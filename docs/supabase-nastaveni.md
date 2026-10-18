@@ -30,18 +30,25 @@ Další migrace (v dalších etapách) se spouští stejně, vždy v pořadí po
 
 ## 4. E-maily
 
-**Authentication → Emails → Templates.** Odkazy musí vést do aplikace přes `/auth/confirm`, jinak nebudou fungovat na jiném zařízení, než kde se o ně žádalo.
+Bez vlastního e-mailového serveru (SMTP) platí v Supabase dvě omezení:
 
-**Invite user** — předmět *Pozvánka do ScioCampu*, tělo:
+- **Texty e-mailů nejdou upravit.** Aplikace si s výchozími texty poradí: odkaz z pozvánky zpracuje stránka `/auth/prijeti`, odkaz na obnovu hesla `/auth/callback`.
+- **E-maily dostanou jen členové týmu projektu** (Organization → Team) a jen pár za hodinu. Pozvánky učitelům a studentům tedy zatím nedorazí.
+
+Pro zkoušení to nevadí: uživatele zakládej v **Authentication → Users → Add user → Create new user** s heslem a zaškrtnutým *Auto Confirm User*.
+
+**Před ostrým spuštěním** nastav vlastní SMTP (**Authentication → Emails → SMTP Settings**), např. zdarma přes Brevo s ověřenou adresou odesílatele. Pak jdou upravit i texty — doporučené české šablony:
+
+**Invite user** — předmět *Pozvánka do ScioCampu*:
 
 ```html
 <h2>Pozvánka do ScioCampu</h2>
 <p>Správce školy ti založil účet. Klikni na odkaz a nastav si heslo:</p>
 <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite">Nastavit heslo</a></p>
-<p>Pak se můžeš přihlašovat školním e-mailem a heslem, případně přes Google.</p>
+<p>Pak se můžeš přihlašovat školním e-mailem a heslem.</p>
 ```
 
-**Reset password** — předmět *Nové heslo do ScioCampu*, tělo:
+**Reset password** — předmět *Nové heslo do ScioCampu*:
 
 ```html
 <h2>Nastavení hesla</h2>
@@ -49,7 +56,7 @@ Další migrace (v dalších etapách) se spouští stejně, vždy v pořadí po
 <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">Nastavit nové heslo</a></p>
 ```
 
-**Důležité pro ostrý provoz:** vestavěné odesílání e-mailů v Supabase pustí jen pár e-mailů za hodinu — na pozvání celé školy to nestačí. Před spuštěním nastav vlastní SMTP (**Authentication → Emails → SMTP Settings**), např. přes Resend nebo Brevo, ideálně s odesílatelem na doméně školy (to musí povolit škola).
+Odkazy přes `/auth/confirm` fungují i na jiném zařízení, než kde se o e-mail žádalo.
 
 ## 5. Klíče do aplikace
 

@@ -44,7 +44,7 @@
 - Next.js 16.4 má zapnuté Cache Components: vše, co čte cookies/session, musí být za `<Suspense>` (layout `src/app/(app)/layout.tsx` to řeší pro všechny stránky). Middleware se jmenuje `src/proxy.ts`. Před psaním kódu čti dokumentaci v `node_modules/next/dist/docs/`.
 - Data jen přes `src/lib/data.ts` (async funkce, připravené na Supabase). Čas vždy přes `src/lib/time.ts` (pásmo Europe/Prague).
 - Styly: design tokeny v `src/app/globals.css`, komponenty přes CSS moduly.
-- Napojení na Supabase je napsané a otestované v PGlite, ale zatím neověřené proti skutečnému projektu (autor ho zakládá).
+- Supabase projekt `sciocamp` (id `gmpvzyvrutaoxcicpnqt`, Frankfurt) existuje, migrace jsou nasazené (Supabase konektor). Registrace vypnutá. Vlastní SMTP zatím není: e-maily chodí jen členům týmu a šablony nejdou upravit — pozvánky z výchozího e-mailu zpracuje `/auth/prijeti` (tokeny za #).
 - Dva režimy (`src/lib/config.ts`): s proměnnými Supabase naostro, bez nich ukázkový režim s `src/lib/demo-data.ts`. Oba musí fungovat.
 - Supabase: schéma a RLS v `supabase/migrations/` (testy `npm run test:db` v PGlite — při každé změně oprávnění přidat test). Klienti v `src/lib/supabase/`. Secret key jen v serverových akcích admina po `requireAdmin()`.
 - Přihlášení: `/auth/callback` (Google, PKCE), `/auth/confirm` (odkazy z e-mailů, token_hash), `/nastavit-heslo`. Po přihlášení `finishSignIn` znovu ověří doménu a profil. Registrace v Supabase je vypnutá, účty zakládá admin pozvánkou.

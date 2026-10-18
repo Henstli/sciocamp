@@ -31,7 +31,8 @@ export async function inviteUser(_prev: InviteState, formData: FormData): Promis
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { full_name: fullName },
-    redirectTo: `${await siteUrl()}/nastavit-heslo`,
+    // Výchozí e-mail Supabase pošle přihlašovací údaje za „#“ — zpracuje je /auth/prijeti.
+    redirectTo: `${await siteUrl()}/auth/prijeti`,
   });
   if (error || !data.user) {
     return {

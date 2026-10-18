@@ -4,7 +4,7 @@ import { SESSION_COOKIE, readSessionToken } from "./lib/session";
 import { updateSession } from "./lib/supabase/proxy";
 
 // Stránky, které jsou dostupné i bez přihlášení.
-const PUBLIC_PATHS = ["/prihlaseni", "/auth/callback", "/auth/confirm"];
+const PUBLIC_PATHS = ["/prihlaseni", "/auth/callback", "/auth/confirm", "/auth/prijeti"];
 
 // Optimistická kontrola přihlášení. Skutečná kontrola rolí probíhá na serveru
 // ve stránkách (src/lib/auth.ts), proxy jen šetří zbytečné vykreslení.
