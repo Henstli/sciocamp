@@ -119,6 +119,14 @@ export async function markConversationRead(conversationId: string, refreshAfter 
     .update({ last_read_at: new Date().toISOString() })
     .eq("conversation_id", conversationId)
     .eq("user_id", user.id);
+  // Notifikace o zprávách z téhle konverzace už nejsou potřeba.
+  await sb
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .eq("kind", "zprava")
+    .eq("href", `/zpravy?k=${conversationId}`)
+    .is("read_at", null);
   if (refreshAfter) refresh();
 }
 

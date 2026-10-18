@@ -27,6 +27,7 @@ import type {
 
 export const POST_BUCKET = "prispevky";
 export const MESSAGE_BUCKET = "zpravy";
+export const CHAT_BUCKET = "chat";
 
 type StoredFile = { path: string; name: string; size: number | null };
 
@@ -91,12 +92,20 @@ async function classChatUncached(activity: Activity): Promise<ClassMessage[]> {
   const sb = await createClient();
   const { data, error } = await sb
     .from("class_messages")
-    .select("id, author_id, body, created_at")
+    .select("id, author_id, body, file_path, file_name, file_size, created_at")
     .eq("activity_id", activity.dbId)
     .order("created_at", { ascending: false })
     .limit(150);
   if (error || !data) return [];
-  return data.reverse().map((m) => ({ id: m.id, authorId: m.author_id, body: m.body, createdAt: m.created_at }));
+  const files = data.filter((m) => m.file_path).map((m) => ({ path: m.file_path!, name: m.file_name ?? "soubor", size: m.file_size }));
+  const urls = await sign(CHAT_BUCKET, files);
+  return data.reverse().map((m) => ({
+    id: m.id,
+    authorId: m.author_id,
+    body: m.body,
+    createdAt: m.created_at,
+    file: m.file_path ? { path: m.file_path, name: m.file_name ?? "soubor", size: m.file_size, url: urls.get(m.file_path) } : null,
+  }));
 }
 
 // ---------------------------------------------------------------------------

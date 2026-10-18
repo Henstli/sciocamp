@@ -34,9 +34,9 @@ export const DEMO_POSTS: Record<string, Post[]> = {
 
 export const DEMO_CLASS_CHAT: Record<string, ClassMessage[]> = {
   "prezentacni-schopnosti": [
-    { id: "c1", authorId: "u-hankova", body: "Kdo se dnes připojuje online, napište sem, ať vím, s kým počítat.", createdAt: "2026-10-19T06:14:00Z" },
-    { id: "c2", authorId: "u-komarek", body: "Já budu na Meetu, jsem ještě ve vlaku.", createdAt: "2026-10-19T06:20:00Z" },
-    { id: "c3", authorId: "u-jaukner", body: "Můžeme si v pátek sdílet obrazovku všichni najednou?", createdAt: "2026-10-19T06:31:00Z" },
+    { id: "c1", authorId: "u-hankova", body: "Kdo se dnes připojuje online, napište sem, ať vím, s kým počítat.", createdAt: "2026-10-19T06:14:00Z", file: null },
+    { id: "c2", authorId: "u-komarek", body: "Já budu na Meetu, jsem ještě ve vlaku.", createdAt: "2026-10-19T06:20:00Z", file: null },
+    { id: "c3", authorId: "u-jaukner", body: "Můžeme si v pátek sdílet obrazovku všichni najednou?", createdAt: "2026-10-19T06:31:00Z", file: null },
   ],
 };
 

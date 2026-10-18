@@ -4,6 +4,7 @@ import { keepForm } from "@/lib/use-keep-form";
 import { useActionState, useState } from "react";
 import { DateInput, TimeInput } from "@/components/fields/DateTime";
 import { Icon } from "@/components/Icon";
+import { StaffPicker } from "./StaffPicker";
 import { saveActivity, type ActivityFormState } from "@/lib/actions/activities";
 import { formatDateRange } from "@/lib/periods";
 import type { ActivityKind } from "@/lib/types";
@@ -188,22 +189,7 @@ export function ActivityForm({
             {fe.coTeachers}
           </p>
         )}
-        <div className={styles.grades}>
-          {staff
-            .filter((s) => s.id !== leadId)
-            .map((s) => (
-              <label key={s.id} className={styles.check}>
-                <input
-                  type="checkbox"
-                  name="coTeachers"
-                  value={s.id}
-                  checked={coTeachers.includes(s.id)}
-                  onChange={(e) => setCoTeachers((list) => (e.target.checked ? [...list, s.id] : list.filter((x) => x !== s.id)))}
-                />
-                {s.name}
-              </label>
-            ))}
-        </div>
+        <StaffPicker name="coTeachers" staff={staff} selected={coTeachers} onChange={setCoTeachers} exclude={leadId} />
         <span className={styles.hint}>
           {kind === "expedice"
             ? "Na expedici jedou aspoň dva vyučující. Všichni můžou třídu spravovat: Meet, studenty, nástěnku i úkoly."

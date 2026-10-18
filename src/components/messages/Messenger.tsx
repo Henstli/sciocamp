@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../Icon";
+import { Attachment } from "../Attachment";
 import { Avatar } from "../PageHeader";
 import { markConversationRead, startConversation } from "@/lib/actions/communication";
 import { createClient } from "@/lib/supabase/client";
@@ -34,12 +35,6 @@ type Row = {
 
 function tone(role: Role) {
   return role === "student" ? ("student" as const) : ("late" as const);
-}
-
-function fileSize(bytes: number | null) {
-  if (!bytes) return "Soubor";
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} kB`;
-  return `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
 }
 
 export function Messenger({
@@ -296,23 +291,7 @@ export function Messenger({
                   </div>
                 ) : (
                   <div key={r.m.id} className={styles.msgWrap} data-mine={r.m.mine}>
-                    {r.m.file && (
-                      <a
-                        href={r.m.file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.file}
-                        aria-disabled={!r.m.file.url}
-                      >
-                        <span className={styles.fileIcon}>
-                          <Icon name="file" size={20} />
-                        </span>
-                        <span>
-                          <span className={styles.fileName}>{r.m.file.name}</span>
-                          <span className={styles.fileMeta}>{fileSize(r.m.file.size)}</span>
-                        </span>
-                      </a>
-                    )}
+                    {r.m.file && <Attachment bucket={BUCKET} file={r.m.file} live={live} />}
                     {r.m.body && <div className={styles.bubble}>{r.m.body}</div>}
                     <div className={styles.time}>{r.m.time}</div>
                   </div>

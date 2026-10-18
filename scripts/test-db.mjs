@@ -30,7 +30,7 @@ await db.exec(`
   -- Minimální napodobenina Supabase Storage
   create schema storage;
   create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint);
-  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid, owner_id text default nullif(current_setting('request.jwt.claim.sub', true), ''));
   create function storage.foldername(name text) returns text[] language sql immutable as $$
     select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1]
   $$;
@@ -492,6 +492,31 @@ await test("expedice: student jen na jedné naráz, spoluvyučující spravuje",
   // Odkaz na expedici vede do sekce Expedice.
   const [{ class_href }] = await db.query(`select public.class_href($1)`, [e1]).then((r) => r.rows);
   assert.equal(class_href, "/expedice/expedice-sumava");
+});
+
+await test("chat třídy: přílohy jen pro třídu, zprávy notifikují příjemce", async () => {
+  await as(student, `insert into storage.objects (bucket_id, name) values ('chat', $1)`, [`${course.id}/1-foto.jpg`]);
+  await assert.rejects(() => as(outsider, `insert into storage.objects (bucket_id, name) values ('chat', $1)`, [`${course.id}/1-x.jpg`]));
+  assert.equal((await as(student2, `select name from storage.objects where bucket_id = 'chat'`)).length, 1);
+  assert.equal((await as(outsider, `select name from storage.objects where bucket_id = 'chat'`)).length, 0);
+  // Spolužák cizí soubor nesmaže, autor a vyučující ano.
+  assert.equal((await as(student2, `delete from storage.objects where bucket_id = 'chat' returning name`)).length, 0);
+  assert.equal((await as(student, `delete from storage.objects where bucket_id = 'chat' returning name`)).length, 1);
+  // Zpráva jen s přílohou.
+  const [m] = await as(student, `insert into public.class_messages (activity_id, file_path, file_name) values ($1, $2, 'foto.jpg') returning body`, [course.id, `${course.id}/2-foto.jpg`]);
+  assert.equal(m.body, "");
+  await assert.rejects(() => as(student, `insert into public.class_messages (activity_id, body) values ($1, '   ')`, [course.id]));
+  await assert.rejects(() => as(student, `insert into public.class_messages (activity_id, file_path) values ($1, 'jina/x.jpg')`, [course.id]));
+
+  // Soukromé zprávy: příjemce má jednu nepřečtenou notifikaci na konverzaci.
+  const [{ start_conversation: conv }] = await as(student2, `select public.start_conversation($1)`, [teacher2]);
+  await as(student2, `insert into public.messages (conversation_id, body) values ($1, 'Dobrý den')`, [conv]);
+  await as(student2, `insert into public.messages (conversation_id, body) values ($1, 'Mám dotaz k expedici')`, [conv]);
+  const n = await as(teacher2, `select title, body, href from public.notifications where kind = 'zprava'`);
+  assert.equal(n.length, 1);
+  assert.equal(n[0].body, "Mám dotaz k expedici");
+  assert.equal(n[0].href, `/zpravy?k=${conv}`);
+  assert.equal((await as(student2, `select id from public.notifications where kind = 'zprava'`)).length, 0, "odesílatel nic");
 });
 
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

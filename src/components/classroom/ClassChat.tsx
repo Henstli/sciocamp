@@ -5,12 +5,27 @@ import { Icon } from "../Icon";
 import { Avatar } from "../PageHeader";
 import { createClient } from "@/lib/supabase/client";
 import { formatStamp } from "@/lib/time";
+import type { SubmissionFile } from "@/lib/types";
+import { MAX_UPLOAD_BYTES, uploadFilesDetailed } from "@/lib/upload";
+import { Attachment } from "../Attachment";
 import { UNKNOWN_PERSON, toneFor, type Person } from "./people";
 import styles from "./classroom.module.css";
 
-export type ChatLine = { id: string; authorId: string; body: string; createdAt: string; when: string };
+export type ChatLine = { id: string; authorId: string; body: string; createdAt: string; when: string; file: SubmissionFile | null };
 
-type Row = { id: string; activity_id: string; author_id: string; body: string; created_at: string };
+type Row = {
+  id: string;
+  activity_id: string;
+  author_id: string;
+  body: string;
+  file_path: string | null;
+  file_name: string | null;
+  file_size: number | null;
+  created_at: string;
+};
+
+const BUCKET = "chat";
+const COLUMNS = "id, activity_id, author_id, body, file_path, file_name, file_size, created_at";
 
 const toLine = (r: Row): ChatLine => ({
   id: r.id,
@@ -18,6 +33,7 @@ const toLine = (r: Row): ChatLine => ({
   body: r.body,
   createdAt: r.created_at,
   when: formatStamp(r.created_at, new Date()),
+  file: r.file_path ? { path: r.file_path, name: r.file_name ?? "soubor", size: r.file_size } : null,
 });
 
 /** Chat třídy. Naostro se nové zprávy objevují samy (Supabase Realtime). */
@@ -41,7 +57,9 @@ export function ClassChat({
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
   const list = useRef<HTMLDivElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const realtime = live && !!activityDbId;
 
   // Nové zprávy naživo.
@@ -78,25 +96,50 @@ export function ClassChat({
 
   async function send() {
     const body = draft.trim();
-    if (!body) return;
+    if (!body && !file) return;
     setError(null);
     if (!realtime) {
       setMessages((m) => [
         ...m,
-        { id: `local-${m.length}`, authorId: me.id, body, createdAt: new Date().toISOString(), when: "teď" },
+        {
+          id: `local-${m.length}`,
+          authorId: me.id,
+          body,
+          createdAt: new Date().toISOString(),
+          when: "teď",
+          file: file ? { path: "", name: file.name, size: file.size } : null,
+        },
       ]);
       setDraft("");
+      setFile(null);
       return;
     }
+    if (file && file.size > MAX_UPLOAD_BYTES) return setError("Soubor je větší než 25 MB. Nahraj ho na Google Disk a pošli odkaz.");
     setSending(true);
+    let attached: { path: string; name: string; size: number } | null = null;
+    if (file) {
+      const { problem, uploaded } = await uploadFilesDetailed(BUCKET, activityDbId!, [file]);
+      if (problem || !uploaded[0]) {
+        setSending(false);
+        return setError(problem ?? "Přílohu se nepodařilo nahrát.");
+      }
+      attached = uploaded[0];
+    }
     const { data, error: err } = await createClient()
       .from("class_messages")
-      .insert({ activity_id: activityDbId, body })
-      .select("id, activity_id, author_id, body, created_at")
+      .insert({
+        activity_id: activityDbId,
+        body,
+        file_path: attached?.path ?? null,
+        file_name: attached?.name ?? null,
+        file_size: attached?.size ?? null,
+      })
+      .select(COLUMNS)
       .single();
     setSending(false);
     if (err || !data) return setError("Zprávu se nepodařilo odeslat. Zkus to znovu.");
     setDraft("");
+    setFile(null);
     const line = toLine(data as Row);
     setMessages((m) => (m.some((x) => x.id === line.id) ? m : [...m, line]));
   }
@@ -122,7 +165,12 @@ export function ClassChat({
                   <span className={styles.strong}>{author.name}</span>
                   <span className={styles.meta}>{m.when}</span>
                 </div>
-                <div className={styles.msgText}>{m.body}</div>
+                {m.body && <div className={styles.msgText}>{m.body}</div>}
+                {m.file && (
+                  <div className={styles.msgFile}>
+                    <Attachment bucket={BUCKET} file={m.file} live={realtime} />
+                  </div>
+                )}
               </div>
               {(m.authorId === me.id || canModerate) && (
                 <button type="button" className={`${styles.iconBtn} ${styles.msgDelete}`} aria-label="Smazat zprávu" onClick={() => void remove(m.id)}>
@@ -133,6 +181,15 @@ export function ClassChat({
           );
         })}
       </div>
+      {file && (
+        <div className={styles.chatPending}>
+          <Icon name="file" size={16} />
+          <span className={styles.grow}>{file.name}</span>
+          <button type="button" className={styles.iconBtn} aria-label="Odebrat přílohu" onClick={() => setFile(null)}>
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      )}
       <form
         className={styles.chatForm}
         onSubmit={(e) => {
@@ -140,6 +197,19 @@ export function ClassChat({
           void send();
         }}
       >
+        <input
+          ref={fileInput}
+          type="file"
+          id={`chat-priloha-${activityDbId ?? "demo"}`}
+          className="sr-only"
+          onChange={(e) => {
+            setFile(e.target.files?.[0] ?? null);
+            if (fileInput.current) fileInput.current.value = "";
+          }}
+        />
+        <label htmlFor={`chat-priloha-${activityDbId ?? "demo"}`} className={styles.chatAttach} aria-label="Přiložit soubor nebo obrázek">
+          <Icon name="paperclip" size={20} />
+        </label>
         <label className={styles.grow}>
           <span className="sr-only">Zpráva pro celou třídu</span>
           <input
@@ -151,9 +221,9 @@ export function ClassChat({
             className={styles.composerInput}
           />
         </label>
-        <button type="submit" className="btn btn-primary" disabled={sending || !draft.trim()}>
+        <button type="submit" className="btn btn-primary" disabled={sending || (!draft.trim() && !file)}>
           <Icon name="send" size={18} />
-          Odeslat
+          {sending ? "Odesílám…" : "Odeslat"}
         </button>
       </form>
       {error && (

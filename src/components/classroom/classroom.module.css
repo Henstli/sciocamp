@@ -641,3 +641,34 @@ a.attachment:hover {
   color: var(--primary-text);
   background: var(--primary-soft);
 }
+
+.msgFile {
+  margin-top: 6px;
+}
+.chatPending {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+.chatAttach {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.chatAttach:hover {
+  border-color: var(--primary-line);
+  color: var(--primary-text);
+}

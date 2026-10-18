@@ -164,8 +164,8 @@ export type Post = {
   comments: Comment[];
 };
 
-/** Zpráva v chatu třídy. */
-export type ClassMessage = { id: string; authorId: string; body: string; createdAt: string };
+/** Zpráva v chatu třídy (text, příloha nebo obojí). */
+export type ClassMessage = { id: string; authorId: string; body: string; createdAt: string; file: SubmissionFile | null };
 
 /** Řádek v seznamu konverzací. */
 export type ConversationSummary = {
