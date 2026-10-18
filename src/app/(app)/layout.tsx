@@ -4,6 +4,7 @@ import { PageSkeleton, SidebarSkeleton } from "@/components/Skeletons";
 import { requireUser } from "@/lib/auth";
 import { getHomeSummary } from "@/lib/data";
 import { homeTasks } from "@/lib/data-assignments";
+import { unreadMessages } from "@/lib/data-communication";
 import { canTeach, initials, isAdmin, roleCaption } from "@/lib/roles";
 import styles from "./shell.module.css";
 
@@ -29,7 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 async function UserSidebar() {
   const user = await requireUser();
-  const [home, tasks] = await Promise.all([getHomeSummary(), homeTasks(user)]);
+  const [home, tasks, messages] = await Promise.all([getHomeSummary(), homeTasks(user), unreadMessages(user)]);
   const teach = canTeach(user.role);
   return (
     <Sidebar
@@ -39,7 +40,7 @@ async function UserSidebar() {
       badges={{
         ukoly: tasks.headline || undefined,
         hlasovani: home?.polls.waiting,
-        zpravy: home?.messages.unread,
+        zpravy: messages.unread || undefined,
         vyuka: undefined,
       }}
     />

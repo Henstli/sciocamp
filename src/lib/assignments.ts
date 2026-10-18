@@ -1,6 +1,6 @@
 // Čisté pomocné funkce pro úkoly (bez přístupu k datům) — běží na serveru i v prohlížeči.
 
-import type { Assignment, Work, WorkState } from "./types";
+import type { Assignment, LinkItem, Work, WorkState } from "./types";
 
 /** Výsledný stav práce studenta. */
 export function workState(a: Pick<Assignment, "kind" | "dueAt">, work: Work | null, now = Date.now()): WorkState {
@@ -119,4 +119,16 @@ export function topicsByClass(list: { activityId: string; topic: string | null }
     if (!arr.includes(a.topic)) arr.push(a.topic);
   }
   return map;
+}
+
+/** Odkazy z formuláře: jeden na řádek, volitelně „Název | https://…“. */
+export function parseLinks(raw: string): { links: LinkItem[]; bad: string | null } {
+  const links: LinkItem[] = [];
+  for (const line of raw.split("\n").map((l) => l.trim()).filter(Boolean)) {
+    const [maybeTitle, maybeUrl] = line.includes("|") ? line.split("|").map((x) => x.trim()) : [null, line];
+    const url = normalizeLink(maybeUrl ?? "");
+    if (!url) return { links, bad: line };
+    links.push({ title: maybeTitle || linkTitle(url), url });
+  }
+  return { links: links.slice(0, 20), bad: null };
 }

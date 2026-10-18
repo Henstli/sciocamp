@@ -123,6 +123,7 @@
 }
 .composerInput {
   flex: 1;
+  width: 100%;
   min-width: 0;
   height: var(--tap);
   padding: 0 14px;
@@ -190,11 +191,21 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-top: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 12px 0 0;
+  border: 0;
   border-top: 1px solid var(--border-soft);
+  background: transparent;
+  font: inherit;
   font-size: 13px;
   color: var(--text-muted);
   font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.comments:hover {
+  color: var(--primary-text);
 }
 
 .event {
@@ -344,6 +355,8 @@
   flex-direction: column;
 }
 .chatList {
+  max-height: min(60vh, 560px);
+  overflow-y: auto;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -445,4 +458,186 @@ a.event:hover {
 }
 .upcoming:hover .strong {
   color: var(--primary-text);
+}
+
+/* --- Etapa 3: psaní příspěvků, komentáře, chat --- */
+.composerOpen {
+  flex: 1;
+  min-width: 0;
+  height: var(--tap);
+  padding: 0 14px;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: text;
+}
+.composerOpen:hover {
+  border-color: var(--primary-line);
+}
+.composerOpenCard {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.composerTop {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.composerTextarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+  resize: vertical;
+}
+.composerTextarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--card);
+}
+.composerBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.linksField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 52px;
+}
+.metaStrong {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.pendingFiles {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pendingFile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 10px;
+  background: var(--primary-tint);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.iconBtn {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.iconBtn:hover {
+  background: var(--late-bg);
+  color: var(--late);
+}
+.formError {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--late);
+}
+.formInfo {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.confirm {
+  display: flex;
+  gap: 6px;
+}
+.dangerBtn {
+  background: var(--late);
+  color: #fff;
+  border: 0;
+}
+.dangerBtn:hover {
+  background: #8e2424;
+  color: #fff;
+}
+.attachmentText {
+  min-width: 0;
+}
+.attachmentText > div:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.attachment {
+  text-decoration: none;
+  color: var(--text);
+}
+a.attachment:hover {
+  border-color: var(--primary-line);
+  background: var(--primary-tint);
+}
+.fileBadge[data-kind="link"] {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.comment {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.commentForm {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.msgDelete {
+  opacity: 0;
+}
+.msg:hover .msgDelete,
+.msgDelete:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .msgDelete {
+    opacity: 1;
+  }
+}
+.studentMsg {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--primary-text);
+  background: var(--primary-soft);
 }

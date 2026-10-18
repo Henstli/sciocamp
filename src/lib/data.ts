@@ -68,6 +68,7 @@ const ACTIVITY_COLUMNS =
 function toActivity(r: ActivityRow): Activity {
   return {
     id: r.slug,
+    dbId: r.id,
     kind: r.kind,
     title: r.title,
     description: r.description ?? undefined,
@@ -209,27 +210,12 @@ export function teachesActivity(user: User, activity: Activity): boolean {
 // Obsah tříd a Domov — nástěnka, úkoly a zprávy přijdou v etapách 2–4
 // ---------------------------------------------------------------------------
 
-const EMPTY_CLASSROOM: ClassroomContent = { stream: [], topics: [], teams: [], chat: [], upcoming: [] };
+const EMPTY_CLASSROOM: ClassroomContent = { topics: [], teams: [], upcoming: [] };
 
+/** Týmy a další obsah třídy, který zatím žije jen v ukázkových datech. */
 export async function getClassroom(activity: Activity): Promise<ClassroomContent> {
   if (isSupabase) return EMPTY_CLASSROOM;
-  const content = DEMO_CLASSROOMS[activity.id];
-  if (content) return content;
-  return {
-    ...EMPTY_CLASSROOM,
-    stream: [
-      {
-        type: "post",
-        id: `${activity.id}-welcome`,
-        authorId: activity.teacherId,
-        when: "1. 9.",
-        label: "oznámení",
-        text: `Vítejte v ${activity.kind === "atelier" ? "ateliéru" : "kurzu"} ${activity.title}! Odkaz na Meet najdete vpravo, platí pro celé období.`,
-        attachments: [],
-        comments: 0,
-      },
-    ],
-  };
+  return DEMO_CLASSROOMS[activity.id] ?? EMPTY_CLASSROOM;
 }
 
 /** Souhrn na Domov. Naostro zatím null — úkoly, hlasování a zprávy ještě nejsou. */

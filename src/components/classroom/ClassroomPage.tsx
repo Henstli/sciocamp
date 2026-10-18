@@ -4,7 +4,10 @@ import { Icon } from "../Icon";
 import { MeetLink } from "../MeetLink";
 import { ClassTabs, type ClassView } from "./ClassTabs";
 import { requireUser } from "@/lib/auth";
-import { canOpenActivity, getActivity, getClassroom, getUsersByIds, teachesActivity } from "@/lib/data";
+import { canOpenActivity, getActivity, getClassroom, getUsersByIds, listStaff, teachesActivity } from "@/lib/data";
+import { classChat, classPosts } from "@/lib/data-communication";
+import { isSupabase } from "@/lib/config";
+import type { Person } from "./people";
 import { plural } from "@/lib/format";
 import { KIND_LABEL } from "@/lib/links";
 import { initials } from "@/lib/roles";
@@ -35,17 +38,16 @@ export async function ClassroomPage({
   if (!activity || !kinds.includes(activity.kind) || !canOpenActivity(user, activity)) notFound();
 
   const now = pragueNow();
-  const content = await getClassroom(activity);
+  const stamp = new Date();
+  const [content, posts, chat, staff] = await Promise.all([getClassroom(activity), classPosts(activity), classChat(activity), listStaff()]);
   const [teacher] = await getUsersByIds([activity.teacherId]);
   const students = await getUsersByIds(activity.studentIds);
-  const authorIds = new Set<string>([
-    ...content.chat.map((m) => m.authorId),
-    ...content.stream.flatMap((s) => (s.type === "post" ? [s.authorId] : [])),
-  ]);
-  const authors = await getUsersByIds([...authorIds]);
-  const person = (u: User | undefined) =>
-    u ? { id: u.id, name: u.name, initials: initials(u.name), role: u.role } : { id: "?", name: "Neznámý uživatel", initials: "?", role: "student" as const };
-  const byId = (uid: string) => person(authors.find((a) => a.id === uid) ?? students.find((s) => s.id === uid));
+  const person = (u: User | undefined): Person =>
+    u ? { id: u.id, name: u.name, initials: initials(u.name), role: u.role } : { id: "?", name: "Neznámý uživatel", initials: "?", role: "student" };
+  // Kdo může ve třídě psát: studenti, vyučující a vedení školy.
+  const people: Record<string, Person> = {};
+  [...students, ...staff, user].forEach((u) => (people[u.id] = person(u)));
+  const byId = (uid: string) => people[uid] ?? person(undefined);
 
   const isTeacher = teachesActivity(user, activity);
   const next = currentOrNext([activity], now);
@@ -54,21 +56,47 @@ export async function ClassroomPage({
 
   const work = await classWork(activity, user, isTeacher, teacher?.name ?? "Vyučující");
 
+  // Nástěnka: příspěvky a nové úkoly/materiály podle času, nejnovější nahoře.
+  const stream: ClassView["stream"] = [
+    ...posts.map((p) => ({
+      at: p.createdAt,
+      item: {
+        type: "post" as const,
+        id: p.id,
+        author: byId(p.authorId),
+        when: formatStamp(p.createdAt, stamp),
+        body: p.body,
+        links: p.links,
+        files: p.files,
+        canDelete: isTeacher || p.authorId === user.id,
+        comments: p.comments.map((c) => ({
+          id: c.id,
+          author: byId(c.authorId),
+          body: c.body,
+          when: formatStamp(c.createdAt, stamp),
+          canDelete: isTeacher || c.authorId === user.id,
+        })),
+      },
+    })),
+    ...work.stream.map((e) => ({ at: e.at, item: e.item })),
+  ]
+    .sort((x, y) => y.at.localeCompare(x.at))
+    .map((x) => x.item);
+
   const view: ClassView = {
     me: person(user),
     teacher: person(teacher),
     teacherLabel: activity.kind === "atelier" ? (feminine ? "Lektorka ateliéru" : "Lektor ateliéru") : "Vyučující kurzu",
-    stream: [
-      ...content.stream.map((s) => (s.type === "post" ? { ...s, author: byId(s.authorId) } : { ...s, author: null })),
-      ...work.stream,
-    ],
+    stream,
+    canManage: isTeacher,
     work: { topics: work.topics, newHref: isTeacher ? `/ukoly/novy?trida=${activity.id}` : null },
     teams: content.teams.map((t) => ({
       name: t.name,
       members: t.memberIds.map((m) => byId(m).name.split(" ")[0]).join(", "),
     })),
     students: students.map(person),
-    chat: content.chat.map((m) => ({ ...m, author: byId(m.authorId) })),
+    chat: chat.map((m) => ({ ...m, when: formatStamp(m.createdAt, stamp) })),
+    people,
     upcoming: [...content.upcoming, ...work.upcoming],
     next: next
       ? {
@@ -82,6 +110,8 @@ export async function ClassroomPage({
     meetUrl: activity.meetUrl,
     canEditMeet: isTeacher,
     slug: activity.id,
+    dbId: activity.dbId,
+    live: isSupabase,
     kindLabel: activity.kind === "atelier" ? "ateliéru" : "kurzu",
   };
 
@@ -106,7 +136,7 @@ export async function ClassroomPage({
         </div>
         <div className={styles.heroActions}>
           {!isTeacher && (
-            <Link href="/zpravy" className={`btn ${styles.heroBtn}`}>
+            <Link href={`/zpravy?s=${activity.teacherId}`} className={`btn ${styles.heroBtn}`}>
               <Icon name="chat" size={18} />
               Napsat {lectorWord}
             </Link>
@@ -189,14 +219,16 @@ async function classWork(activity: Activity, user: User, isTeacher: boolean, tea
 
   const stream = [...list]
     .sort((x, y) => y.createdAt.localeCompare(x.createdAt))
-    .slice(0, 6)
+    .slice(0, 10)
     .map((a) => ({
-      type: a.kind === "ukol" ? ("task" as const) : ("material" as const),
-      id: `zadani-${a.id}`,
-      title: a.kind === "ukol" ? `${teacherName} zadal(a) nový úkol: ${a.title}` : `Nový materiál: ${a.title}`,
-      meta: [formatStamp(a.createdAt), a.dueAt ? `termín ${formatDue(a.dueAt)}` : null].filter(Boolean).join(" · "),
-      author: null,
-      href: `/ukoly/${a.id}`,
+      at: a.createdAt,
+      item: {
+        type: a.kind === "ukol" ? ("task" as const) : ("material" as const),
+        id: `zadani-${a.id}`,
+        title: a.kind === "ukol" ? `${teacherName} zadal(a) nový úkol: ${a.title}` : `Nový materiál: ${a.title}`,
+        meta: [formatStamp(a.createdAt), a.dueAt ? `termín ${formatDue(a.dueAt)}` : null].filter(Boolean).join(" · "),
+        href: `/ukoly/${a.id}`,
+      },
     }));
 
   return { topics, upcoming, stream };

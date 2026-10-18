@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NotificationBell } from "./NotificationBell";
 import styles from "./ui.module.css";
 
 export function PageHeader({
@@ -22,6 +23,7 @@ export function PageHeader({
         {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
       </div>
       {children}
+      {avatar && <NotificationBell />}
       {avatar && (
         <Link href="/profil" aria-label={`Profil: ${avatar.name}`} className={styles.headerAvatar}>
           {avatar.initials}

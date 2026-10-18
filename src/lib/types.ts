@@ -59,6 +59,8 @@ export type Activity = {
   /** Vlastní začátek a konec („rrrr-mm-dd“) — u ateliérů a expedic. Null = podle období. */
   startsOn: string | null;
   endsOn: string | null;
+  /** Id řádku v databázi (uuid) — pro Realtime a Storage. V ukázkovém režimu chybí. */
+  dbId?: string;
   /** Odkaz na Google Meet; vkládá ho vyučující nebo admin. Null = zatím není. */
   meetUrl: string | null;
   /** Pro které ročníky je aktivita; null = pro všechny. */
@@ -70,24 +72,6 @@ export type Activity = {
   tone: "blue" | "blueDark" | "violet" | "teal";
   project?: Project;
 };
-
-export type StreamItem =
-  | {
-      type: "post";
-      id: string;
-      authorId: string;
-      when: string;
-      label: string;
-      text: string;
-      attachments: { kind: "pdf" | "doc"; title: string; meta: string }[];
-      comments: number;
-    }
-  | {
-      type: "task" | "material";
-      id: string;
-      title: string;
-      meta: string;
-    };
 
 export type WorkItemKind = "ukol" | "tym" | "pdf" | "video" | "kviz";
 export type WorkStatus = "ceka" | "hotovo" | "info";
@@ -106,13 +90,9 @@ export type WorkTopic = {
 
 export type Team = { name: string; memberIds: string[] };
 
-export type ChatMessage = { id: string; authorId: string; time: string; text: string };
-
 export type ClassroomContent = {
-  stream: StreamItem[];
   topics: WorkTopic[];
   teams: Team[];
-  chat: ChatMessage[];
   upcoming: { title: string; when: string; urgent: boolean }[];
 };
 
@@ -165,3 +145,51 @@ export type Work = { submission: Submission | null; review: Review | null };
 export type WorkState = "material" | "ceka" | "pozde" | "odevzdano" | "vraceno" | "splneno" | "nesplneno";
 
 export type Comment = { id: string; authorId: string; body: string; createdAt: string };
+
+// ---------------------------------------------------------------------------
+// Etapa 3: nástěnka, chat, zprávy, notifikace
+// ---------------------------------------------------------------------------
+
+/** Příspěvek na nástěnce třídy (píše vyučující nebo admin). */
+export type Post = {
+  id: string;
+  authorId: string;
+  body: string;
+  links: LinkItem[];
+  files: SubmissionFile[];
+  createdAt: string;
+  comments: Comment[];
+};
+
+/** Zpráva v chatu třídy. */
+export type ClassMessage = { id: string; authorId: string; body: string; createdAt: string };
+
+/** Řádek v seznamu konverzací. */
+export type ConversationSummary = {
+  id: string;
+  otherId: string;
+  lastAt: string;
+  lastBody: string;
+  lastMine: boolean;
+  lastHasFile: boolean;
+  unread: number;
+};
+
+/** Soukromá zpráva. */
+export type DirectMessage = {
+  id: string;
+  authorId: string;
+  body: string;
+  file: SubmissionFile | null;
+  createdAt: string;
+};
+
+export type NotificationItem = {
+  id: string;
+  kind: string;
+  title: string;
+  body: string | null;
+  href: string | null;
+  createdAt: string;
+  read: boolean;
+};

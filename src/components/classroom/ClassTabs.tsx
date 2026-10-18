@@ -4,29 +4,19 @@ import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "../Icon";
 import { Avatar, EmptyNote } from "../PageHeader";
+import { ClassChat, type ChatLine } from "./ClassChat";
 import { MeetEditor } from "./MeetEditor";
-import type { Role } from "@/lib/types";
+import { type Person } from "./people";
+import { Stream, type StreamEntry } from "./Stream";
 import styles from "./classroom.module.css";
-
-type Person = { id: string; name: string; initials: string; role: Role };
 
 export type ClassView = {
   me: Person;
   teacher: Person;
   teacherLabel: string;
-  stream: (
-    | {
-        type: "post";
-        id: string;
-        author: Person | null;
-        when: string;
-        label: string;
-        text: string;
-        attachments: { kind: "pdf" | "doc"; title: string; meta: string }[];
-        comments: number;
-      }
-    | { type: "task" | "material"; id: string; title: string; meta: string; author: null; href?: string }
-  )[];
+  stream: StreamEntry[];
+  /** Smí psát příspěvky a mazat cizí zprávy (vyučující třídy a admin) */
+  canManage: boolean;
   work: {
     topics: {
       name: string;
@@ -37,13 +27,17 @@ export type ClassView = {
   };
   teams: { name: string; members: string }[];
   students: Person[];
-  chat: { id: string; time: string; text: string; author: Person }[];
+  chat: ChatLine[];
+  /** Lidé, kteří můžou psát do chatu (studenti, vyučující, admini) */
+  people: Record<string, Person>;
   upcoming: { title: string; when: string; urgent: boolean; href?: string }[];
   next: { label: string; live: boolean } | null;
   location: string | null;
   meetUrl: string | null;
   canEditMeet: boolean;
   slug: string;
+  dbId?: string;
+  live: boolean;
   kindLabel: string;
 };
 
@@ -55,11 +49,6 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
-
-function toneFor(p: Person, me: Person) {
-  if (p.id === me.id) return "me" as const;
-  return p.role === "student" ? ("student" as const) : ("late" as const);
-}
 
 export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: string }) {
   const [tab, setTab] = useState<Tab>(TABS.some(([k]) => k === initialTab) ? (initialTab as Tab) : "stream");
@@ -83,81 +72,36 @@ export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: 
       </div>
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === "stream" && <Stream view={view} />}
+        {tab === "stream" && <StreamTab view={view} />}
         {tab === "work" && <Work work={view.work} />}
         {tab === "people" && <People view={view} />}
-        {tab === "chat" && <Chat view={view} />}
+        {tab === "chat" && (
+          <ClassChat
+            initial={view.chat}
+            me={view.me}
+            people={view.people}
+            activityDbId={view.dbId}
+            live={view.live}
+            canModerate={view.canManage}
+          />
+        )}
       </div>
     </>
   );
 }
 
-function Stream({ view }: { view: ClassView }) {
+function StreamTab({ view }: { view: ClassView }) {
   return (
     <div className={styles.columns}>
       <div className={styles.mainCol}>
-        <div className={`card ${styles.composer}`}>
-          <Avatar initials={view.me.initials} size={40} tone="me" />
-          <input
-            type="text"
-            aria-label="Napiš příspěvek třídě"
-            placeholder="Psaní příspěvků přidáme v etapě 3"
-            disabled
-            className={styles.composerInput}
-          />
-        </div>
-
-        {view.stream.length === 0 && (
-          <EmptyNote>Nástěnka je zatím prázdná. Objeví se tu nové úkoly a materiály; vlastní příspěvky přidáme v etapě 3.</EmptyNote>
-        )}
-        {view.stream.map((item) =>
-          item.type === "post" ? (
-            <article key={item.id} className={`card ${styles.post}`}>
-              <div className={styles.postHead}>
-                {item.author && <Avatar initials={item.author.initials} size={40} tone={toneFor(item.author, view.me)} />}
-                <div>
-                  <div className={styles.strong}>{item.author?.name}</div>
-                  <div className={styles.meta}>
-                    {item.when} · {item.label}
-                  </div>
-                </div>
-              </div>
-              <p className={styles.postText}>{item.text}</p>
-              {item.attachments.length > 0 && (
-                <div className={styles.attachments}>
-                  {item.attachments.map((a) => (
-                    <div key={a.title} className={styles.attachment}>
-                      <div className={styles.fileBadge} data-kind={a.kind}>
-                        {a.kind.toUpperCase()}
-                      </div>
-                      <div>
-                        <div className={styles.strong}>{a.title}</div>
-                        <div className={styles.meta}>{a.meta}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {item.comments > 0 && (
-                <div className={styles.comments}>
-                  <Icon name="comment" size={16} />
-                  {item.comments} {item.comments === 1 ? "komentář" : item.comments < 5 ? "komentáře" : "komentářů"} třídy
-                </div>
-              )}
-            </article>
-          ) : (
-            <Link key={item.id} href={item.href ?? "#"} className={`card ${styles.event}`}>
-              <div className={styles.eventIcon} data-kind={item.type}>
-                <Icon name={item.type === "task" ? "file" : "play"} size={22} />
-              </div>
-              <div className={styles.grow}>
-                <div className={styles.strong}>{item.title}</div>
-                <div className={styles.meta}>{item.meta}</div>
-              </div>
-              <Icon name="chevronRight" size={18} style={{ color: "var(--text-muted)" }} />
-            </Link>
-          ),
-        )}
+        <Stream
+          items={view.stream}
+          me={view.me}
+          canPost={view.canManage}
+          activitySlug={view.slug}
+          activityDbId={view.dbId}
+          live={view.live}
+        />
       </div>
 
       <div className={styles.sideCol}>
@@ -256,7 +200,7 @@ function People({ view }: { view: ClassView }) {
             <div className={styles.meta}>{view.teacherLabel}</div>
           </div>
           {view.teacher.id !== view.me.id && (
-            <Link href="/zpravy" aria-label={`Napsat: ${view.teacher.name}`} className={styles.msgBtn}>
+            <Link href={`/zpravy?s=${view.teacher.id}`} aria-label={`Napsat: ${view.teacher.name}`} className={styles.msgBtn}>
               <Icon name="chat" size={18} />
             </Link>
           )}
@@ -281,66 +225,16 @@ function People({ view }: { view: ClassView }) {
           {view.students.map((s) => (
             <div key={s.id} className={styles.student}>
               <Avatar initials={s.initials} size={36} tone={s.id === view.me.id ? "me" : "student"} />
-              <span>{s.name}</span>
+              <span className={styles.grow}>{s.name}</span>
+              {s.id !== view.me.id && (
+                <Link href={`/zpravy?s=${s.id}`} aria-label={`Napsat: ${s.name}`} className={styles.studentMsg}>
+                  <Icon name="chat" size={16} />
+                </Link>
+              )}
             </div>
           ))}
         </div>
       </section>
     </div>
-  );
-}
-
-function Chat({ view }: { view: ClassView }) {
-  const [draft, setDraft] = useState("");
-  const [sent, setSent] = useState<string[]>([]);
-  const send = () => {
-    const t = draft.trim();
-    if (!t) return;
-    setSent((s) => [...s, t]);
-    setDraft("");
-  };
-  const messages = [
-    ...view.chat,
-    ...sent.map((text, i) => ({ id: `local-${i}`, time: "teď", text, author: view.me })),
-  ];
-
-  return (
-    <section aria-label="Chat třídy" className={`card ${styles.chat}`}>
-      <div className={styles.chatList}>
-        {messages.length === 0 && <div className={styles.meta}>Zatím tu nikdo nic nenapsal.</div>}
-        {messages.map((m) => (
-          <div key={m.id} className={styles.msg}>
-            <Avatar initials={m.author.initials} size={36} tone={toneFor(m.author, view.me)} />
-            <div>
-              <div className={styles.msgHead}>
-                <span className={styles.strong}>{m.author.name}</span>
-                <span className={styles.meta}>{m.time}</span>
-              </div>
-              <div className={styles.msgText}>{m.text}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <form
-        className={styles.chatForm}
-        onSubmit={(e) => {
-          e.preventDefault();
-          send();
-        }}
-      >
-        <input
-          type="text"
-          aria-label="Zpráva pro celou třídu"
-          placeholder="Zpráva pro celou třídu…"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          className={styles.composerInput}
-        />
-        <button type="submit" className="btn btn-primary">
-          Odeslat
-        </button>
-      </form>
-      <div className={styles.chatNote}>Ukázkový režim: zprávy se zatím neukládají (chat přijde v etapě 3).</div>
-    </section>
   );
 }

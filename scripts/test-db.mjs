@@ -38,6 +38,8 @@ await db.exec(`
   grant usage on schema storage to authenticated;
   grant select, insert, delete on storage.objects to authenticated;
   grant execute on function auth.uid() to anon, authenticated, service_role;
+  -- Supabase Realtime
+  create publication supabase_realtime;
 `);
 
 const dir = new URL("../supabase/migrations/", import.meta.url).pathname;
@@ -358,6 +360,107 @@ await test("místo je nepovinné a data aktivity musí dávat smysl", async () =
   await assert.rejects(() =>
     as(teacher, `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on) values ('spatne', 'ostatni', 'X', $1, '2026-11-10', '2026-11-09')`, [teacher]),
   );
+});
+
+// ---------------------------------------------------------------------------
+// Etapa 3: nástěnka, chat, zprávy, notifikace
+// ---------------------------------------------------------------------------
+
+await test("nástěnka: píše vyučující třídy, čte a komentuje jen třída", async () => {
+  const [post] = await as(teacher, `insert into public.posts (activity_id, body) values ($1, 'Zítra začínáme dřív.') returning id`, [course.id]);
+  await assert.rejects(() => as(student, `insert into public.posts (activity_id, body) values ($1, 'Ahoj')`, [course.id]));
+  await assert.rejects(() => as(teacher2, `insert into public.posts (activity_id, body) values ($1, 'Cizí')`, [course.id]));
+  assert.equal((await as(admin, `insert into public.posts (activity_id, body) values ($1, 'Od vedení') returning id`, [course.id])).length, 1);
+  assert.equal((await as(student, `select id from public.posts where activity_id = $1`, [course.id])).length, 2);
+  assert.equal((await as(outsider, `select id from public.posts`)).length, 0);
+  assert.equal((await as(teacher2, `select id from public.posts`)).length, 0);
+  await as(student, `insert into public.post_comments (post_id, body) values ($1, 'Díky!')`, [post.id]);
+  await assert.rejects(() => as(outsider, `insert into public.post_comments (post_id, body) values ($1, 'Já taky')`, [post.id]));
+  // Student nemůže smazat cizí komentář ani příspěvek, vyučující může.
+  const [c2] = await as(student2, `insert into public.post_comments (post_id, body) values ($1, 'Super') returning id`, [post.id]);
+  assert.equal((await as(student, `delete from public.post_comments where id = $1 returning id`, [c2.id])).length, 0);
+  assert.equal((await as(student, `delete from public.posts where id = $1 returning id`, [post.id])).length, 0);
+  assert.equal((await as(teacher, `delete from public.post_comments where id = $1 returning id`, [c2.id])).length, 1);
+});
+
+await test("nástěnka: notifikace studentům a autorovi příspěvku", async () => {
+  const before = (await as(student, `select id from public.notifications where kind = 'oznameni'`)).length;
+  const teacherBefore = (await as(teacher, `select id from public.notifications where kind = 'oznameni'`)).length;
+  const [post] = await as(teacher, `insert into public.posts (activity_id, body) values ($1, 'Nový rozpis') returning id`, [course.id]);
+  const mine = await as(student, `select title, href from public.notifications where kind = 'oznameni'`);
+  assert.equal(mine.length, before + 1);
+  assert.equal(mine.at(-1).href, "/kurzy/literatura-ve-filmu");
+  assert.equal((await as(teacher, `select id from public.notifications where kind = 'oznameni'`)).length, teacherBefore, "autor sám sobě ne");
+  await as(student, `insert into public.post_comments (post_id, body) values ($1, 'Ok')`, [post.id]);
+  assert.ok((await as(teacher, `select title from public.notifications where kind = 'komentar'`)).some((n) => n.title.includes("okomentoval")));
+  // Cizí notifikace nikdo nevidí a sám si je nikdo nezaloží.
+  assert.equal((await as(student2, `select id from public.notifications where user_id = $1`, [student])).length, 0);
+  await assert.rejects(() => as(student, `insert into public.notifications (user_id, kind, title) values ($1, 'x', 'x')`, [student2]));
+  await assert.rejects(() => as(student, `select public.notify(array[$1::uuid], 'x', 'x', null, null)`, [student2]));
+});
+
+await test("chat třídy: jen pro třídu, mazat smí autor a vyučující", async () => {
+  const [m] = await as(student, `insert into public.class_messages (activity_id, body) values ($1, 'Ahoj všichni') returning id`, [course.id]);
+  await assert.rejects(() => as(outsider, `insert into public.class_messages (activity_id, body) values ($1, 'Haló')`, [course.id]));
+  assert.equal((await as(student2, `select id from public.class_messages`)).length, 1);
+  assert.equal((await as(outsider, `select id from public.class_messages`)).length, 0);
+  assert.equal((await as(student2, `delete from public.class_messages where id = $1 returning id`, [m.id])).length, 0);
+  assert.equal((await as(teacher, `delete from public.class_messages where id = $1 returning id`, [m.id])).length, 1);
+});
+
+await test("zprávy: konverzace dvou lidí, třetí nic nevidí", async () => {
+  const [{ start_conversation: conv }] = await as(student, `select public.start_conversation($1)`, [teacher]);
+  const [{ start_conversation: again }] = await as(teacher, `select public.start_conversation($1)`, [student]);
+  assert.equal(conv, again, "stejná dvojice = stejná konverzace");
+  await assert.rejects(() => as(student, `select public.start_conversation($1)`, [student]));
+  await as(student, `insert into public.messages (conversation_id, body) values ($1, 'Dobrý den')`, [conv]);
+  await as(teacher, `insert into public.messages (conversation_id, body) values ($1, 'Dobrý den, Šimone')`, [conv]);
+  assert.equal((await as(student2, `select id from public.messages`)).length, 0);
+  await assert.rejects(() => as(student2, `insert into public.messages (conversation_id, body) values ($1, 'Vlezu')`, [conv]));
+  await assert.rejects(() => as(student, `insert into public.messages (conversation_id, body, file_path) values ($1, '', 'jina-slozka/x.pdf')`, [conv]));
+  // Nepřečtené: student má 1 (od učitele), učitel 0 (svou zprávu má přečtenou).
+  const [s] = await as(student, `select other_id, unread, last_body from public.my_conversations()`);
+  assert.equal(s.other_id, teacher);
+  assert.equal(s.unread, 1);
+  assert.equal(s.last_body, "Dobrý den, Šimone");
+  assert.equal((await as(teacher, `select unread from public.my_conversations()`))[0].unread, 0);
+  await as(student, `update public.conversation_members set last_read_at = now() + interval '1 second' where conversation_id = $1 and user_id = $2`, [conv, student]);
+  assert.equal((await as(student, `select unread from public.my_conversations()`))[0].unread, 0);
+  // Cizí řádek „přečteno“ změnit nejde.
+  assert.equal((await as(student, `update public.conversation_members set last_read_at = now() where user_id = $1 returning user_id`, [teacher])).length, 0);
+  // Přílohy: jen účastníci.
+  await as(student, `insert into storage.objects (bucket_id, name) values ('zpravy', $1)`, [`${conv}/1-a.pdf`]);
+  await assert.rejects(() => as(student2, `insert into storage.objects (bucket_id, name) values ('zpravy', $1)`, [`${conv}/1-b.pdf`]));
+  assert.equal((await as(student2, `select name from storage.objects where bucket_id = 'zpravy'`)).length, 0);
+  assert.equal((await as(teacher, `select name from storage.objects where bucket_id = 'zpravy'`)).length, 1);
+});
+
+await test("notifikace: nový úkol, odevzdání, hodnocení a komentář", async () => {
+  const [a] = await as(teacher, `insert into public.assignments (activity_id, title, created_by) values ($1, 'Esej o filmu', $2) returning id`, [course.id, teacher]);
+  const got = async (uid, kind) => (await as(uid, `select title, href from public.notifications where kind = $1 and href like $2`, [kind, `/ukoly/${a.id}%`]));
+  assert.equal((await got(student, "ukol")).length, 1);
+  assert.equal((await got(student2, "ukol")).length, 1);
+  await as(student, `insert into public.submissions (assignment_id, student_id, status) values ($1, $2, 'odevzdano')`, [a.id, student]);
+  assert.equal((await got(teacher, "odevzdani")).length, 1);
+  await as(teacher, `insert into public.reviews (assignment_id, student_id, result, request, reviewed_by) values ($1, $2, 'vraceno', 'Doplň závěr.', $3)`, [a.id, student, teacher]);
+  const r = await got(student, "hodnoceni");
+  assert.equal(r.length, 1);
+  assert.match(r[0].title, /vrácený/);
+  // Znovuodevzdání po vrácení učitele znovu upozorní.
+  await as(student, `update public.submissions set note = 'doplněno', status = 'odevzdano' where assignment_id = $1 and student_id = $2`, [a.id, student]);
+  assert.equal((await got(teacher, "odevzdani")).length, 2);
+  await as(student, `insert into public.assignment_comments (assignment_id, student_id, author_id, body) values ($1, $2, $2, 'Je to dobře?')`, [a.id, student]);
+  assert.equal((await got(teacher, "komentar")).length, 1);
+  // Označit přečtené smí jen svoje.
+  assert.equal((await as(student, `update public.notifications set read_at = now() returning id`)).length >= 1, true);
+  assert.equal((await as(student, `update public.notifications set title = 'x' returning id`).catch(() => "zamítnuto")), "zamítnuto");
+});
+
+await test("příspěvky: přílohy nahrává vyučující, čte třída", async () => {
+  await as(teacher, `insert into storage.objects (bucket_id, name) values ('prispevky', $1)`, [`${course.id}/1-rozpis.pdf`]);
+  await assert.rejects(() => as(student, `insert into storage.objects (bucket_id, name) values ('prispevky', $1)`, [`${course.id}/2-x.pdf`]));
+  assert.equal((await as(student, `select name from storage.objects where bucket_id = 'prispevky'`)).length, 1);
+  assert.equal((await as(outsider, `select name from storage.objects where bucket_id = 'prispevky'`)).length, 0);
 });
 
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

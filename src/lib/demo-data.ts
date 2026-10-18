@@ -62,37 +62,15 @@ export const DEMO_ACTIVITIES: Activity[] = [
   { id: "za-vlky-do-javorniku", kind: "ostatni", title: "Expedice: Za vlky do Javorníků", teacherId: "u-kumstat", location: "Javorníky, chata pod Kohútkou", period: null, startsOn: "2026-10-21", endsOn: "2026-10-23", meetUrl: null, allowedGrades: null, slots: [], studentIds: ["u-liska", "u-komarek", "u-cerny", "u-svobodova", "u-vesely", "u-kral", "u-benes", "u-maly"], capacity: 12, tone: "teal" },
 ];
 
-// Obsah tříd (nástěnka, témata, týmy, chat). Plný obsah má ateliér z návrhu,
-// ostatní třídy dostanou jednoduchou nástěnku.
+// Obsah tříd, který zatím žije jen v ukázkových datech (týmy). Nástěnka, chat
+// a zprávy jsou v demo-communication.ts.
 export const DEMO_CLASSROOMS: Record<string, ClassroomContent> = {
   "prezentacni-schopnosti": {
-    stream: [
-      {
-        type: "post",
-        id: "p1",
-        authorId: "u-hankova",
-        when: "dnes 8:12",
-        label: "oznámení",
-        text: "Dobré ráno! Dnes začínáme o 15 minut později, sejdeme se na Meetu v 9:15. Do příští hodiny si prosím projděte přiložený materiál ke struktuře prezentace.",
-        attachments: [
-          { kind: "pdf", title: "Struktura prezentace", meta: "PDF · 2,4 MB" },
-          { kind: "doc", title: "Šablona osnovy", meta: "Google Dokument · každý dostane kopii" },
-        ],
-        comments: 3,
-      },
-      { type: "task", id: "t1", title: "Tereza Hanková zadala nový týmový úkol: Příprava týmové prezentace", meta: "včera 16:40 · termín čt 22. 10." },
-      { type: "material", id: "m1", title: "Nový materiál: Záznam z minulé hodiny", meta: "po 12. 10. · nahrávka z Meetu, 1 h 54 min" },
-    ],
     topics: [],
     teams: [
       { name: "Tým A · Klima", memberIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny"] },
       { name: "Tým B · Technologie", memberIds: ["u-jaukner", "u-novotna", "u-kubicek", "u-maly"] },
       { name: "Tým C · Města", memberIds: ["u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-horakova", "u-vesely"] },
-    ],
-    chat: [
-      { id: "c1", authorId: "u-hankova", time: "8:14", text: "Kdo se dnes připojuje online, napište sem, ať vím, s kým počítat." },
-      { id: "c2", authorId: "u-komarek", time: "8:20", text: "Já budu na Meetu, jsem ještě ve vlaku." },
-      { id: "c3", authorId: "u-jaukner", time: "8:31", text: "Můžeme si v pátek půjčit projektor do 204?" },
     ],
     upcoming: [],
   },

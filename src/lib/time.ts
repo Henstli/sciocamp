@@ -183,3 +183,29 @@ export function formatStamp(iso: string, now = new Date()): string {
   if (sameDate(p, addDays(t, -1))) return `včera ${time}`;
   return `${p.d}. ${p.m}. ${time}`;
 }
+
+/** Čas v seznamu konverzací: „14:06“ dnes, „včera“, „po“ v posledním týdnu, jinak „12. 10.“ */
+export function formatListTime(iso: string, now = new Date()): string {
+  const p = pragueNow(new Date(iso));
+  const t = pragueNow(now);
+  if (sameDate(p, t)) return `${Math.floor(p.minutes / 60)}:${pad(p.minutes % 60)}`;
+  if (sameDate(p, addDays(t, -1))) return "včera";
+  const diff = Math.round((Date.UTC(t.y, t.m - 1, t.d) - Date.UTC(p.y, p.m - 1, p.d)) / 86400000);
+  if (diff > 0 && diff < 7) return DAYS_SHORT[isoWeekdayOf(p) - 1].toLowerCase();
+  return `${p.d}. ${p.m}.`;
+}
+
+/** Jen čas „14:06“ (pražský). */
+export function formatClock(iso: string): string {
+  const p = pragueNow(new Date(iso));
+  return `${Math.floor(p.minutes / 60)}:${pad(p.minutes % 60)}`;
+}
+
+/** Oddělovač dne v konverzaci: „Dnes“, „Včera“, „Po 12. 10.“ */
+export function formatDayLabel(iso: string, now = new Date()): string {
+  const p = pragueNow(new Date(iso));
+  const t = pragueNow(now);
+  if (sameDate(p, t)) return "Dnes";
+  if (sameDate(p, addDays(t, -1))) return "Včera";
+  return `${DAYS_SHORT[isoWeekdayOf(p) - 1]} ${p.d}. ${p.m}.${p.y !== t.y ? ` ${p.y}` : ""}`;
+}

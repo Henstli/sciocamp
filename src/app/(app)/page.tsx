@@ -6,6 +6,7 @@ import { PageHeader, Avatar } from "@/components/PageHeader";
 import { ScheduleWeek } from "@/components/ScheduleWeek";
 import { requireUser } from "@/lib/auth";
 import { homeTasks } from "@/lib/data-assignments";
+import { unreadMessages } from "@/lib/data-communication";
 import { plural } from "@/lib/format";
 import { activitiesForUser, getHomeSummary, getUserById, getUsersByIds } from "@/lib/data";
 import { activityHref } from "@/lib/links";
@@ -41,7 +42,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const upcomingTeacher = upcoming ? await getUserById(upcoming.activity.teacherId) : null;
   const home = await getHomeSummary();
   const tasks = await homeTasks(user);
-  const senders = home ? await getUsersByIds(home.messages.from) : [];
+  const messages = await unreadMessages(user);
+  const senders = await getUsersByIds(messages.from.slice(0, 3));
   const teaching = canTeach(user.role);
 
   return (
@@ -55,9 +57,6 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           <Icon name="search" size={18} />
           <input type="search" aria-label="Hledat" placeholder="Hledat kurzy, úkoly, lidi…" />
         </label>
-        <button type="button" aria-label="Oznámení" className={styles.bell}>
-          <Icon name="bell" />
-        </button>
       </PageHeader>
 
       {upcoming && (
@@ -122,8 +121,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           </StatCard>
         )}
 
-        {home && (
-          <StatCard href="/zpravy" icon="chat" title="Zprávy" value={home.messages.unread} unit="nepřečtené zprávy">
+        {(
+          <StatCard href="/zpravy" icon="chat" title="Zprávy" value={messages.unread} unit={plural(messages.unread, "nepřečtená zpráva", "nepřečtené zprávy", "nepřečtených zpráv")}>
             <div className={styles.people}>
               <div className={styles.faces}>
                 {senders.map((s) => (
@@ -132,7 +131,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
                   </span>
                 ))}
               </div>
-              <div className={styles.statFoot}>{senders.map((s) => s.name).join(", ")}</div>
+              <div className={styles.statFoot}>{senders.length ? senders.map((s) => s.name).join(", ") : "Všechno máš přečtené."}</div>
             </div>
           </StatCard>
         )}

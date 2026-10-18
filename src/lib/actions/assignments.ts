@@ -2,7 +2,7 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { linkTitle, normalizeLink } from "../assignments";
+import { linkTitle, normalizeLink, parseLinks } from "../assignments";
 import { requireTeacher, requireUser } from "../auth";
 import { isSupabase } from "../config";
 import { getActivity, teachesActivity } from "../data";
@@ -19,18 +19,6 @@ export type FormState = {
   fieldErrors?: Record<string, string>;
   /** Nově založený úkol, ke kterému prohlížeč ještě nahraje soubory. */
   createdId?: string;
-}
-
-/** Odkazy z formuláře: jeden na řádek, volitelně „Název | https://…“. */
-function parseLinks(raw: string): { links: LinkItem[]; bad: string | null } {
-  const links: LinkItem[] = [];
-  for (const line of raw.split("\n").map((l) => l.trim()).filter(Boolean)) {
-    const [maybeTitle, maybeUrl] = line.includes("|") ? line.split("|").map((x) => x.trim()) : [null, line];
-    const url = normalizeLink(maybeUrl ?? "");
-    if (!url) return { links, bad: line };
-    links.push({ title: maybeTitle || linkTitle(url), url });
-  }
-  return { links: links.slice(0, 20), bad: null };
 }
 
 // ---------------------------------------------------------------------------
