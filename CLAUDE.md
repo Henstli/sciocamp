@@ -56,4 +56,5 @@
 - Autor nasadil aplikaci na Vercel: https://sciocamp.vercel.app (push do `main` = nasazení).
 - Kurzová období (tabulka `blocks`, admin je spravuje ve Správě → „Kurzová období“): 4 za rok, 2 za pololetí. Kurz trvá celé období; ateliér má vlastní od–do uvnitř období (student je v jednu dobu jen v jednom ateliéru — hlídá trigger `guard_one_atelier` i UI); ostatní (expedice) má od–do a volitelně rozvrh. Pomocné funkce v `src/lib/periods.ts`. Proběhlé aktivity jsou na stránkách Kurzy/Ateliéry ve sbaleném seznamu „Proběhlé“.
 - Učebny nejsou (výuka je online), místo `activities.location` je nepovinné.
-- Datum a čas ve formulářích jen přes `src/components/fields/DateTime.tsx` (dd. mm. rrrr, 24h) — nativní `<input type="date|time">` se řídí jazykem prohlížeče.
+- Datum a čas ve formulářích jen přes `src/components/fields/DateTime.tsx` (dd. mm. rrrr, 24h, kalendář a nabídka časů, volné psaní „1 11“, „1230“) — nativní `<input type="date|time">` se řídí jazykem prohlížeče.
+- Vyučující přikládá k úkolům a materiálům soubory (Storage bucket `materialy`, cesta `<id úkolu>/<čas>-<název>`, nahrávání přes `src/lib/upload.ts`). Počet „odevzdalo X z Y“ nezapočítává vrácené práce (`isHandedIn`).

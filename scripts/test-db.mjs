@@ -313,6 +313,18 @@ await test("soubory: student nahrává jen do své složky, vyučující čte", 
   await assert.rejects(() => as(student, `insert into storage.objects (bucket_id, name) values ('odevzdani', $1)`, [`${task.id}/${student}/pozde.pdf`]));
 });
 
+await test("soubory k úkolu: nahrává vyučující, čtou zapsaní studenti", async () => {
+  const file = `${task.id}/1760000000000-podklady.pdf`;
+  await assert.rejects(() => as(student, `insert into storage.objects (bucket_id, name) values ('materialy', $1)`, [`${task.id}/podvrh.pdf`]));
+  await assert.rejects(() => as(teacher2, `insert into storage.objects (bucket_id, name) values ('materialy', $1)`, [`${task.id}/cizi.pdf`]));
+  await as(teacher, `insert into storage.objects (bucket_id, name) values ('materialy', $1)`, [file]);
+  assert.equal((await as(student, `select name from storage.objects where bucket_id = 'materialy'`)).length, 1);
+  assert.equal((await as(outsider, `select name from storage.objects where bucket_id = 'materialy'`)).length, 0);
+  assert.equal((await as(teacher2, `select name from storage.objects where bucket_id = 'materialy'`)).length, 0);
+  assert.equal((await as(student, `delete from storage.objects where bucket_id = 'materialy' returning name`)).length, 0);
+  assert.equal((await as(teacher, `delete from storage.objects where bucket_id = 'materialy' returning name`)).length, 1);
+});
+
 await test("student je v jednu dobu jen v jednom ateliéru, kurzů může mít víc", async () => {
   const { rows: [blok] } = await db.query(`insert into public.blocks (name, starts_on, ends_on) values ('Kurzové období 2', '2026-11-02', '2026-12-18') returning id`);
   const mk = async (slug, kind, s, e) =>

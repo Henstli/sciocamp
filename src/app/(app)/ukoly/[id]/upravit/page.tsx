@@ -7,7 +7,8 @@ import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { requireTeacher } from "@/lib/auth";
 import { getActivity, teachesActivity } from "@/lib/data";
-import { assignmentsForActivity, getAssignment } from "@/lib/data-assignments";
+import { assignmentFiles, assignmentsForActivity, getAssignment } from "@/lib/data-assignments";
+import { isSupabase } from "@/lib/config";
 import { isoToPragueLocal } from "@/lib/time";
 import styles from "../../ukol.module.css";
 
@@ -29,6 +30,8 @@ export default async function EditAssignmentPage({ params }: PageProps<"/ukoly/[
       </Link>
       <PageHeader title={a.kind === "ukol" ? "Upravit úkol" : "Upravit materiál"} subtitle={activity.title} />
       <AssignmentForm
+        live={isSupabase}
+        files={await assignmentFiles(a.id)}
         classes={[{ id: activity.id, title: activity.title }]}
         topics={{ [activity.id]: topics }}
         initial={{

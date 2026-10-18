@@ -11,7 +11,7 @@ import { initials } from "@/lib/roles";
 import { currentOrNext } from "@/lib/schedule";
 import { describeWhen } from "@/lib/periods";
 import { DAYS_SHORT, formatRange, isoWeekdayOf, pragueNow } from "@/lib/time";
-import { STATE_CHIP, STATE_LABEL, isOpen, needsReview, workState } from "@/lib/assignments";
+import { STATE_CHIP, STATE_LABEL, isHandedIn, isOpen, needsReview, workState } from "@/lib/assignments";
 import { assignmentsForActivity, workMap } from "@/lib/data-assignments";
 import { formatDue, formatStamp } from "@/lib/time";
 import type { Activity, ActivityKind, User } from "@/lib/types";
@@ -152,7 +152,7 @@ async function classWork(activity: Activity, user: User, isTeacher: boolean, tea
     if (isTeacher) {
       const states = activity.studentIds.map((sid) => workState(a, works.get(`${a.id}:${sid}`) ?? null));
       const toReview = states.filter(needsReview).length;
-      const done = states.filter((st) => !isOpen(st)).length;
+      const done = states.filter(isHandedIn).length;
       return {
         ...base,
         chip: toReview > 0 ? `${toReview} k opravení` : `odevzdalo ${done} z ${states.length}`,

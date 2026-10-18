@@ -1,11 +1,17 @@
 "use client";
 
-import { keepForm } from "@/lib/use-keep-form";
-import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState, useTransition, type FormEvent } from "react";
 import { DueInput } from "@/components/fields/DateTime";
-import { saveAssignment, type FormState } from "@/lib/actions/assignments";
-import type { AssignmentKind } from "@/lib/types";
+import { filesChanged, saveAssignment, type FormState } from "@/lib/actions/assignments";
+import type { AssignmentKind, SubmissionFile } from "@/lib/types";
+import { removeFile, uploadFiles } from "@/lib/upload";
+import { Icon } from "../Icon";
+import { WorkFiles } from "./WorkFiles";
 import styles from "../manage/manage.module.css";
+import own from "./assignment.module.css";
+
+const BUCKET = "materialy";
 
 export type AssignmentFormValues = {
   id?: string;
@@ -30,21 +36,71 @@ export function AssignmentForm({
   initial,
   classes,
   topics,
+  files = [],
+  live,
 }: {
   initial: AssignmentFormValues;
+  /** Soubory, které už u úkolu jsou (při úpravě). */
+  files?: SubmissionFile[];
+  /** false = ukázkový režim, soubory se nenahrávají */
+  live: boolean;
   /** Třídy, do kterých smí uživatel zadávat (při úpravě se třída nemění). */
   classes: { id: string; title: string }[];
   /** Existující témata podle třídy — nabídnou se v poli Téma. */
   topics: Record<string, string[]>;
 }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(saveAssignment, {});
+  const router = useRouter();
+  const [state, setState] = useState<FormState>({});
+  const [pending, start] = useTransition();
+  // Soubory: u nového úkolu čekají ve frontě a nahrají se po založení,
+  // u existujícího se nahrávají hned.
+  const [queued, setQueued] = useState<File[]>([]);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [fileMessage, setFileMessage] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [kind, setKind] = useState<AssignmentKind>(initial.kind);
   const [activity, setActivity] = useState(initial.activity || classes[0]?.id || "");
   const fe = state.fieldErrors ?? {};
   const editing = !!initial.id;
 
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
+    if (!editing && queued.length > 0 && live) data.set("withFiles", "1");
+    start(async () => {
+      const res = (await saveAssignment({}, data)) ?? {};
+      if (res.createdId) {
+        const problem = await uploadFiles(BUCKET, res.createdId, queued, setUploading);
+        router.push(`/ukoly/${res.createdId}?nove=1${problem ? "&soubory=chyba" : ""}`);
+        return;
+      }
+      setState(res);
+    });
+  }
+
+  async function pickFiles(list: FileList | null) {
+    const picked = Array.from(list ?? []);
+    if (fileInput.current) fileInput.current.value = "";
+    if (picked.length === 0) return;
+    setFileMessage(null);
+    if (!live) return setFileMessage("Ukázkový režim: soubory se nenahrávají.");
+    if (!editing) {
+      setQueued((q) => [...q, ...picked]);
+      return;
+    }
+    const problem = await uploadFiles(BUCKET, initial.id!, picked, setUploading);
+    if (problem) setFileMessage(problem);
+    start(() => filesChanged());
+  }
+
+  async function dropFile(path: string) {
+    setFileMessage(null);
+    if (!(await removeFile(BUCKET, path))) return setFileMessage("Soubor se nepodařilo odebrat.");
+    start(() => filesChanged());
+  }
+
   return (
-    <form onSubmit={keepForm(action)} className={`card ${styles.form}`} noValidate>
+    <form onSubmit={onSubmit} className={`card ${styles.form}`} noValidate>
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
 
       <fieldset className={styles.fieldset}>
@@ -114,7 +170,7 @@ export function AssignmentForm({
 
         {kind === "ukol" && (
           <>
-            <Field label="Termín (nepovinné)" error={fe.due} hint="Datum jako 21. 10. 2026, čas ve 24h formátu.">
+            <Field label="Termín (nepovinné)" error={fe.due} hint="Vyber v kalendáři, nebo napiš třeba 21 10 a čas 1200.">
               <DueInput name="due" defaultValue={initial.due} />
             </Field>
             <Field label="Maximum bodů (nepovinné)" error={fe.maxPoints} hint="Bez bodů hodnotíš jen splněno / nesplněno a slovně.">
@@ -131,6 +187,49 @@ export function AssignmentForm({
         >
           <textarea name="links" defaultValue={initial.links} rows={3} className={styles.textarea} placeholder="https://docs.google.com/…" />
         </Field>
+
+        <div className={styles.field} data-wide>
+          <span className={styles.label}>Soubory (nepovinné)</span>
+          <WorkFiles files={files} links={[]} onRemoveFile={(p) => void dropFile(p)} />
+          {queued.length > 0 && (
+            <ul className={own.items}>
+              {queued.map((f, i) => (
+                <li key={`${f.name}-${i}`} className={own.item}>
+                  <span className={own.badge} data-kind="file">
+                    <Icon name="file" size={16} />
+                  </span>
+                  <span className={own.itemText}>
+                    <span className={own.itemName}>{f.name}</span>
+                    <span className={own.itemMeta}>Nahraje se po uložení</span>
+                  </span>
+                  <button
+                    type="button"
+                    className={own.remove}
+                    aria-label={`Odebrat ${f.name}`}
+                    onClick={() => setQueued((q) => q.filter((_, j) => j !== i))}
+                  >
+                    <Icon name="trash" size={16} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            id="soubory-ukolu"
+            className="sr-only"
+            onChange={(e) => void pickFiles(e.target.files)}
+          />
+          <label htmlFor="soubory-ukolu" className={`btn btn-outline ${own.fileButton}`} aria-disabled={!!uploading}>
+            <Icon name="upload" size={18} />
+            {uploading ? `Nahrávám ${uploading}…` : "Přiložit soubor"}
+          </label>
+          <span className={fileMessage ? styles.fieldError : styles.hint} role={fileMessage ? "alert" : undefined}>
+            {fileMessage ?? "Pracovní list, prezentace, PDF… do 25 MB. Větší věci dej na Google Disk a přidej odkaz."}
+          </span>
+        </div>
       </div>
 
       {state.error && (
@@ -145,8 +244,8 @@ export function AssignmentForm({
       )}
 
       <div className={styles.actions}>
-        <button type="submit" className="btn btn-primary" disabled={pending || classes.length === 0}>
-          {pending ? "Ukládám…" : editing ? "Uložit změny" : kind === "ukol" ? "Zadat úkol" : "Přidat materiál"}
+        <button type="submit" className="btn btn-primary" disabled={pending || !!uploading || classes.length === 0}>
+          {uploading ? "Nahrávám soubory…" : pending ? "Ukládám…" : editing ? "Uložit změny" : kind === "ukol" ? "Zadat úkol" : "Přidat materiál"}
         </button>
       </div>
     </form>

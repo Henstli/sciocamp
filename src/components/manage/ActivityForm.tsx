@@ -140,7 +140,7 @@ export function ActivityForm({
               periods.length === 0
                 ? "Admin zatím nezaložil kurzová období (Správa → Kurzová období)."
                 : kind === "kurz"
-                  ? "Kurz trvá celé období. V dalším období se zapisuje znovu."
+                  ? "Kurz trvá celé období a na jeho konci se uzavře. V dalším období se zakládají nové kurzy."
                   : undefined
             }
           >
@@ -244,7 +244,7 @@ export function ActivityForm({
         <span className={styles.hint}>
           {kind === "ostatni"
             ? "Nepovinné. Vícedenní akce bez rozvrhu se v rozvrhu ukáže jako celodenní."
-            : "Hodiny se opakují každý týden po dobu trvání. Čas piš ve 24h formátu, např. 9:00–11:30."}
+            : "Hodiny se opakují každý týden po dobu trvání. Čas vyber z nabídky, nebo ho napiš (např. 930 nebo 9:30)."}
         </span>
       </fieldset>
 

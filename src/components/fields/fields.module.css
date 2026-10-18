@@ -39,3 +39,162 @@
 .due > .wrap:first-child {
   flex: 1;
 }
+
+/* Pole s tlačítkem (kalendář) */
+.wrap {
+  position: relative;
+}
+.control {
+  position: relative;
+  display: flex;
+}
+.withButton {
+  padding-right: 48px;
+}
+.fieldButton {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 40px;
+  height: calc(var(--tap) - 4px);
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.fieldButton:hover,
+.fieldButton[aria-expanded="true"] {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
+/* Vyskakovací okno */
+.popover {
+  position: absolute;
+  top: calc(var(--tap) + 6px);
+  left: 0;
+  z-index: 40;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(17, 26, 51, 0.14);
+}
+
+/* Kalendář */
+.popover[role="dialog"] {
+  width: 296px;
+  padding: 12px;
+}
+.calHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.calTitle {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+.calNav {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.calNav:hover {
+  background: var(--primary-soft);
+}
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.calDow {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+.calDay {
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  cursor: pointer;
+}
+.calDay[data-weekend] {
+  color: var(--text-muted);
+}
+.calDay:hover {
+  background: var(--primary-soft);
+}
+.calDay[data-today] {
+  box-shadow: inset 0 0 0 1.5px var(--primary);
+}
+.calDay[data-selected] {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+.calFoot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+.calLink {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-text);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.calLink:hover {
+  background: var(--primary-soft);
+}
+
+/* Nabídka časů */
+.timeWrap {
+  flex: none;
+}
+.timeList {
+  width: 100%;
+  min-width: 88px;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+}
+.timeOption {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.timeOption:hover,
+.timeOption[data-active] {
+  background: var(--primary-soft);
+}
+.timeOption[aria-selected="true"] {
+  font-weight: 700;
+  color: var(--primary-text);
+}

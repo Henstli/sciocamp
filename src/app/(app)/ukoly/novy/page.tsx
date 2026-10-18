@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { isSupabase } from "@/lib/config";
 import Link from "next/link";
 import { AssignmentForm } from "@/components/assignments/AssignmentForm";
 import { Icon } from "@/components/Icon";
@@ -35,6 +36,7 @@ export default async function NewAssignmentPage({ searchParams }: PageProps<"/uk
         </EmptyNote>
       ) : (
         <AssignmentForm
+          live={isSupabase}
           classes={classes.map((c) => ({ id: c.id, title: c.title }))}
           topics={topics}
           initial={{

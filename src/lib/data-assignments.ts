@@ -5,12 +5,13 @@ import "server-only";
 import { isSupabase } from "./config";
 import { getActivity, listActivities } from "./data";
 import { DEMO_ASSIGNMENTS, DEMO_COMMENTS, DEMO_WORK } from "./demo-assignments";
-import { needsReview, workState } from "./assignments";
+import { isHandedIn, needsReview, workState } from "./assignments";
 import { canTeach } from "./roles";
 import { createClient } from "./supabase/server";
 import type { Activity, Assignment, Comment, LinkItem, Review, Submission, SubmissionFile, User, Work, WorkState } from "./types";
 
 export const SUBMISSION_BUCKET = "odevzdani";
+export const MATERIAL_BUCKET = "materialy";
 
 type AssignmentRow = {
   id: string;
@@ -204,13 +205,23 @@ export async function getWork(assignmentId: string, studentId: string): Promise<
 }
 
 async function listFiles(assignmentId: string, studentId: string): Promise<SubmissionFile[]> {
+  return signedList(SUBMISSION_BUCKET, `${assignmentId}/${studentId}`);
+}
+
+/** Soubory, které k úkolu nebo materiálu přiložil vyučující. */
+export async function assignmentFiles(assignmentId: string): Promise<SubmissionFile[]> {
+  if (!isSupabase) return [];
+  return signedList(MATERIAL_BUCKET, assignmentId);
+}
+
+async function signedList(bucket: string, prefix: string): Promise<SubmissionFile[]> {
   const sb = await createClient();
-  const prefix = `${assignmentId}/${studentId}`;
-  const { data, error } = await sb.storage.from(SUBMISSION_BUCKET).list(prefix, { sortBy: { column: "created_at", order: "asc" } });
+  const { data, error } = await sb.storage.from(bucket).list(prefix, { sortBy: { column: "created_at", order: "asc" } });
   if (error || !data?.length) return [];
   const files = data.filter((f) => f.id);
+  if (files.length === 0) return [];
   const paths = files.map((f) => `${prefix}/${f.name}`);
-  const { data: signed } = await sb.storage.from(SUBMISSION_BUCKET).createSignedUrls(paths, 60 * 60);
+  const { data: signed } = await sb.storage.from(bucket).createSignedUrls(paths, 60 * 60);
   return files.map((f, i) => ({
     path: paths[i],
     // Uložené jako „<čas>-<název>“ — čas na začátku jen zajišťuje jedinečnost.
@@ -294,7 +305,7 @@ export async function tasksForTeacher(user: User): Promise<TeacherTask[]> {
       for (const sid of studentIds) {
         const work = works.get(`${a.id}:${sid}`) ?? null;
         const state = workState(a, work, now);
-        if (work?.submission?.status === "odevzdano" || work?.review) submitted++;
+        if (isHandedIn(state)) submitted++;
         if (needsReview(state)) toReview++;
       }
     }

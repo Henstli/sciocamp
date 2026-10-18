@@ -13,7 +13,13 @@ import type { LinkItem, ReviewResult } from "../types";
 
 const DEMO = "Ukázkový režim: změny se neukládají.";
 
-export type FormState = { error?: string; info?: string; fieldErrors?: Record<string, string> };
+export type FormState = {
+  error?: string;
+  info?: string;
+  fieldErrors?: Record<string, string>;
+  /** Nově založený úkol, ke kterému prohlížeč ještě nahraje soubory. */
+  createdId?: string;
+}
 
 /** Odkazy z formuláře: jeden na řádek, volitelně „Název | https://…“. */
 function parseLinks(raw: string): { links: LinkItem[]; bad: string | null } {
@@ -79,6 +85,7 @@ export async function saveAssignment(_prev: FormState, formData: FormData): Prom
   if (!row) return { error: "Třída nenalezena." };
   const { data, error } = await sb.from("assignments").insert({ ...values, activity_id: row.id }).select("id").single();
   if (error || !data) return { error: `Úkol se nepodařilo zadat: ${error?.message ?? ""}` };
+  if (formData.get("withFiles") === "1") return { createdId: data.id };
   redirect(`/ukoly/${data.id}?nove=1`);
 }
 
@@ -89,6 +96,9 @@ export async function deleteAssignment(id: string): Promise<{ error?: string }> 
   if (!a || !activity || !teachesActivity(user, activity)) return { error: "Tenhle úkol smazat nemůžeš." };
   if (!isSupabase) return { error: DEMO };
   const sb = await createClient();
+  // Soubory vyučujícího smazat dřív než úkol (oprávnění k nim se odvozuje od úkolu).
+  const { data: files } = await sb.storage.from("materialy").list(id);
+  if (files?.length) await sb.storage.from("materialy").remove(files.map((f) => `${id}/${f.name}`));
   const { error } = await sb.from("assignments").delete().eq("id", id);
   if (error) return { error: "Úkol se nepodařilo smazat." };
   // Soubory odevzdaných prací smaže vyučující nemůže (Storage je studentův); zůstanou do úklidu adminem.

@@ -4,23 +4,12 @@ import { useRef, useState, useTransition } from "react";
 import { Icon } from "../Icon";
 import { STATE_CHIP, STATE_LABEL } from "@/lib/assignments";
 import { addSubmissionLink, filesChanged, removeSubmissionLink, setSubmitted } from "@/lib/actions/assignments";
-import { createClient } from "@/lib/supabase/client";
+import { removeFile, uploadFiles } from "@/lib/upload";
 import type { Review, Submission, WorkState } from "@/lib/types";
 import { ReviewSummary, WorkFiles } from "./WorkFiles";
 import styles from "./assignment.module.css";
 
 const BUCKET = "odevzdani";
-const MAX_BYTES = 25 * 1024 * 1024;
-
-/** Název souboru bezpečný pro úložiště (bez diakritiky a zvláštních znaků). */
-function safeName(name: string): string {
-  const cleaned = name
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^A-Za-z0-9._-]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-  return (cleaned || "soubor").slice(-100);
-}
 
 /** Panel „Tvoje práce“: soubory, odkazy, poznámka, odevzdání a výsledek hodnocení. */
 export function StudentWork({
@@ -67,30 +56,16 @@ export function StudentWork({
       setMessage({ info: "Ukázkový režim: soubory se nenahrávají." });
       return;
     }
-    const sb = createClient();
     setMessage({});
-    for (const file of Array.from(list)) {
-      if (file.size > MAX_BYTES) {
-        setMessage({ error: `Soubor „${file.name}“ je větší než 25 MB. Nahraj ho na Google Disk a přidej odkaz.` });
-        continue;
-      }
-      setUploading(file.name);
-      const path = `${assignmentId}/${userId}/${Date.now()}-${safeName(file.name)}`;
-      const { error } = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type || undefined, upsert: false });
-      if (error) {
-        setMessage({ error: `Soubor „${file.name}“ se nepodařilo nahrát. Zkus to znovu.` });
-        break;
-      }
-    }
-    setUploading(null);
+    const problem = await uploadFiles(BUCKET, `${assignmentId}/${userId}`, Array.from(list), setUploading);
+    if (problem) setMessage({ error: problem });
     if (fileInput.current) fileInput.current.value = "";
     start(() => filesChanged());
   }
 
-  async function removeFile(path: string) {
+  async function removeOne(path: string) {
     if (!live) return setMessage({ info: "Ukázkový režim: změny se neukládají." });
-    const { error } = await createClient().storage.from(BUCKET).remove([path]);
-    if (error) return setMessage({ error: "Soubor se nepodařilo odebrat." });
+    if (!(await removeFile(BUCKET, path))) return setMessage({ error: "Soubor se nepodařilo odebrat." });
     start(() => filesChanged());
   }
 
@@ -108,7 +83,7 @@ export function StudentWork({
       <WorkFiles
         files={files}
         links={links}
-        onRemoveFile={editable ? (p) => void removeFile(p) : undefined}
+        onRemoveFile={editable ? (p) => void removeOne(p) : undefined}
         onRemoveLink={editable ? (i) => run(() => removeSubmissionLink(assignmentId, i)) : undefined}
         emptyText={editable ? null : "Nic nepřiloženo."}
       />

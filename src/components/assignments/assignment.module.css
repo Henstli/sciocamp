@@ -325,3 +325,7 @@ a.itemName:hover {
   font-size: 13px;
   font-weight: 800;
 }
+
+.fileButton {
+  align-self: flex-start;
+}

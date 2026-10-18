@@ -43,6 +43,11 @@ export function isOpen(state: WorkState): boolean {
   return state === "ceka" || state === "pozde" || state === "vraceno";
 }
 
+/** Má student práci odevzdanou? Vrácená práce se nepočítá, dokud ji znovu neodevzdá. */
+export function isHandedIn(state: WorkState): boolean {
+  return state === "odevzdano" || state === "splneno" || state === "nesplneno";
+}
+
 /** Čeká práce na vyučujícího? (odevzdaná a neohodnocená, nebo znovu odevzdaná po vrácení) */
 export function needsReview(state: WorkState): boolean {
   return state === "odevzdano";

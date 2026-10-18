@@ -7,11 +7,11 @@ import { StudentWork } from "@/components/assignments/StudentWork";
 import { ReviewSummary, WorkFiles } from "@/components/assignments/WorkFiles";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/PageHeader";
-import { STATE_CHIP, STATE_LABEL, linkTitle, workState } from "@/lib/assignments";
+import { STATE_CHIP, STATE_LABEL, isHandedIn, linkTitle, workState } from "@/lib/assignments";
 import { requireUser } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
 import { canOpenActivity, getActivity, getUsersByIds, teachesActivity } from "@/lib/data";
-import { commentCounts, getAssignment, getComments, getWork, workMap } from "@/lib/data-assignments";
+import { assignmentFiles, commentCounts, getAssignment, getComments, getWork, workMap } from "@/lib/data-assignments";
 import { plural } from "@/lib/format";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { canTeach, initials } from "@/lib/roles";
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: PageProps<"/ukoly/[id]">): Pr
 export default async function AssignmentPage({ params, searchParams }: PageProps<"/ukoly/[id]">) {
   const user = await requireUser();
   const { id } = await params;
-  const { student, nove, ulozeno } = await searchParams;
+  const { student, nove, ulozeno, soubory } = await searchParams;
   const a = await getAssignment(id);
   const activity = a ? await getActivity(a.activityId) : null;
   if (!a || !activity || !canOpenActivity(user, activity)) notFound();
@@ -35,6 +35,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
   const teaching = teachesActivity(user, activity);
   const [teacher] = await getUsersByIds([activity.teacherId]);
   const isTask = a.kind === "ukol";
+  const files = await assignmentFiles(a.id);
 
   const people = new Map<string, User>();
   const remember = (list: User[]) => list.forEach((u) => people.set(u.id, u));
@@ -75,8 +76,19 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
         </div>
       </div>
       {a.instructions && <div className={styles.instructions}>{a.instructions}</div>}
-      {a.links.length > 0 && (
+      {(a.links.length > 0 || files.length > 0) && (
         <div className={styles.attachments}>
+          {files.map((f) => (
+            <a key={f.path} href={f.url} target="_blank" rel="noopener noreferrer" className={styles.attachment}>
+              <span className={styles.attachmentIcon}>
+                <Icon name="file" size={18} />
+              </span>
+              <span className={styles.attachmentText}>
+                <span className={styles.attachmentName}>{f.name}</span>
+                <span className={styles.attachmentMeta}>Soubor{f.size ? ` · ${fileSize(f.size)}` : ""}</span>
+              </span>
+            </a>
+          ))}
           {a.links.map((l, i) => (
             <a key={`${l.url}-${i}`} href={l.url} target="_blank" rel="noopener noreferrer" className={styles.attachment}>
               <span className={styles.attachmentIcon}>
@@ -109,7 +121,11 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
   );
 
   const notice =
-    nove || ulozeno ? (
+    soubory === "chyba" ? (
+      <p role="alert" className={styles.success} data-tone="error">
+        Úkol je uložený, ale některý soubor se nepodařilo nahrát. Zkus ho přidat přes Upravit.
+      </p>
+    ) : nove || ulozeno ? (
       <p role="status" className={styles.success}>
         {nove ? (isTask ? "Úkol je zadaný. Studenti ho uvidí ve třídě i v Úkolech." : "Materiál je přidaný do třídy.") : "Změny jsou uložené."}
       </p>
@@ -139,7 +155,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
     const order = { odevzdano: 0, vraceno: 1, pozde: 2, ceka: 3, splneno: 4, nesplneno: 5, material: 6 } as const;
     rows.sort((x, y) => order[x.state] - order[y.state] || x.s.name.localeCompare(y.s.name, "cs"));
     const toReview = rows.filter((r) => r.state === "odevzdano").length;
-    const submitted = rows.filter((r) => r.work?.submission?.status === "odevzdano" || r.work?.review).length;
+    const submitted = rows.filter((r) => isHandedIn(r.state)).length;
 
     const selectedId = typeof student === "string" && activity.studentIds.includes(student) ? student : null;
     const selected = selectedId ? people.get(selectedId)! : null;
@@ -280,4 +296,9 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       </div>
     </>
   );
+}
+
+function fileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} kB`;
+  return `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
 }

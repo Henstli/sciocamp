@@ -242,3 +242,7 @@
     padding-right: 16px;
   }
 }
+.success[data-tone="error"] {
+  color: var(--late);
+  background: var(--late-bg);
+}
