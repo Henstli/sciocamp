@@ -44,6 +44,7 @@ type ActivityRow = {
   slug: string;
   kind: ActivityKind;
   title: string;
+  description: string | null;
   teacher_id: string;
   room: string;
   meet_url: string | null;
@@ -58,13 +59,14 @@ type ActivityRow = {
 };
 
 const ACTIVITY_COLUMNS =
-  "id, slug, kind, title, teacher_id, room, meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id)";
+  "id, slug, kind, title, description, teacher_id, room, meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id)";
 
 function toActivity(r: ActivityRow): Activity {
   return {
     id: r.slug,
     kind: r.kind,
     title: r.title,
+    description: r.description ?? undefined,
     teacherId: r.teacher_id,
     room: r.room,
     meetUrl: r.meet_url,
@@ -129,6 +131,18 @@ export async function getUsersByIds(ids: string[]): Promise<User[]> {
   if (error) fail("uživatele", error);
   const users = (data as ProfileRow[]).map(toUser);
   return ids.map((id) => users.find((u) => u.id === id)).filter((u): u is User => !!u);
+}
+
+/** Vyučující a admini (kdo může učit kurz). */
+export async function listStaff(): Promise<User[]> {
+  return (await listUsers()).filter((u) => canTeach(u.role));
+}
+
+/** Všichni studenti, seřazení podle ročníku a jména. */
+export async function listStudents(): Promise<User[]> {
+  return (await listUsers())
+    .filter((u) => u.role === "student")
+    .sort((a, b) => (a.grade ?? 9) - (b.grade ?? 9) || a.name.localeCompare(b.name, "cs"));
 }
 
 /** Ukázkové účty pro přihlášení v demo režimu (jeden za každou roli). */

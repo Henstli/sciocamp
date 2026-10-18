@@ -41,6 +41,7 @@ export type Activity = {
   id: string;
   kind: ActivityKind;
   title: string;
+  description?: string;
   teacherId: string;
   room: string;
   /** Odkaz na Google Meet; vkládá ho vyučující nebo admin. Null = zatím není. */

@@ -11,8 +11,9 @@ import styles from "./admin.module.css";
 
 export const metadata: Metadata = { title: "Uživatelé a škola" };
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   await requireAdmin();
+  const { tab } = await searchParams;
   const users = await listUsers();
   const activities = await listActivities();
   const nameOf = (id: string) => users.find((u) => u.id === id)?.name ?? "";
@@ -34,6 +35,7 @@ export default async function AdminPage() {
 
       <AdminTabs
         live={isSupabase}
+        initialTab={tab === "kurzy" ? "courses" : "users"}
         users={users.map((u) => ({
           id: u.id,
           name: u.name,
@@ -51,7 +53,7 @@ export default async function AdminPage() {
           lector: nameOf(a.teacherId),
           when: formatSlots(a.slots),
           taken: a.studentIds.length,
-          cap: a.capacity ?? a.studentIds.length,
+          cap: a.capacity ?? null,
           meetUrl: a.meetUrl,
         }))}
       />

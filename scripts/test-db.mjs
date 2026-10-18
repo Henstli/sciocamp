@@ -179,6 +179,28 @@ await test("učitel zapisuje jen do své třídy", async () => {
   await assert.rejects(() => as(teacher, `insert into public.enrollments (activity_id, student_id) values ($1, $2)`, [atelier.id, student2]));
 });
 
+await test("učitel založí vlastní aktivitu, ale ne za jiného", async () => {
+  const own = await as(teacher, `insert into public.activities (slug, kind, title, teacher_id) values ('moje-nova', 'kurz', 'Moje nová', $1) returning id`, [teacher]);
+  assert.equal(own.length, 1);
+  await assert.rejects(() => as(teacher, `insert into public.activities (slug, kind, title, teacher_id) values ('cizi-nova', 'kurz', 'Cizí', $1)`, [teacher2]));
+  await assert.rejects(() => as(student, `insert into public.activities (slug, kind, title, teacher_id) values ('studentova', 'kurz', 'X', $1)`, [student]));
+});
+
+await test("učitel smaže jen svou aktivitu", async () => {
+  const foreign = await as(teacher, `delete from public.activities where id = $1 returning id`, [atelier.id]);
+  assert.equal(foreign.length, 0);
+  const own = await as(teacher, `delete from public.activities where slug = 'moje-nova' returning id`);
+  assert.equal(own.length, 1);
+  const byStudent = await as(student, `delete from public.activities where id = $1 returning id`, [course.id]);
+  assert.equal(byStudent.length, 0);
+});
+
+await test("učitel upravuje rozvrh jen u své třídy", async () => {
+  const own = await as(teacher, `insert into public.activity_slots (activity_id, weekday, starts_at, ends_at) values ($1, 3, '09:00', '10:00') returning id`, [course.id]);
+  assert.equal(own.length, 1);
+  await assert.rejects(() => as(teacher, `insert into public.activity_slots (activity_id, weekday, starts_at, ends_at) values ($1, 3, '09:00', '10:00')`, [atelier.id]));
+});
+
 await test("zablokovaný uživatel přijde o přístup", async () => {
   await db.query(`update public.profiles set blocked = true where id = $1`, [student2]);
   assert.equal((await as(student2, `select id from public.activities`)).length, 0);

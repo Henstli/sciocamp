@@ -33,3 +33,22 @@
   gap: 8px;
   margin-top: auto;
 }
+.back {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  min-height: 32px;
+  margin-bottom: -8px;
+}
+.success {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ok);
+  background: var(--ok-bg);
+  padding: 12px 16px;
+  border-radius: 12px;
+}

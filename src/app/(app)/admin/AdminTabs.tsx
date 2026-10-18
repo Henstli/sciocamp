@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/PageHeader";
@@ -16,7 +17,7 @@ type AdminCourse = {
   lector: string;
   when: string;
   taken: number;
-  cap: number;
+  cap: number | null;
   meetUrl: string | null;
 };
 
@@ -30,8 +31,18 @@ const FILTERS = [
 // Porovnání bez diakritiky, aby "simon" našlo "Šimon".
 const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
-export function AdminTabs({ users, courses, live }: { users: AdminUser[]; courses: AdminCourse[]; live: boolean }) {
-  const [tab, setTab] = useState<"users" | "courses">("users");
+export function AdminTabs({
+  users,
+  courses,
+  live,
+  initialTab = "users",
+}: {
+  users: AdminUser[];
+  courses: AdminCourse[];
+  live: boolean;
+  initialTab?: "users" | "courses";
+}) {
+  const [tab, setTab] = useState<"users" | "courses">(initialTab);
   const [filter, setFilter] = useState<(typeof FILTERS)[number][0]>("all");
   const [query, setQuery] = useState("");
   const [roles, setRoles] = useState<Record<string, Role>>({});
@@ -143,26 +154,36 @@ export function AdminTabs({ users, courses, live }: { users: AdminUser[]; course
       {tab === "courses" && (
         <section aria-label="Kurzy a ateliéry" className={`card ${styles.table}`}>
           <div className={styles.toolbar}>
-            <h2 className="section-title">Nabídka bloku 1</h2>
+            <h2 className="section-title">Kurzy, ateliéry a další aktivity</h2>
+            <Link href="/ucitel/nova" className="btn btn-primary" style={{ marginLeft: "auto", minHeight: 40 }}>
+              + Nová aktivita
+            </Link>
           </div>
+          {courses.length === 0 && (
+            <p className={styles.inviteNote} style={{ padding: "16px 20px" }}>
+              Zatím tu nic není. Aktivitu může založit admin i kterýkoli učitel.
+            </p>
+          )}
           {courses.map((c) => {
-            const full = c.taken >= c.cap;
+            const full = c.cap !== null && c.taken >= c.cap;
             return (
               <div key={c.id} className={styles.courseRow}>
                 <span className={`chip ${c.kindKey === "atelier" ? styles.chipAtelier : "chip-primary"}`}>{c.kind}</span>
                 <div className={styles.courseMain}>
-                  <div className={styles.name}>{c.title}</div>
+                  <Link href={`/ucitel/${c.id}`} className={styles.name} style={{ color: "inherit", display: "block" }}>
+                    {c.title}
+                  </Link>
                   <div className={styles.email}>
                     {c.lector} · {c.when}
                   </div>
                 </div>
                 <div className={styles.capacity}>
-                  <div className={styles.capLabel}>
-                    {c.taken} / {c.cap} míst
-                  </div>
-                  <div className={styles.capBar}>
-                    <div style={{ width: `${Math.min(100, Math.round((c.taken / c.cap) * 100))}%` }} data-full={full} />
-                  </div>
+                  <div className={styles.capLabel}>{c.cap !== null ? `${c.taken} / ${c.cap} míst` : `${c.taken} studentů`}</div>
+                  {c.cap !== null && (
+                    <div className={styles.capBar}>
+                      <div style={{ width: `${Math.min(100, Math.round((c.taken / c.cap) * 100))}%` }} data-full={full} />
+                    </div>
+                  )}
                 </div>
                 {c.meetUrl ? (
                   <a href={c.meetUrl} target="_blank" rel="noopener noreferrer" className="chip chip-ok" style={{ textDecoration: "none" }}>
@@ -171,6 +192,9 @@ export function AdminTabs({ users, courses, live }: { users: AdminUser[]; course
                 ) : (
                   <span className="chip chip-wait">Bez Meetu</span>
                 )}
+                <Link href={`/ucitel/${c.id}`} className="btn btn-outline" style={{ minHeight: 36, padding: "0 12px" }}>
+                  Upravit
+                </Link>
               </div>
             );
           })}

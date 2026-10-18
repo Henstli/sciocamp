@@ -93,6 +93,11 @@ export async function ClassroomPage({ id, kinds, back }: { id: string; kinds: Ac
               Napsat {lectorWord}
             </Link>
           )}
+          {isTeacher && (
+            <Link href={`/ucitel/${activity.id}`} className={`btn ${styles.heroBtn}`}>
+              Upravit a studenti
+            </Link>
+          )}
           <MeetLink
             url={activity.meetUrl}
             variant="white"

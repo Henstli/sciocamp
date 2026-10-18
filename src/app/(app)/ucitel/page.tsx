@@ -12,17 +12,31 @@ import styles from "./ucitel.module.css";
 
 export const metadata: Metadata = { title: "Moje třídy" };
 
-export default async function TeacherPage() {
+export default async function TeacherPage({ searchParams }: PageProps<"/ucitel">) {
   const user = await requireTeacher();
   const now = pragueNow();
   const classes = await activitiesTaughtBy(user);
+  const { smazano } = await searchParams;
 
   return (
     <>
-      <PageHeader eyebrow={`${formatLongDate(now)} · pohled učitele`} title="Moje třídy" />
+      <PageHeader eyebrow={`${formatLongDate(now)} · pohled učitele`} title="Moje třídy">
+        <Link href="/ucitel/nova" className="btn btn-primary">
+          + Nová aktivita
+        </Link>
+      </PageHeader>
+
+      {smazano && (
+        <p role="status" className={styles.success}>
+          Aktivita je smazaná.
+        </p>
+      )}
 
       {classes.length === 0 ? (
-        <EmptyNote>Zatím neučíš žádný kurz ani ateliér. Přiřadit ti ho může admin ve Správě.</EmptyNote>
+        <EmptyNote>
+          Zatím neučíš žádný kurz ani ateliér. Založ si ho tlačítkem <strong>Nová aktivita</strong> — zadáš název, rozvrh a pak do
+          něj zapíšeš studenty.
+        </EmptyNote>
       ) : (
         <div className={styles.grid}>
           {classes.map((c) => {
@@ -46,6 +60,9 @@ export default async function TeacherPage() {
                   <Link href={activityHref(c)} className="btn btn-outline" style={{ flex: 1 }}>
                     Otevřít
                   </Link>
+                  <Link href={`/ucitel/${c.id}`} className="btn btn-outline" aria-label={`Upravit: ${c.title}`}>
+                    Upravit
+                  </Link>
                   <MeetLink url={c.meetUrl} variant={live ? "primary" : "soft"} label={live ? "Zahájit Meet" : "Meet"} />
                 </div>
               </article>
@@ -54,9 +71,7 @@ export default async function TeacherPage() {
         </div>
       )}
 
-      <EmptyNote>
-        Zadávání úkolů, opravování a hodnocení s body přidáme v etapě 2, oznámení třídě a chaty v etapě 3.
-      </EmptyNote>
+
     </>
   );
 }
