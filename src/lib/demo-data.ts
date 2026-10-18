@@ -76,24 +76,7 @@ export const DEMO_CLASSROOMS: Record<string, ClassroomContent> = {
       { type: "task", id: "t1", title: "Tereza Hanková zadala nový týmový úkol: Příprava týmové prezentace", meta: "včera 16:40 · termín čt 22. 10." },
       { type: "material", id: "m1", title: "Nový materiál: Záznam z minulé hodiny", meta: "po 12. 10. · nahrávka z Meetu, 1 h 54 min" },
     ],
-    topics: [
-      {
-        name: "Téma 2 · Hlas, tělo a tréma",
-        items: [
-          { id: "w1", kind: "tym", title: "Příprava týmové prezentace", meta: "Týmový úkol · termín čt 22. 10.", status: "Čeká", statusTone: "ceka" },
-          { id: "w2", kind: "ukol", title: "Reflexe prezentace z TEDx", meta: "Individuální · termín st 21. 10. 23:59", status: "Čeká", statusTone: "ceka" },
-          { id: "w3", kind: "video", title: "Záznam z hodiny 12. 10.", meta: "Nahrávka z Meetu · 1 h 54 min", status: "Materiál", statusTone: "info" },
-        ],
-      },
-      {
-        name: "Téma 1 · Struktura a příběh",
-        items: [
-          { id: "w4", kind: "pdf", title: "Struktura prezentace", meta: "Materiál · 2,4 MB", status: "Materiál", statusTone: "info" },
-          { id: "w5", kind: "kviz", title: "Rétorické figury", meta: "Kvíz · 10 otázek", status: "8/10 bodů", statusTone: "hotovo" },
-          { id: "w6", kind: "ukol", title: "Osnova vlastní prezentace", meta: "Individuální · odevzdáno 5. 10.", status: "Hodnoceno", statusTone: "hotovo" },
-        ],
-      },
-    ],
+    topics: [],
     teams: [
       { name: "Tým A · Klima", memberIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny"] },
       { name: "Tým B · Technologie", memberIds: ["u-jaukner", "u-novotna", "u-kubicek", "u-maly"] },
@@ -104,10 +87,7 @@ export const DEMO_CLASSROOMS: Record<string, ClassroomContent> = {
       { id: "c2", authorId: "u-komarek", time: "8:20", text: "Já budu na Meetu, jsem ještě ve vlaku." },
       { id: "c3", authorId: "u-jaukner", time: "8:31", text: "Můžeme si v pátek půjčit projektor do 204?" },
     ],
-    upcoming: [
-      { title: "Reflexe prezentace z TEDx", when: "St 21. 10. 23:59", urgent: true },
-      { title: "Příprava týmové prezentace", when: "Čt 22. 10.", urgent: false },
-    ],
+    upcoming: [],
   },
 };
 

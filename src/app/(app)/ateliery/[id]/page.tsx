@@ -7,7 +7,8 @@ export async function generateMetadata({ params }: PageProps<"/ateliery/[id]">):
   return { title: activity?.title ?? "Ateliér" };
 }
 
-export default async function AtelierPage({ params }: PageProps<"/ateliery/[id]">) {
+export default async function AtelierPage({ params, searchParams }: PageProps<"/ateliery/[id]">) {
   const { id } = await params;
-  return <ClassroomPage id={id} kinds={["atelier"]} back={{ href: "/ateliery", label: "Ateliéry" }} />;
+  const { tab } = await searchParams;
+  return <ClassroomPage id={id} kinds={["atelier"]} back={{ href: "/ateliery", label: "Ateliéry" }} tab={typeof tab === "string" ? tab : undefined} />;
 }

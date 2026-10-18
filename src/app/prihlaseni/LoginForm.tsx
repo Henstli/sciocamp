@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/lib/use-keep-form";
 import { useActionState, useState } from "react";
 import { GoogleLogo } from "@/components/Icon";
 import { loginAsDemo, loginWithEmail, loginWithGoogle, requestPasswordReset, type LoginState } from "./actions";
@@ -10,17 +11,21 @@ type DemoAccount = { id: string; name: string; email: string; caption: string };
 export function LoginForm({
   demoAccounts,
   live,
+  googleEnabled,
   initialError,
 }: {
   demoAccounts: DemoAccount[];
   /** true = napojeno na Supabase, false = ukázkový režim */
   live: boolean;
+  /** Je v Supabase zapnuté přihlášení přes Google? */
+  googleEnabled: boolean;
   initialError?: string;
 }) {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(loginWithEmail, {});
   const [reset, resetAction, resetPending] = useActionState<LoginState, FormData>(requestPasswordReset, {});
   const [showDemo, setShowDemo] = useState(false);
   const [showReset, setShowReset] = useState(false);
+  const [googleOff, setGoogleOff] = useState(false);
   const [email, setEmail] = useState("");
   const error = state.error ?? initialError;
 
@@ -31,7 +36,12 @@ export function LoginForm({
         <p className={styles.subtitle}>Přihlas se svým školním účtem.</p>
       </div>
 
-      {live ? (
+      {live && !googleEnabled ? (
+        <button type="button" className={styles.google} aria-expanded={googleOff} onClick={() => setGoogleOff(true)}>
+          <GoogleLogo />
+          Pokračovat přes Google
+        </button>
+      ) : live ? (
         <form action={loginWithGoogle}>
           <button type="submit" className={styles.google} style={{ width: "100%" }}>
             <GoogleLogo />
@@ -49,6 +59,13 @@ export function LoginForm({
           <GoogleLogo />
           Pokračovat přes Google
         </button>
+      )}
+
+      {googleOff && (
+        <p role="status" className={styles.demoNote}>
+          Přihlášení přes Google škola zatím nezapnula. Přihlas se níže <strong>školním e-mailem a heslem</strong>. Heslo si
+          nastavíš přes „Zapomenuté heslo?“.
+        </p>
       )}
 
       {!live && showDemo && (
@@ -76,7 +93,7 @@ export function LoginForm({
         <span />
       </div>
 
-      <form action={formAction} className={styles.fields} noValidate>
+      <form onSubmit={keepForm(formAction)} className={styles.fields} noValidate>
         <div className={styles.field}>
           <label htmlFor="email">E-mail</label>
           <input

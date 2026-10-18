@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { endSession, startDemoSession } from "@/lib/auth";
-import { SCHOOL_DOMAIN, isSchoolEmail, isSupabase } from "@/lib/config";
+import { SCHOOL_DOMAIN, isGoogleEnabled, isSchoolEmail, isSupabase } from "@/lib/config";
 import { getUserByEmail, getUserById, listDemoAccounts } from "@/lib/data";
 import { siteUrl } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
@@ -13,7 +13,7 @@ const DOMAIN_ERROR = `Přihlásit se dá jen školním e-mailem @${SCHOOL_DOMAIN
 
 /** Přihlášení přes Google. Doménu ověřujeme znovu po návratu v /auth/callback. */
 export async function loginWithGoogle() {
-  if (!isSupabase) redirect("/prihlaseni");
+  if (!isSupabase || !isGoogleEnabled) redirect("/prihlaseni?chyba=google-vypnuto");
   const sb = await createClient();
   const { data, error } = await sb.auth.signInWithOAuth({
     provider: "google",

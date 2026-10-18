@@ -40,7 +40,7 @@
 
 ## Implementace (stav)
 
-- Etapa 1 hotová na ukázkových datech: přihlášení (ukázkové účty místo Google OAuth), role, Domov s rozvrhem a Meetem, Kurzy, Ateliéry, detail třídy (`/kurzy/[id]`, `/ateliery/[id]`), Moje třídy, Správa, Profil. Ostatní stránky jsou zástupné.
+- Etapa 1 hotová (naostro se Supabase): přihlášení (ukázkové účty místo Google OAuth), role, Domov s rozvrhem a Meetem, Kurzy, Ateliéry, detail třídy (`/kurzy/[id]`, `/ateliery/[id]`), Moje třídy, Správa, Profil. Ostatní stránky jsou zástupné.
 - Next.js 16.4 má zapnuté Cache Components: vše, co čte cookies/session, musí být za `<Suspense>` (layout `src/app/(app)/layout.tsx` to řeší pro všechny stránky). Middleware se jmenuje `src/proxy.ts`. Před psaním kódu čti dokumentaci v `node_modules/next/dist/docs/`.
 - Data jen přes `src/lib/data.ts` (async funkce, připravené na Supabase). Čas vždy přes `src/lib/time.ts` (pásmo Europe/Prague).
 - Styly: design tokeny v `src/app/globals.css`, komponenty přes CSS moduly.
@@ -49,4 +49,8 @@
 - Supabase: schéma a RLS v `supabase/migrations/` (testy `npm run test:db` v PGlite — při každé změně oprávnění přidat test). Klienti v `src/lib/supabase/`. Secret key jen v serverových akcích admina po `requireAdmin()`.
 - Přihlášení: `/auth/callback` (Google, PKCE), `/auth/confirm` (odkazy z e-mailů, token_hash), `/nastavit-heslo`. Po přihlášení `finishSignIn` znovu ověří doménu a profil. Registrace v Supabase je vypnutá, účty zakládá admin pozvánkou.
 - Serverové akce v `src/lib/actions/`. Návod k nastavení Supabase: `docs/supabase-nastaveni.md`.
-- Ukázkový režim: změny (role v adminu, Meet, chat) se neukládají a UI to říká.
+- Ukázkový režim: změny (role v adminu, Meet, chat, odevzdání) se neukládají a UI to říká.
+- Etapa 2 (úkoly) hotová: `/ukoly` (student: přehled s filtry; učitel: úkoly svých tříd a počty k opravení), `/ukoly/novy`, `/ukoly/[id]` (student odevzdává soubory do Storage bucketu `odevzdani` přímo z prohlížeče + odkazy + poznámku; učitel hodnotí přes `?student=`), `/ukoly/[id]/upravit`. Data v `src/lib/data-assignments.ts`, akce v `src/lib/actions/assignments.ts`, stav práce počítá `workState()` v `src/lib/assignments.ts`. Týmové úkoly a kvízy zatím ne.
+- Formuláře s `useActionState` odesílat přes `onSubmit={keepForm(action)}` (`src/lib/use-keep-form.ts`), ne `action={…}` — React 19 by po chybě formulář vymazal.
+- Google přihlášení se v UI zapíná proměnnou `NEXT_PUBLIC_GOOGLE_LOGIN=1` (až bude Google v Supabase zapnutý).
+- Autor nasadil aplikaci na Vercel: https://sciocamp.vercel.app (push do `main` = nasazení).

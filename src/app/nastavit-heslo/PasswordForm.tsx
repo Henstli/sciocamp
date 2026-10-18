@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/lib/use-keep-form";
 import { useActionState } from "react";
 import { setPassword, type PasswordState } from "./actions";
 import styles from "../prihlaseni/login.module.css";
@@ -7,7 +8,7 @@ import styles from "../prihlaseni/login.module.css";
 export function PasswordForm({ email }: { email: string }) {
   const [state, action, pending] = useActionState<PasswordState, FormData>(setPassword, {});
   return (
-    <form action={action} className={styles.form} noValidate>
+    <form onSubmit={keepForm(action)} className={styles.form} noValidate>
       <div>
         <h1 className={styles.title}>Nastav si heslo</h1>
         <p className={styles.subtitle}>

@@ -100,6 +100,7 @@ Vytvoří ukázkové uživatele (všichni s heslem ze `SEED_PASSWORD`), kurzy, a
 1. V [Google Cloud Console](https://console.cloud.google.com) založ projekt, nastav **OAuth consent screen** (typ *External*, název ScioCamp) a vytvoř **OAuth client ID** typu *Web application*.
 2. **Authorized redirect URI**: `https://<id-projektu>.supabase.co/auth/v1/callback` (přesnou adresu ukazuje Supabase u Google providera).
 3. Client ID a Client secret vlož v Supabase do **Authentication → Sign In / Providers → Google** a zapni ho.
+4. Ve Vercelu přidej proměnnou `NEXT_PUBLIC_GOOGLE_LOGIN` s hodnotou `1` a dej **Redeploy**. Do té doby tlačítko „Pokračovat přes Google“ jen vysvětlí, ať se uživatel přihlásí e-mailem a heslem.
 
 Učitelé se tak přihlásí hned. **Studentům pod 18 let** Google přihlášení do aplikací třetích stran ve výchozím stavu blokuje, dokud ho správce školního Google Workspace aplikaci nepovolí (Admin console → Security → API controls → App access control). Do té doby se studenti přihlašují e-mailem a heslem — aplikace jim to při chybě sama napíše.
 

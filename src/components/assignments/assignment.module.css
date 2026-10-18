@@ -1,0 +1,327 @@
+.panel {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.panelHead > :global(.chip) {
+  margin-left: auto;
+}
+.h2 {
+  font-size: 16px;
+  font-weight: 800;
+}
+.h3 {
+  font-size: 14px;
+  font-weight: 800;
+  padding: 0;
+  margin-bottom: 8px;
+}
+.small {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.metaLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.error {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--late);
+  background: var(--late-bg);
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+.info {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ok);
+  background: var(--ok-bg);
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+/* Soubory a odkazy */
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+.badge {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+.badge[data-kind="pdf"] {
+  background: var(--late-bg);
+  color: var(--late);
+}
+.badge[data-kind="link"] {
+  background: var(--other-bg);
+  color: var(--other);
+}
+.itemText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.itemName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.itemName:hover {
+  color: var(--primary-text);
+}
+.itemMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.remove {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.remove:hover {
+  background: var(--late-bg);
+  color: var(--late);
+}
+
+/* Přidávání a formuláře */
+.addRow {
+  display: flex;
+  gap: 8px;
+}
+.grow {
+  flex: 1;
+}
+.input,
+.textarea {
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border-input);
+  background: var(--card);
+  font-size: 14px;
+  color: var(--text);
+}
+.input {
+  height: var(--tap);
+  padding: 0 12px;
+}
+.textarea {
+  padding: 10px 12px;
+  line-height: 1.5;
+  resize: vertical;
+  width: 100%;
+}
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.noteLabel,
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.fieldError {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--late);
+}
+.submit {
+  min-height: 48px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.note {
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg);
+  white-space: pre-line;
+}
+
+/* Výsledek hodnocení */
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--ok-bg);
+}
+.review[data-result="vraceno"] {
+  background: var(--wait-bg);
+}
+.review[data-result="nesplneno"] {
+  background: var(--late-bg);
+}
+.reviewHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.points {
+  margin-left: auto;
+  font-size: 22px;
+  font-weight: 800;
+}
+.points span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.reviewText {
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+/* Formulář hodnocení */
+.reviewForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+.fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  cursor: pointer;
+}
+.result:focus-within {
+  outline: 3px solid var(--primary-line);
+}
+.result[data-checked="true"][data-result="splneno"] {
+  border-color: var(--ok);
+  background: var(--ok-bg);
+}
+.result[data-checked="true"][data-result="vraceno"] {
+  border-color: #f0a63a;
+  background: var(--wait-bg);
+}
+.result[data-checked="true"][data-result="nesplneno"] {
+  border-color: var(--late);
+  background: var(--late-bg);
+}
+.resultLabel {
+  font-size: 14px;
+  font-weight: 800;
+}
+.pointsInput {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.pointsInput .input {
+  flex: 0 0 110px;
+}
+.actionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Komentáře */
+.comments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.comment {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.commentHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.commentName {
+  font-size: 13px;
+  font-weight: 700;
+}
+.commentBody {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-top: 2px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.reviewTitle {
+  font-size: 13px;
+  font-weight: 800;
+}

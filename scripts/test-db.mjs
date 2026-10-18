@@ -27,6 +27,16 @@ await db.exec(`
     select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
   $$;
   grant usage on schema auth to anon, authenticated, service_role;
+  -- Minimální napodobenina Supabase Storage
+  create schema storage;
+  create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
+  create function storage.foldername(name text) returns text[] language sql immutable as $$
+    select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1]
+  $$;
+  alter table storage.objects enable row level security;
+  grant usage on schema storage to authenticated;
+  grant select, insert, delete on storage.objects to authenticated;
   grant execute on function auth.uid() to anon, authenticated, service_role;
 `);
 
@@ -209,6 +219,98 @@ await test("zablokovaný uživatel přijde o přístup", async () => {
 
 await test("ročník mají jen studenti", async () => {
   await assert.rejects(() => db.query(`update public.profiles set grade = 2 where id = $1`, [teacher]));
+});
+
+// ---------------------------------------------------------------------------
+// Etapa 2: úkoly, odevzdání, hodnocení
+// ---------------------------------------------------------------------------
+
+const { rows: [task] } = await db.query(
+  `insert into public.assignments (activity_id, title, max_points, due_at, created_by) values ($1, 'Recenze', 20, now() + interval '1 day', $2) returning id`,
+  [course.id, teacher],
+);
+
+await test("úkol vidí zapsaný student a vyučující, cizí student ne", async () => {
+  assert.equal((await as(student, `select id from public.assignments`)).length, 1);
+  assert.equal((await as(teacher, `select id from public.assignments`)).length, 1);
+  assert.equal((await as(outsider, `select id from public.assignments`)).length, 0);
+  assert.equal((await as(teacher2, `select id from public.assignments`)).length, 0);
+});
+
+await test("úkol zadá jen vyučující třídy nebo admin", async () => {
+  await assert.rejects(() => as(student, `insert into public.assignments (activity_id, title, created_by) values ($1, 'X', $2)`, [course.id, student]));
+  await assert.rejects(() => as(teacher2, `insert into public.assignments (activity_id, title, created_by) values ($1, 'X', $2)`, [course.id, teacher2]));
+  const ok = await as(admin, `insert into public.assignments (activity_id, title, kind, created_by) values ($1, 'Materiál', 'material', $2) returning id`, [course.id, admin]);
+  assert.equal(ok.length, 1);
+});
+
+await test("student odevzdá svou práci, cizí ne", async () => {
+  const rows = await as(student, `insert into public.submissions (assignment_id, student_id, status) values ($1, $2, 'odevzdano') returning submitted_at`, [task.id, student]);
+  assert.ok(rows[0].submitted_at, "čas odevzdání nastaví databáze");
+  await assert.rejects(() => as(student, `insert into public.submissions (assignment_id, student_id) values ($1, $2)`, [task.id, student2]));
+  await assert.rejects(() => as(outsider, `insert into public.submissions (assignment_id, student_id) values ($1, $2)`, [task.id, outsider]));
+});
+
+await test("spolužák nevidí cizí odevzdání, vyučující ano", async () => {
+  assert.equal((await as(student2, `select * from public.submissions`)).length, 0);
+  assert.equal((await as(teacher, `select * from public.submissions`)).length, 1);
+});
+
+await test("student si nemůže zapsat hodnocení", async () => {
+  await assert.rejects(() => as(student, `insert into public.reviews (assignment_id, student_id, result, points, reviewed_by) values ($1, $2, 'splneno', 20, $2)`, [task.id, student]));
+});
+
+await test("body nesmí přesáhnout maximum, vrácení musí mít požadavek", async () => {
+  await assert.rejects(() => as(teacher, `insert into public.reviews (assignment_id, student_id, result, points, reviewed_by) values ($1, $2, 'splneno', 25, $3)`, [task.id, student, teacher]), /maximem/);
+  await assert.rejects(() => as(teacher, `insert into public.reviews (assignment_id, student_id, result, reviewed_by) values ($1, $2, 'vraceno', $3)`, [task.id, student, teacher]));
+});
+
+await test("vrácenou práci student upraví, uzavřenou už ne", async () => {
+  const [before] = await as(student, `select submitted_at from public.submissions where assignment_id = $1`, [task.id]);
+  // Úprava odevzdané práce bez vrácení čas odevzdání neposune.
+  const edited = await as(student, `update public.submissions set note = 'oprava překlepu' where assignment_id = $1 and student_id = $2 returning submitted_at`, [task.id, student]);
+  assert.equal(edited[0].submitted_at.getTime(), before.submitted_at.getTime());
+  await as(teacher, `insert into public.reviews (assignment_id, student_id, result, request, reviewed_by) values ($1, $2, 'vraceno', 'Doplň zdroje', $3)`, [task.id, student, teacher]);
+  const again = await as(student, `update public.submissions set status = 'odevzdano', note = 'doplněno' where assignment_id = $1 and student_id = $2 returning note, submitted_at`, [task.id, student]);
+  assert.equal(again.length, 1);
+  assert.ok(again[0].submitted_at > before.submitted_at, "znovu odevzdáno po vrácení má nový čas");
+  const [rev] = await as(teacher, `select reviewed_at from public.reviews where assignment_id = $1`, [task.id]);
+  assert.ok(again[0].submitted_at >= rev.reviewed_at, "nové odevzdání je až po vrácení");
+  await as(teacher, `update public.reviews set result = 'splneno', points = 18, request = null, feedback = 'Výborně' where assignment_id = $1 and student_id = $2`, [task.id, student]);
+  const locked = await as(student, `update public.submissions set note = 'změna' where assignment_id = $1 and student_id = $2 returning note`, [task.id, student]);
+  assert.equal(locked.length, 0);
+  const mine = await as(student, `select result, points, feedback from public.reviews`);
+  assert.deepEqual(mine, [{ result: "splneno", points: 18, feedback: "Výborně" }]);
+});
+
+await test("učitel jiné třídy nehodnotí", async () => {
+  const rows = await as(teacher2, `update public.reviews set points = 0 returning points`);
+  assert.equal(rows.length, 0);
+  await assert.rejects(() => as(teacher2, `insert into public.reviews (assignment_id, student_id, result, reviewed_by) values ($1, $2, 'nesplneno', $3)`, [task.id, student2, teacher2]));
+});
+
+await test("hodnotit jde jen zapsané studenty", async () => {
+  await assert.rejects(() => as(teacher, `insert into public.reviews (assignment_id, student_id, result, reviewed_by) values ($1, $2, 'nesplneno', $3)`, [task.id, outsider, teacher]));
+});
+
+await test("soukromé komentáře vidí jen student a vyučující", async () => {
+  await as(student, `insert into public.assignment_comments (assignment_id, student_id, author_id, body) values ($1, $2, $2, 'Můžu odkaz?')`, [task.id, student]);
+  await as(teacher, `insert into public.assignment_comments (assignment_id, student_id, author_id, body) values ($1, $2, $3, 'Jasně')`, [task.id, student, teacher]);
+  assert.equal((await as(student, `select * from public.assignment_comments`)).length, 2);
+  assert.equal((await as(student2, `select * from public.assignment_comments`)).length, 0);
+  assert.equal((await as(teacher, `select * from public.assignment_comments`)).length, 2);
+  await assert.rejects(() => as(student2, `insert into public.assignment_comments (assignment_id, student_id, author_id, body) values ($1, $2, $3, 'X')`, [task.id, student, student2]));
+});
+
+await test("soubory: student nahrává jen do své složky, vyučující čte", async () => {
+  const mine = `${task.id}/${student2}/esej.pdf`;
+  await as(student2, `insert into storage.objects (bucket_id, name) values ('odevzdani', $1)`, [mine]);
+  await assert.rejects(() => as(student2, `insert into storage.objects (bucket_id, name) values ('odevzdani', $1)`, [`${task.id}/${student}/podvrh.pdf`]));
+  await assert.rejects(() => as(outsider, `insert into storage.objects (bucket_id, name) values ('odevzdani', $1)`, [`${task.id}/${outsider}/x.pdf`]));
+  assert.equal((await as(student, `select name from storage.objects where name = $1`, [mine])).length, 0);
+  assert.equal((await as(teacher, `select name from storage.objects where name = $1`, [mine])).length, 1);
+  // Šimon má práci uzavřenou — nahrát už nesmí.
+  await assert.rejects(() => as(student, `insert into storage.objects (bucket_id, name) values ('odevzdani', $1)`, [`${task.id}/${student}/pozde.pdf`]));
 });
 
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

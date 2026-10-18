@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Icon } from "../Icon";
 import { Avatar, EmptyNote } from "../PageHeader";
 import { MeetEditor } from "./MeetEditor";
-import type { Role, WorkItemKind, WorkStatus, WorkTopic } from "@/lib/types";
+import type { Role } from "@/lib/types";
 import styles from "./classroom.module.css";
 
 type Person = { id: string; name: string; initials: string; role: Role };
@@ -25,13 +25,20 @@ export type ClassView = {
         attachments: { kind: "pdf" | "doc"; title: string; meta: string }[];
         comments: number;
       }
-    | { type: "task" | "material"; id: string; title: string; meta: string; author: null }
+    | { type: "task" | "material"; id: string; title: string; meta: string; author: null; href?: string }
   )[];
-  topics: WorkTopic[];
+  work: {
+    topics: {
+      name: string;
+      items: { id: string; kind: "ukol" | "material"; title: string; meta: string; chip: string; chipClass: string }[];
+    }[];
+    /** Odkaz na zadání nového úkolu (jen vyučující a admin) */
+    newHref: string | null;
+  };
   teams: { name: string; members: string }[];
   students: Person[];
   chat: { id: string; time: string; text: string; author: Person }[];
-  upcoming: { title: string; when: string; urgent: boolean }[];
+  upcoming: { title: string; when: string; urgent: boolean; href?: string }[];
   next: { label: string; live: boolean } | null;
   room: string;
   meetUrl: string | null;
@@ -48,16 +55,14 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
-const KIND_CODE: Record<WorkItemKind, string> = { ukol: "ÚKOL", tym: "TÝM", pdf: "PDF", video: "VIDEO", kviz: "KVÍZ" };
-const STATUS_CHIP: Record<WorkStatus, string> = { ceka: "chip-wait", hotovo: "chip-ok", info: "chip-info" };
 
 function toneFor(p: Person, me: Person) {
   if (p.id === me.id) return "me" as const;
   return p.role === "student" ? ("student" as const) : ("late" as const);
 }
 
-export function ClassTabs({ view }: { view: ClassView }) {
-  const [tab, setTab] = useState<Tab>("stream");
+export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: string }) {
+  const [tab, setTab] = useState<Tab>(TABS.some(([k]) => k === initialTab) ? (initialTab as Tab) : "stream");
 
   return (
     <>
@@ -79,7 +84,7 @@ export function ClassTabs({ view }: { view: ClassView }) {
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "stream" && <Stream view={view} />}
-        {tab === "work" && <Work topics={view.topics} />}
+        {tab === "work" && <Work work={view.work} />}
         {tab === "people" && <People view={view} />}
         {tab === "chat" && <Chat view={view} />}
       </div>
@@ -103,7 +108,7 @@ function Stream({ view }: { view: ClassView }) {
         </div>
 
         {view.stream.length === 0 && (
-          <EmptyNote>Nástěnka je zatím prázdná. Příspěvky a oznámení přidáme v etapě 3.</EmptyNote>
+          <EmptyNote>Nástěnka je zatím prázdná. Objeví se tu nové úkoly a materiály; vlastní příspěvky přidáme v etapě 3.</EmptyNote>
         )}
         {view.stream.map((item) =>
           item.type === "post" ? (
@@ -141,7 +146,7 @@ function Stream({ view }: { view: ClassView }) {
               )}
             </article>
           ) : (
-            <div key={item.id} className={`card ${styles.event}`}>
+            <Link key={item.id} href={item.href ?? "#"} className={`card ${styles.event}`}>
               <div className={styles.eventIcon} data-kind={item.type}>
                 <Icon name={item.type === "task" ? "file" : "play"} size={22} />
               </div>
@@ -149,7 +154,8 @@ function Stream({ view }: { view: ClassView }) {
                 <div className={styles.strong}>{item.title}</div>
                 <div className={styles.meta}>{item.meta}</div>
               </div>
-            </div>
+              <Icon name="chevronRight" size={18} style={{ color: "var(--text-muted)" }} />
+            </Link>
           ),
         )}
       </div>
@@ -160,14 +166,23 @@ function Stream({ view }: { view: ClassView }) {
           {view.upcoming.length === 0 ? (
             <div className={styles.meta}>Žádné termíny.</div>
           ) : (
-            view.upcoming.map((u) => (
-              <div key={u.title}>
-                <div className={styles.when} data-urgent={u.urgent}>
-                  {u.when}
+            view.upcoming.map((u) =>
+              u.href ? (
+                <Link key={u.href} href={u.href} className={styles.upcoming}>
+                  <span className={styles.when} data-urgent={u.urgent}>
+                    {u.when}
+                  </span>
+                  <span className={styles.strong}>{u.title}</span>
+                </Link>
+              ) : (
+                <div key={u.title}>
+                  <div className={styles.when} data-urgent={u.urgent}>
+                    {u.when}
+                  </div>
+                  <div className={styles.strong}>{u.title}</div>
                 </div>
-                <div className={styles.strong}>{u.title}</div>
-              </div>
-            ))
+              ),
+            )
           )}
         </section>
         <section aria-label="Příští hodina" className={`card ${styles.sidePanel}`}>
@@ -191,26 +206,35 @@ function Stream({ view }: { view: ClassView }) {
   );
 }
 
-function Work({ topics }: { topics: WorkTopic[] }) {
-  if (topics.length === 0) {
-    return <EmptyNote>Zatím tu nejsou žádné úkoly ani materiály. Zadávání úkolů přidáme v etapě 2.</EmptyNote>;
-  }
+function Work({ work }: { work: ClassView["work"] }) {
   return (
     <div className="stack" style={{ gap: 16 }}>
-      {topics.map((t) => (
+      {work.newHref && (
+        <div className={styles.workActions}>
+          <Link href={work.newHref} className="btn btn-primary">
+            + Zadat úkol nebo materiál
+          </Link>
+        </div>
+      )}
+      {work.topics.length === 0 && (
+        <EmptyNote>
+          {work.newHref ? "Zatím tu nejsou žádné úkoly ani materiály. Zadáš je tlačítkem výše." : "Zatím tu nejsou žádné úkoly ani materiály."}
+        </EmptyNote>
+      )}
+      {work.topics.map((t) => (
         <section key={t.name} className={`card ${styles.topic}`}>
           <h2 className={styles.topicTitle}>{t.name}</h2>
           {t.items.map((it) => (
-            <div key={it.id} className={styles.workRow}>
-              <div className={styles.workIcon} data-kind={it.kind}>
-                {KIND_CODE[it.kind]}
+            <Link key={it.id} href={`/ukoly/${it.id}`} className={styles.workRow}>
+              <div className={styles.workIcon} data-kind={it.kind === "ukol" ? "ukol" : "pdf"}>
+                {it.kind === "ukol" ? "ÚKOL" : "MAT."}
               </div>
               <div className={styles.workMain}>
                 <div className={styles.strong}>{it.title}</div>
                 <div className={styles.meta}>{it.meta}</div>
               </div>
-              <span className={`chip ${STATUS_CHIP[it.statusTone]}`}>{it.status}</span>
-            </div>
+              <span className={`chip ${it.chipClass}`}>{it.chip}</span>
+            </Link>
           ))}
         </section>
       ))}

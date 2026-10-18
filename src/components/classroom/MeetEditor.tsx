@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/lib/use-keep-form";
 import { useActionState, useState } from "react";
 import { updateMeetUrl, type MeetState } from "@/lib/actions/meet";
 import styles from "./classroom.module.css";
@@ -18,7 +19,7 @@ export function MeetEditor({ activity, current }: { activity: string; current: s
   }
 
   return (
-    <form action={action} className={styles.meetForm}>
+    <form onSubmit={keepForm(action)} className={styles.meetForm}>
       <input type="hidden" name="activity" value={activity} />
       <label htmlFor="meet-url" className={styles.strong}>
         Odkaz na Meet pro celý blok

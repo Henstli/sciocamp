@@ -7,7 +7,8 @@ export async function generateMetadata({ params }: PageProps<"/kurzy/[id]">): Pr
   return { title: activity?.title ?? "Kurz" };
 }
 
-export default async function CoursePage({ params }: PageProps<"/kurzy/[id]">) {
+export default async function CoursePage({ params, searchParams }: PageProps<"/kurzy/[id]">) {
   const { id } = await params;
-  return <ClassroomPage id={id} kinds={["kurz", "ostatni"]} back={{ href: "/kurzy", label: "Kurzy" }} />;
+  const { tab } = await searchParams;
+  return <ClassroomPage id={id} kinds={["kurz", "ostatni"]} back={{ href: "/kurzy", label: "Kurzy" }} tab={typeof tab === "string" ? tab : undefined} />;
 }

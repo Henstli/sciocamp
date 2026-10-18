@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/lib/use-keep-form";
 import { useActionState, useState } from "react";
 import { saveActivity, type ActivityFormState } from "@/lib/actions/activities";
 import type { ActivityKind } from "@/lib/types";
@@ -49,7 +50,7 @@ export function ActivityForm({
     setSlots((all) => all.map((s, j) => (j === i ? { ...s, ...patch } : s)));
 
   return (
-    <form action={action} className={`card ${styles.form}`} noValidate>
+    <form onSubmit={keepForm(action)} className={`card ${styles.form}`} noValidate>
       {initial.slug && <input type="hidden" name="slug" value={initial.slug} />}
       <input type="hidden" name="slots" value={JSON.stringify(slots)} />
 

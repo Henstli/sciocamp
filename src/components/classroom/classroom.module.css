@@ -419,3 +419,30 @@
 .meetForm .composerInput {
   flex: none;
 }
+
+a.workRow,
+a.event {
+  text-decoration: none;
+  color: var(--text);
+}
+a.workRow:hover {
+  background: #fbfcfe;
+  color: var(--text);
+}
+a.event:hover {
+  border-color: var(--primary-line);
+  color: var(--text);
+}
+.workActions {
+  display: flex;
+  justify-content: flex-end;
+}
+.upcoming {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: var(--text);
+}
+.upcoming:hover .strong {
+  color: var(--primary-text);
+}

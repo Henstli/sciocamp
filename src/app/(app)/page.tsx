@@ -5,6 +5,8 @@ import { MeetLink } from "@/components/MeetLink";
 import { PageHeader, Avatar } from "@/components/PageHeader";
 import { ScheduleWeek } from "@/components/ScheduleWeek";
 import { requireUser } from "@/lib/auth";
+import { homeTasks } from "@/lib/data-assignments";
+import { plural } from "@/lib/format";
 import { activitiesForUser, getHomeSummary, getUserById, getUsersByIds } from "@/lib/data";
 import { activityHref } from "@/lib/links";
 import { canTeach, firstNameVocative, initials } from "@/lib/roles";
@@ -14,6 +16,7 @@ import {
   defaultWeekStart,
   formatLongDate,
   formatRange,
+  formatDue,
   isoWeekdayOf,
   mondayOf,
   parseIso,
@@ -36,6 +39,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const upcoming = currentOrNext(activities, now);
   const upcomingTeacher = upcoming ? await getUserById(upcoming.activity.teacherId) : null;
   const home = await getHomeSummary();
+  const tasks = await homeTasks(user);
   const senders = home ? await getUsersByIds(home.messages.from) : [];
   const teaching = canTeach(user.role);
 
@@ -80,79 +84,90 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         </div>
       )}
 
-      {home && (
       <section aria-label="Přehled" className={styles.stats}>
         {teaching ? (
-          <StatCard href="/ucitel" icon="monitor" title="K opravení" value={home.toGrade} unit="odevzdaných prací">
-            <div className={styles.statFoot}>Hodnocení přijde v etapě 2</div>
+          <StatCard href="/ukoly" icon="monitor" title="K opravení" value={tasks.headline} unit={plural(tasks.headline, "odevzdaná práce", "odevzdané práce", "odevzdaných prací")}>
+            <div className={styles.statFoot}>
+              {tasks.headline === 0
+                ? "Všechno je opravené."
+                : `V ${tasks.assignmentsToReview} ${plural(tasks.assignmentsToReview, "úkolu", "úkolech", "úkolech")}`}
+            </div>
           </StatCard>
         ) : (
-          <StatCard href="/ukoly" icon="check" title="Úkoly" value={home.tasks.open} unit="otevřených úkolů">
-            <div className={styles.bar}>
-              <div style={{ flex: home.tasks.done, background: "#1F8A5B" }} />
-              <div style={{ flex: home.tasks.waiting, background: "#F0A63A" }} />
-              <div style={{ flex: home.tasks.late, background: "#C93B3B" }} />
-            </div>
+          <StatCard href="/ukoly" icon="check" title="Úkoly" value={tasks.headline} unit={plural(tasks.headline, "otevřený úkol", "otevřené úkoly", "otevřených úkolů")}>
+            {tasks.done + tasks.waiting + tasks.late > 0 && (
+              <div className={styles.bar}>
+                <div style={{ flex: tasks.done, background: "#1F8A5B" }} />
+                <div style={{ flex: tasks.waiting, background: "#F0A63A" }} />
+                <div style={{ flex: tasks.late, background: "#C93B3B" }} />
+              </div>
+            )}
             <div className={styles.legend}>
-              <span><i style={{ background: "#1F8A5B" }} />{home.tasks.done} hotovo</span>
-              <span><i style={{ background: "#F0A63A" }} />{home.tasks.waiting} čeká</span>
-              <span><i style={{ background: "#C93B3B" }} />{home.tasks.late} po termínu</span>
+              <span><i style={{ background: "#1F8A5B" }} />{tasks.done} hotovo</span>
+              <span><i style={{ background: "#F0A63A" }} />{tasks.waiting} čeká</span>
+              <span><i style={{ background: "#C93B3B" }} />{tasks.late} po termínu</span>
             </div>
           </StatCard>
         )}
 
-        <StatCard href="/hlasovani" icon="vote" title="Hlasování" value={home.polls.waiting} unit="čekají na tvůj hlas">
-          <div className={styles.chips}>
-            <span className="chip chip-wait">{home.polls.running} probíhající</span>
-            <span className="chip chip-info">{home.polls.closed} ukončená</span>
-          </div>
-          <div className={styles.statFoot}>Nejbližší konec: {home.polls.nextEnd}</div>
-        </StatCard>
-
-        <StatCard href="/zpravy" icon="chat" title="Zprávy" value={home.messages.unread} unit="nepřečtené zprávy">
-          <div className={styles.people}>
-            <div className={styles.faces}>
-              {senders.map((s) => (
-                <span key={s.id} className={styles.face}>
-                  <Avatar initials={initials(s.name)} size={30} tone={s.role === "student" ? "student" : "ucitel"} />
-                </span>
-              ))}
+        {home && (
+          <StatCard href="/hlasovani" icon="vote" title="Hlasování" value={home.polls.waiting} unit="čekají na tvůj hlas">
+            <div className={styles.chips}>
+              <span className="chip chip-wait">{home.polls.running} probíhající</span>
+              <span className="chip chip-info">{home.polls.closed} ukončená</span>
             </div>
-            <div className={styles.statFoot}>{senders.map((s) => s.name).join(", ")}</div>
-          </div>
-        </StatCard>
+            <div className={styles.statFoot}>Nejbližší konec: {home.polls.nextEnd}</div>
+          </StatCard>
+        )}
+
+        {home && (
+          <StatCard href="/zpravy" icon="chat" title="Zprávy" value={home.messages.unread} unit="nepřečtené zprávy">
+            <div className={styles.people}>
+              <div className={styles.faces}>
+                {senders.map((s) => (
+                  <span key={s.id} className={styles.face}>
+                    <Avatar initials={initials(s.name)} size={30} tone={s.role === "student" ? "student" : "ucitel"} />
+                  </span>
+                ))}
+              </div>
+              <div className={styles.statFoot}>{senders.map((s) => s.name).join(", ")}</div>
+            </div>
+          </StatCard>
+        )}
       </section>
-      )}
 
       <div className={styles.columns}>
         <div className={styles.schedule}>
           <ScheduleWeek entries={entries} monday={monday} now={now} title={teaching ? "Můj rozvrh výuky" : "Rozvrh týdne"} />
         </div>
 
-        {home && (
         <div className={styles.side}>
           <section aria-label="Nejbližší termíny" className={`card ${styles.panel}`}>
             <div className={styles.panelHead}>
               <h2 className="section-title">Nejbližší termíny</h2>
               <Link href="/ukoly">Vše</Link>
             </div>
-            {home.deadlines.map((d) => {
-              const date = parseIso(d.date)!;
+            {tasks.deadlines.length === 0 && <div className={styles.itemMeta}>Žádné blížící se termíny.</div>}
+            {tasks.deadlines.map((d) => {
+              const date = pragueNow(new Date(d.dueAt));
               return (
-                <div key={d.title} className={styles.deadline}>
+                <Link key={d.id} href={`/ukoly/${d.id}`} className={styles.deadline}>
                   <div className={styles.dateBox} data-urgent={d.urgent}>
-                    {DAYS_SHORT[isoWeekdayOf(date) - 1].toUpperCase()}
+                    {DAYS_SHORT[date.isoWeekday - 1].toUpperCase()}
                     <span>{date.d}</span>
                   </div>
                   <div>
                     <div className={styles.itemTitle}>{d.title}</div>
-                    <div className={styles.itemMeta}>{d.meta}</div>
+                    <div className={styles.itemMeta}>
+                      {d.meta} · {formatDue(d.dueAt)}
+                    </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </section>
 
+          {home && (
           <section aria-label="Probíhající hlasování" className={`card ${styles.panel}`}>
             <div className={styles.panelHead}>
               <h2 className="section-title">Hlasování</h2>
@@ -174,8 +189,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
               Jít hlasovat
             </Link>
           </section>
+          )}
         </div>
-        )}
       </div>
     </>
   );

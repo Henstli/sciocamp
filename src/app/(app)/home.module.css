@@ -285,3 +285,10 @@
     flex: 1 1 100%;
   }
 }
+a.deadline {
+  text-decoration: none;
+  color: var(--text);
+}
+a.deadline:hover .itemTitle {
+  color: var(--primary-text);
+}

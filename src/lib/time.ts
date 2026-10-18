@@ -125,3 +125,61 @@ export function formatSlots(slots: Slot[]): string {
     })
     .join(" · ");
 }
+
+// ---------------------------------------------------------------------------
+// Termíny úkolů (okamžiky v UTC zobrazované v pražském čase)
+// ---------------------------------------------------------------------------
+
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+/** ISO okamžik → hodnota pro <input type="datetime-local"> v pražském čase. */
+export function isoToPragueLocal(iso: string): string {
+  const p = pragueNow(new Date(iso));
+  return `${p.y}-${pad(p.m)}-${pad(p.d)}T${pad(Math.floor(p.minutes / 60))}:${pad(p.minutes % 60)}`;
+}
+
+/** „2026-10-21T23:59“ (pražský čas) → ISO okamžik v UTC. Null = neplatné. */
+export function pragueLocalToIso(local: string): string | null {
+  const m = local.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  const [, y, mo, d, h, mi] = m.map(Number);
+  const wanted = Date.UTC(y, mo - 1, d, h, mi);
+  let guess = wanted;
+  // Dvakrát dorovnat posun pásma (kvůli přechodu na letní čas).
+  for (let i = 0; i < 2; i++) {
+    const p = pragueNow(new Date(guess));
+    const shown = Date.UTC(p.y, p.m - 1, p.d, Math.floor(p.minutes / 60), p.minutes % 60);
+    guess += wanted - shown;
+  }
+  return new Date(guess).toISOString();
+}
+
+/** Termín lidsky: „dnes 23:59“, „zítra 8:00“, „čt 22. 10. 23:59“. */
+export function formatDue(iso: string, now = new Date()): string {
+  const due = pragueNow(new Date(iso));
+  const today = pragueNow(now);
+  const time = `${Math.floor(due.minutes / 60)}:${pad(due.minutes % 60)}`;
+  if (sameDate(due, today)) return `dnes ${time}`;
+  if (sameDate(due, addDays(today, 1))) return `zítra ${time}`;
+  if (sameDate(due, addDays(today, -1))) return `včera ${time}`;
+  const year = due.y !== today.y ? `${due.y} ` : "";
+  return `${DAYS_SHORT[due.isoWeekday - 1].toLowerCase()} ${due.d}. ${due.m}. ${year}${time}`;
+}
+
+/** Krátké datum: „21. 10.“ */
+export function formatShortDate(iso: string): string {
+  const p = pragueNow(new Date(iso));
+  return `${p.d}. ${p.m}.`;
+}
+
+/** Datum a čas události: „21. 10. 14:05“ */
+export function formatStamp(iso: string, now = new Date()): string {
+  const p = pragueNow(new Date(iso));
+  const t = pragueNow(now);
+  const time = `${Math.floor(p.minutes / 60)}:${pad(p.minutes % 60)}`;
+  if (sameDate(p, t)) return `dnes ${time}`;
+  if (sameDate(p, addDays(t, -1))) return `včera ${time}`;
+  return `${p.d}. ${p.m}. ${time}`;
+}

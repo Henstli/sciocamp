@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/lib/use-keep-form";
 import Link from "next/link";
 import { useActionState, useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
@@ -208,7 +209,7 @@ function InviteForm({ live, onClose }: { live: boolean; onClose: () => void }) {
   const [state, action, pending] = useActionState<InviteState, FormData>(inviteUser, {});
   const [role, setRole] = useState<Role>("student");
   return (
-    <form action={action} className={`card ${styles.invite}`}>
+    <form onSubmit={keepForm(action)} className={`card ${styles.invite}`}>
       <div className={styles.inviteHead}>
         <h2 className="section-title">Přidat uživatele</h2>
         <button type="button" className="btn btn-outline" style={{ marginLeft: "auto", minHeight: 40 }} onClick={onClose}>

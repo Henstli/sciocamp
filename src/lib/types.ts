@@ -100,3 +100,53 @@ export type ClassroomContent = {
   chat: ChatMessage[];
   upcoming: { title: string; when: string; urgent: boolean }[];
 };
+
+// ---------------------------------------------------------------------------
+// Etapa 2: úkoly a hodnocení
+// ---------------------------------------------------------------------------
+
+export type AssignmentKind = "ukol" | "material";
+export type ReviewResult = "splneno" | "nesplneno" | "vraceno";
+export type LinkItem = { title: string; url: string };
+
+export type Assignment = {
+  id: string;
+  /** Slug třídy */
+  activityId: string;
+  activityTitle: string;
+  activityKind: ActivityKind;
+  kind: AssignmentKind;
+  title: string;
+  instructions: string;
+  topic: string | null;
+  /** ISO čas (UTC) nebo null */
+  dueAt: string | null;
+  maxPoints: number | null;
+  links: LinkItem[];
+  createdAt: string;
+};
+
+export type SubmissionFile = { path: string; name: string; size: number | null; url?: string };
+
+export type Submission = {
+  status: "rozpracovano" | "odevzdano";
+  links: LinkItem[];
+  note: string | null;
+  submittedAt: string | null;
+  files: SubmissionFile[];
+};
+
+export type Review = {
+  result: ReviewResult;
+  points: number | null;
+  feedback: string | null;
+  request: string | null;
+  reviewedAt: string;
+};
+
+export type Work = { submission: Submission | null; review: Review | null };
+
+/** Stav úkolu z pohledu studenta. */
+export type WorkState = "material" | "ceka" | "pozde" | "odevzdano" | "vraceno" | "splneno" | "nesplneno";
+
+export type Comment = { id: string; authorId: string; body: string; createdAt: string };

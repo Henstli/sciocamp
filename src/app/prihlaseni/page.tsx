@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Icon } from "@/components/Icon";
 import { getCurrentUser } from "@/lib/auth";
-import { SCHOOL_DOMAIN, isSupabase } from "@/lib/config";
+import { SCHOOL_DOMAIN, isGoogleEnabled, isSupabase } from "@/lib/config";
 import { listDemoAccounts } from "@/lib/data";
 import { roleCaption } from "@/lib/roles";
 import { LoginForm } from "./LoginForm";
@@ -58,7 +58,7 @@ async function LoginGate({ searchParams }: { searchParams: PageProps<"/prihlasen
     caption: roleCaption(u),
   }));
   const error = typeof chyba === "string" ? ERRORS[chyba] ?? ERRORS.odkaz : undefined;
-  return <LoginForm demoAccounts={demo} live={isSupabase} initialError={error} />;
+  return <LoginForm demoAccounts={demo} live={isSupabase} googleEnabled={isGoogleEnabled} initialError={error} />;
 }
 
 const ERRORS: Record<string, string> = {
@@ -67,5 +67,6 @@ const ERRORS: Record<string, string> = {
   blokovano: "Účet je zablokovaný. Obrať se na správce školy.",
   google:
     "Přihlášení přes Google se nepovedlo. Studentům ho někdy blokuje nastavení školního Google účtu — přihlas se e-mailem a heslem.",
+  "google-vypnuto": "Přihlášení přes Google zatím není zapnuté. Přihlas se školním e-mailem a heslem.",
   odkaz: "Odkaz je neplatný nebo vypršel. Zkus to znovu, nebo si nech poslat nový přes „Zapomenuté heslo?“.",
 };
