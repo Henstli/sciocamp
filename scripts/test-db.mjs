@@ -38,9 +38,7 @@ for (const file of readdirSync(dir).sort()) {
 // Supabase dává rolím přístup ke schématu public; tady to musíme udělat sami.
 await db.exec(`
   grant usage on schema public to anon, authenticated, service_role;
-  grant select, insert, update, delete on all tables in schema public to authenticated, service_role;
-  revoke update on public.profiles from authenticated;
-  grant update (bio) on public.profiles to authenticated;
+  grant select, insert, update, delete on all tables in schema public to service_role;
 `);
 
 let passed = 0;

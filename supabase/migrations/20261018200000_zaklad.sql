@@ -166,6 +166,11 @@ create policy "vlastní profil: o mně" on public.profiles
   using (id = (select auth.uid()) and public.is_member())
   with check (id = (select auth.uid()));
 
+-- Přístup k tabulkám výslovně (nezávisle na nastavení „Automatically expose new tables“).
+-- Anonymní návštěvník nesmí nic; přihlášený jen to, co povolí politiky RLS výše i níže.
+revoke all on public.profiles, public.blocks, public.activities, public.activity_slots, public.enrollments from anon;
+grant select on public.profiles to authenticated;
+grant select, insert, update, delete on public.blocks, public.activities, public.activity_slots, public.enrollments to authenticated;
 revoke update on public.profiles from authenticated;
 grant update (bio) on public.profiles to authenticated;
 
