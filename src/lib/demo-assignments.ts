@@ -35,7 +35,7 @@ export const DEMO_ASSIGNMENTS: DemoAssignment[] = [
   },
   {
     id: "a-literatura", activityId: "literatura-ve-filmu", kind: "ukol", title: "Seznam povinné literatury",
-    instructions: "Napiš, které tři knihy ze seznamu si vybereš na tento blok.", topic: null,
+    instructions: "Napiš, které tři knihy ze seznamu si vybereš na toto období.", topic: null,
     dueAt: "2026-10-17T21:59:00Z", maxPoints: null, links: [], createdAt: "2026-10-01T09:00:00Z",
   },
   {

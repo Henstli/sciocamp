@@ -37,13 +37,16 @@ export function AdminTabs({
   courses,
   live,
   initialTab = "users",
+  periodsTab,
 }: {
   users: AdminUser[];
   courses: AdminCourse[];
   live: boolean;
-  initialTab?: "users" | "courses";
+  initialTab?: "users" | "courses" | "periods";
+  /** Obsah záložky Kurzová období (vykreslený na serveru) */
+  periodsTab?: React.ReactNode;
 }) {
-  const [tab, setTab] = useState<"users" | "courses">(initialTab);
+  const [tab, setTab] = useState<"users" | "courses" | "periods">(initialTab);
   const [filter, setFilter] = useState<(typeof FILTERS)[number][0]>("all");
   const [query, setQuery] = useState("");
   const [roles, setRoles] = useState<Record<string, Role>>({});
@@ -75,6 +78,9 @@ export function AdminTabs({
       <div role="tablist" aria-label="Sekce správy" className="tablist">
         <button role="tab" aria-selected={tab === "users"} className="tab" onClick={() => setTab("users")}>
           Uživatelé
+        </button>
+        <button role="tab" aria-selected={tab === "periods"} className="tab" onClick={() => setTab("periods")}>
+          Kurzová období
         </button>
         <button role="tab" aria-selected={tab === "courses"} className="tab" onClick={() => setTab("courses")}>
           Kurzy a ateliéry
@@ -151,6 +157,8 @@ export function AdminTabs({
           </div>
         </section>
       )}
+
+      {tab === "periods" && periodsTab}
 
       {tab === "courses" && (
         <section aria-label="Kurzy a ateliéry" className={`card ${styles.table}`}>

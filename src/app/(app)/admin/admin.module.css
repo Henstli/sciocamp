@@ -230,3 +230,11 @@
 .field .select {
   height: 44px;
 }
+.periodForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--primary-tint);
+}

@@ -35,6 +35,15 @@ export type Project = {
   milestonesTotal: number;
 };
 
+/** Kurzové období (4 za školní rok). */
+export type Period = {
+  id: string;
+  name: string;
+  /** „rrrr-mm-dd“ */
+  startsOn: string;
+  endsOn: string;
+};
+
 /** Kurz, ateliér nebo jiná aktivita (třídnická hodina, příprava expedice …). */
 export type Activity = {
   /** Slug pro adresu (/kurzy/<id>). */
@@ -43,7 +52,13 @@ export type Activity = {
   title: string;
   description?: string;
   teacherId: string;
-  room: string;
+  /** Nepovinné místo konání (výuka je jinak online), např. kam se jede na expedici. */
+  location: string | null;
+  /** Kurzové období, do kterého aktivita patří */
+  period: Period | null;
+  /** Vlastní začátek a konec („rrrr-mm-dd“) — u ateliérů a expedic. Null = podle období. */
+  startsOn: string | null;
+  endsOn: string | null;
   /** Odkaz na Google Meet; vkládá ho vyučující nebo admin. Null = zatím není. */
   meetUrl: string | null;
   /** Pro které ročníky je aktivita; null = pro všechny. */

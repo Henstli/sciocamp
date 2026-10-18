@@ -2,6 +2,7 @@
 
 import { keepForm } from "@/lib/use-keep-form";
 import { useActionState, useState } from "react";
+import { DueInput } from "@/components/fields/DateTime";
 import { saveAssignment, type FormState } from "@/lib/actions/assignments";
 import type { AssignmentKind } from "@/lib/types";
 import styles from "../manage/manage.module.css";
@@ -113,8 +114,8 @@ export function AssignmentForm({
 
         {kind === "ukol" && (
           <>
-            <Field label="Termín (nepovinné)" error={fe.due}>
-              <input name="due" type="datetime-local" defaultValue={initial.due} className={styles.input} />
+            <Field label="Termín (nepovinné)" error={fe.due} hint="Datum jako 21. 10. 2026, čas ve 24h formátu.">
+              <DueInput name="due" defaultValue={initial.due} />
             </Field>
             <Field label="Maximum bodů (nepovinné)" error={fe.maxPoints} hint="Bez bodů hodnotíš jen splněno / nesplněno a slovně.">
               <input name="maxPoints" type="number" min={1} max={1000} step={1} defaultValue={initial.maxPoints} className={styles.input} placeholder="Např. 20" />

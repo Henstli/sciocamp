@@ -286,3 +286,8 @@ label.row:hover,
     grid-column: 1 / -1;
   }
 }
+
+.row[data-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

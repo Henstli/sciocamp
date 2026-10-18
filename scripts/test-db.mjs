@@ -93,7 +93,7 @@ const student2 = await createUser("eliot.komarek@scioskola.cz", { grade: "4" }, 
 const outsider = await createUser("cizi.student@scioskola.cz", {}, { full_name: "Cizí Student" });
 
 const { rows: [course] } = await db.query(
-  `insert into public.activities (slug, kind, title, teacher_id, room, meet_url)
+  `insert into public.activities (slug, kind, title, teacher_id, location, meet_url)
    values ('literatura-ve-filmu', 'kurz', 'Literatura ve filmu', $1, 'učebna 204', 'https://meet.google.com/abc-defg-hij') returning id`,
   [teacher],
 );
@@ -311,6 +311,41 @@ await test("soubory: student nahrává jen do své složky, vyučující čte", 
   assert.equal((await as(teacher, `select name from storage.objects where name = $1`, [mine])).length, 1);
   // Šimon má práci uzavřenou — nahrát už nesmí.
   await assert.rejects(() => as(student, `insert into storage.objects (bucket_id, name) values ('odevzdani', $1)`, [`${task.id}/${student}/pozde.pdf`]));
+});
+
+await test("student je v jednu dobu jen v jednom ateliéru, kurzů může mít víc", async () => {
+  const { rows: [blok] } = await db.query(`insert into public.blocks (name, starts_on, ends_on) values ('Kurzové období 2', '2026-11-02', '2026-12-18') returning id`);
+  const mk = async (slug, kind, s, e) =>
+    (await db.query(
+      `insert into public.activities (slug, kind, title, teacher_id, block_id, starts_on, ends_on) values ($1, $2, $1, $3, $4, $5, $6) returning id`,
+      [slug, kind, teacher2, blok.id, s, e],
+    )).rows[0].id;
+  const enroll = (activity) => as(admin, `insert into public.enrollments (activity_id, student_id) values ($1, $2) returning student_id`, [activity, student2]);
+  const a1 = await mk("atelier-a", "atelier", "2026-11-02", "2026-11-20");
+  const a2 = await mk("atelier-b", "atelier", "2026-11-23", "2026-12-11");
+  const a3 = await mk("atelier-c", "atelier", "2026-11-16", "2026-11-27");
+  assert.equal((await enroll(a1)).length, 1);
+  assert.equal((await enroll(a2)).length, 1, "navazující ateliér jde");
+  await assert.rejects(() => enroll(a3), /ateliéru „atelier-a“/);
+  // Ateliér bez vlastních dat trvá celé období → překrývá se.
+  const a4 = await mk("atelier-d", "atelier", null, null);
+  await assert.rejects(() => enroll(a4));
+  // Kurzy ve stejném období se nehlídají.
+  const k1 = await mk("kurz-x", "kurz", null, null);
+  const k2 = await mk("kurz-y", "kurz", null, null);
+  assert.equal((await enroll(k1)).length, 1);
+  assert.equal((await enroll(k2)).length, 1);
+  // Posunutí termínu, které by vytvořilo překryv, databáze nepustí.
+  await assert.rejects(() => db.query(`update public.activities set starts_on = '2026-11-10' where id = $1`, [a2]), /překrýval/);
+  await db.query(`update public.activities set ends_on = '2026-12-18' where id = $1`, [a2]);
+});
+
+await test("místo je nepovinné a data aktivity musí dávat smysl", async () => {
+  const ok = await as(teacher, `insert into public.activities (slug, kind, title, teacher_id) values ('online-kurz', 'kurz', 'Online', $1) returning location`, [teacher]);
+  assert.equal(ok[0].location, null);
+  await assert.rejects(() =>
+    as(teacher, `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on) values ('spatne', 'ostatni', 'X', $1, '2026-11-10', '2026-11-09')`, [teacher]),
+  );
 });
 
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

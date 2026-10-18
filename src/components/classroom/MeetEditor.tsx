@@ -22,7 +22,7 @@ export function MeetEditor({ activity, current }: { activity: string; current: s
     <form onSubmit={keepForm(action)} className={styles.meetForm}>
       <input type="hidden" name="activity" value={activity} />
       <label htmlFor="meet-url" className={styles.strong}>
-        Odkaz na Meet pro celý blok
+        Odkaz na Meet pro celé období
       </label>
       <input
         id="meet-url"

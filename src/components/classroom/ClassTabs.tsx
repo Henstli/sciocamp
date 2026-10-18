@@ -40,7 +40,7 @@ export type ClassView = {
   chat: { id: string; time: string; text: string; author: Person }[];
   upcoming: { title: string; when: string; urgent: boolean; href?: string }[];
   next: { label: string; live: boolean } | null;
-  room: string;
+  location: string | null;
   meetUrl: string | null;
   canEditMeet: boolean;
   slug: string;
@@ -189,8 +189,8 @@ function Stream({ view }: { view: ClassView }) {
           <h2 className={styles.h2}>{view.next?.live ? "Hodina" : "Příští hodina"}</h2>
           {view.next && <div className={styles.nextLabel}>{view.next.label}</div>}
           <div className={styles.meta}>
-            {view.room ? `${view.room[0].toUpperCase()}${view.room.slice(1)} nebo online.` : "Online."} Odkaz na Meet je stejný
-            pro celý blok.
+            {view.location ? `Místo: ${view.location}. ` : "Výuka probíhá online. "}Odkaz na Meet je stejný pro celé
+            období.
           </div>
           {view.meetUrl ? (
             <a href={view.meetUrl} target="_blank" rel="noopener noreferrer" className="btn btn-soft">

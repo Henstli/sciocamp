@@ -4,7 +4,9 @@ import { Icon } from "@/components/Icon";
 import { ActivityForm } from "@/components/manage/ActivityForm";
 import { PageHeader } from "@/components/PageHeader";
 import { requireTeacher } from "@/lib/auth";
-import { listStaff } from "@/lib/data";
+import { listPeriods, listStaff } from "@/lib/data";
+import { currentPeriod } from "@/lib/periods";
+import { pragueNow, toIso } from "@/lib/time";
 import { isAdmin } from "@/lib/roles";
 import type { ActivityKind } from "@/lib/types";
 import styles from "../ucitel.module.css";
@@ -17,6 +19,9 @@ export default async function NewActivityPage({ searchParams }: PageProps<"/ucit
   const kind: ActivityKind = typ === "atelier" || typ === "ostatni" ? typ : "kurz";
   const admin = isAdmin(user.role);
   const staff = admin ? (await listStaff()).map((s) => ({ id: s.id, name: s.name })) : [];
+  const periods = await listPeriods();
+  const now = pragueNow();
+  const current = currentPeriod(periods, toIso(now));
 
   return (
     <>
@@ -29,13 +34,17 @@ export default async function NewActivityPage({ searchParams }: PageProps<"/ucit
         subtitle={admin ? "Kurz, ateliér nebo jiná aktivita. Vyber, kdo ji vede." : "Kurz, ateliér nebo jiná aktivita, kterou povedeš ty."}
       />
       <ActivityForm
+        periods={periods}
         canPickTeacher={admin}
         staff={staff}
         initial={{
           kind,
           title: "",
           description: "",
-          room: "",
+          location: "",
+          periodId: current?.id ?? "",
+          startsOn: "",
+          endsOn: "",
           capacity: "",
           meetUrl: "",
           teacherId: user.id,

@@ -3,10 +3,10 @@
 
 import "server-only";
 import { isSupabase } from "./config";
-import { DEMO_ACTIVITIES, DEMO_CLASSROOMS, DEMO_HOME, DEMO_USERS } from "./demo-data";
+import { DEMO_ACTIVITIES, DEMO_CLASSROOMS, DEMO_HOME, DEMO_PERIODS, DEMO_USERS } from "./demo-data";
 import { canTeach, isAdmin } from "./roles";
 import { createClient } from "./supabase/server";
-import type { Activity, ActivityKind, ClassroomContent, Role, Slot, User, Weekday } from "./types";
+import type { Activity, ActivityKind, ClassroomContent, Period, Role, Slot, User, Weekday } from "./types";
 
 // ---------------------------------------------------------------------------
 // Převod řádků z databáze na typy aplikace
@@ -46,7 +46,10 @@ type ActivityRow = {
   title: string;
   description: string | null;
   teacher_id: string;
-  room: string;
+  location: string | null;
+  starts_on: string | null;
+  ends_on: string | null;
+  blocks: { id: string; name: string; starts_on: string; ends_on: string } | null;
   meet_url: string | null;
   capacity: number | null;
   allowed_grades: number[] | null;
@@ -59,7 +62,7 @@ type ActivityRow = {
 };
 
 const ACTIVITY_COLUMNS =
-  "id, slug, kind, title, description, teacher_id, room, meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id)";
+  "id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(id, name, starts_on, ends_on), meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id)";
 
 function toActivity(r: ActivityRow): Activity {
   return {
@@ -68,7 +71,10 @@ function toActivity(r: ActivityRow): Activity {
     title: r.title,
     description: r.description ?? undefined,
     teacherId: r.teacher_id,
-    room: r.room,
+    location: r.location,
+    period: r.blocks ? toPeriod(r.blocks) : null,
+    startsOn: r.starts_on,
+    endsOn: r.ends_on,
     meetUrl: r.meet_url,
     allowedGrades: r.allowed_grades,
     slots: r.activity_slots
@@ -83,6 +89,12 @@ function toActivity(r: ActivityRow): Activity {
         ? { name: r.project_name, milestonesDone: r.milestones_done, milestonesTotal: r.milestones_total }
         : undefined,
   };
+}
+
+type PeriodRow = { id: string; name: string; starts_on: string; ends_on: string };
+
+function toPeriod(r: PeriodRow): Period {
+  return { id: r.id, name: r.name, startsOn: r.starts_on, endsOn: r.ends_on };
 }
 
 function fail(what: string, error: { message: string }): never {
@@ -216,7 +228,7 @@ export async function getClassroom(activity: Activity): Promise<ClassroomContent
         authorId: activity.teacherId,
         when: "1. 9.",
         label: "oznámení",
-        text: `Vítejte v ${activity.kind === "atelier" ? "ateliéru" : "kurzu"} ${activity.title}! Odkaz na Meet najdete vpravo, platí pro celý blok.`,
+        text: `Vítejte v ${activity.kind === "atelier" ? "ateliéru" : "kurzu"} ${activity.title}! Odkaz na Meet najdete vpravo, platí pro celé období.`,
         attachments: [],
         comments: 0,
       },
@@ -227,4 +239,16 @@ export async function getClassroom(activity: Activity): Promise<ClassroomContent
 /** Souhrn na Domov. Naostro zatím null — úkoly, hlasování a zprávy ještě nejsou. */
 export async function getHomeSummary(): Promise<typeof DEMO_HOME | null> {
   return isSupabase ? null : DEMO_HOME;
+}
+
+// ---------------------------------------------------------------------------
+// Kurzová období
+// ---------------------------------------------------------------------------
+
+export async function listPeriods(): Promise<Period[]> {
+  if (!isSupabase) return DEMO_PERIODS;
+  const sb = await createClient();
+  const { data, error } = await sb.from("blocks").select("id, name, starts_on, ends_on").order("starts_on");
+  if (error) fail("kurzová období", error);
+  return (data as PeriodRow[]).map(toPeriod);
 }

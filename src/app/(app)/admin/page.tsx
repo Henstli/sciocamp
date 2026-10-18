@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/PageHeader";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
-import { listActivities, listUsers } from "@/lib/data";
+import { listActivities, listPeriods, listUsers } from "@/lib/data";
+import { currentPeriod, describeWhen } from "@/lib/periods";
 import { KIND_LABEL } from "@/lib/links";
 import { initials } from "@/lib/roles";
-import { formatSlots } from "@/lib/time";
+import { pragueNow, toIso } from "@/lib/time";
 import { AdminTabs } from "./AdminTabs";
+import { PeriodManager } from "./PeriodManager";
 import styles from "./admin.module.css";
 
 export const metadata: Metadata = { title: "Uživatelé a škola" };
@@ -16,6 +18,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const { tab } = await searchParams;
   const users = await listUsers();
   const activities = await listActivities();
+  const periods = await listPeriods();
+  const today = toIso(pragueNow());
+  const current = currentPeriod(periods, today);
   const nameOf = (id: string) => users.find((u) => u.id === id)?.name ?? "";
 
   const students = users.filter((u) => u.role === "student").length;
@@ -35,7 +40,16 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
       <AdminTabs
         live={isSupabase}
-        initialTab={tab === "kurzy" ? "courses" : "users"}
+        initialTab={tab === "kurzy" ? "courses" : tab === "obdobi" ? "periods" : "users"}
+        periodsTab={
+          <PeriodManager
+            periods={periods.map((p) => ({
+              ...p,
+              current: p.id === current?.id && p.startsOn <= today && today <= p.endsOn,
+              activities: activities.filter((a) => a.period?.id === p.id).length,
+            }))}
+          />
+        }
         users={users.map((u) => ({
           id: u.id,
           name: u.name,
@@ -51,7 +65,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           kindKey: a.kind,
           title: a.title,
           lector: nameOf(a.teacherId),
-          when: formatSlots(a.slots),
+          when: [a.period?.name, describeWhen(a)].filter(Boolean).join(" · "),
           taken: a.studentIds.length,
           cap: a.capacity ?? null,
           meetUrl: a.meetUrl,

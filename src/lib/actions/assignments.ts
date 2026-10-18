@@ -51,7 +51,7 @@ export async function saveAssignment(_prev: FormState, formData: FormData): Prom
   if (kind === "ukol") {
     if (dueRaw) {
       dueAt = pragueLocalToIso(dueRaw);
-      if (!dueAt) fieldErrors.due = "Neplatný termín.";
+      if (!dueAt) fieldErrors.due = "Napiš datum jako 21. 10. 2026 a čas jako 23:59.";
     }
     if (pointsRaw) {
       maxPoints = Number(pointsRaw);

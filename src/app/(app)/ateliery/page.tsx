@@ -4,12 +4,13 @@ import { ClassCard, Milestones } from "@/components/ClassCard";
 import { Icon } from "@/components/Icon";
 import { EmptyNote, PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
-import { activitiesForUser, getClassroom, getUsersByIds, listActivities } from "@/lib/data";
+import { activitiesForUser, getClassroom, getUsersByIds, listActivities, listPeriods } from "@/lib/data";
+import { currentPeriod, describeWhen, hasEnded } from "@/lib/periods";
 import { plural } from "@/lib/format";
 import { activityHref } from "@/lib/links";
 import { initials } from "@/lib/roles";
 import { isLiveNow } from "@/lib/schedule";
-import { formatSlots, pragueNow } from "@/lib/time";
+import { pragueNow, toIso } from "@/lib/time";
 import styles from "../classes.module.css";
 
 export const metadata: Metadata = { title: "Ateliéry" };
@@ -17,9 +18,17 @@ export const metadata: Metadata = { title: "Ateliéry" };
 export default async function AteliersPage() {
   const user = await requireUser();
   const now = pragueNow();
-  const mine = await activitiesForUser(user, "atelier");
-  const others = (await listActivities()).filter((a) => a.kind === "atelier" && !mine.some((m) => m.id === a.id));
-  const teachers = await getUsersByIds([...new Set([...mine, ...others].map((c) => c.teacherId))]);
+  const today = toIso(now);
+  const period = currentPeriod(await listPeriods(), today);
+  const byStart = (x: { startsOn: string | null }, y: { startsOn: string | null }) => (x.startsOn ?? "").localeCompare(y.startsOn ?? "");
+  const allMine = await activitiesForUser(user, "atelier");
+  // Ateliéry se během období střídají: nahoře běžící a nadcházející, proběhlé schované.
+  const mine = allMine.filter((a) => !hasEnded(a, today)).sort(byStart);
+  const ended = allMine.filter((a) => hasEnded(a, today));
+  const others = (await listActivities())
+    .filter((a) => a.kind === "atelier" && !allMine.some((m) => m.id === a.id) && !hasEnded(a, today))
+    .sort(byStart);
+  const teachers = await getUsersByIds([...new Set([...allMine, ...others].map((c) => c.teacherId))]);
   const teacherName = (id: string) => teachers.find((t) => t.id === id)?.name ?? "";
 
   const cards = await Promise.all(
@@ -30,17 +39,17 @@ export default async function AteliersPage() {
     <>
       <PageHeader
         title="Ateliéry"
-        subtitle="Dlouhodobé projekty v týmech · blok 1"
+        subtitle={`Kratší projekty, během období se střídají${period ? ` · ${period.name}` : ""}`}
         avatar={{ initials: initials(user.name), name: user.name }}
       >
         <Link href="/zapisy" className="btn btn-outline-primary">
-          Zápis na další blok
+          Zápis na další ateliér
         </Link>
       </PageHeader>
 
       <h2 className="section-title">{user.role === "student" ? "Moje ateliéry" : "Ateliéry, které vedu"}</h2>
       {cards.length === 0 ? (
-        <EmptyNote>V tomhle bloku nemáš žádný ateliér.</EmptyNote>
+        <EmptyNote>Teď nemáš žádný ateliér.</EmptyNote>
       ) : (
         <div className={styles.gridWide}>
           {cards.map(({ activity, next }) => (
@@ -77,7 +86,7 @@ export default async function AteliersPage() {
       {others.length > 0 && (
         <>
           <h2 className="section-title" style={{ marginTop: 8 }}>
-            Další ateliéry tento blok
+            Další ateliéry v období
           </h2>
           <section className={`card ${styles.list}`}>
             {others.map((o) => (
@@ -85,7 +94,7 @@ export default async function AteliersPage() {
                 <div className={styles.rowMain}>
                   <div className={styles.rowTitle}>{o.title}</div>
                   <div className={styles.rowMeta}>
-                    {teacherName(o.teacherId)} · {formatSlots(o.slots)}
+                    {[teacherName(o.teacherId), describeWhen(o), o.location].filter(Boolean).join(" · ")}
                   </div>
                 </div>
                 <div className={styles.rowSide}>
@@ -100,6 +109,17 @@ export default async function AteliersPage() {
             ))}
           </section>
         </>
+      )}
+      {ended.length > 0 && (
+        <details className={styles.past}>
+          <summary>Proběhlé ateliéry ({ended.length})</summary>
+          {ended.map((a) => (
+            <Link key={a.id} href={activityHref(a)} className={styles.pastRow}>
+              <span className={styles.rowTitle}>{a.title}</span>
+              <span className={styles.rowMeta}>{[teacherName(a.teacherId), describeWhen(a)].filter(Boolean).join(" · ")}</span>
+            </Link>
+          ))}
+        </details>
       )}
     </>
   );

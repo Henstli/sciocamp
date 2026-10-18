@@ -3,11 +3,13 @@ import Link from "next/link";
 import { ClassCard } from "@/components/ClassCard";
 import { EmptyNote, PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
-import { activitiesForUser, getUsersByIds, listActivities } from "@/lib/data";
+import { activitiesForUser, getUsersByIds, listActivities, listPeriods } from "@/lib/data";
+import { activityHref } from "@/lib/links";
+import { currentPeriod, formatDateRange, hasEnded } from "@/lib/periods";
 import { plural } from "@/lib/format";
 import { initials, isAdmin } from "@/lib/roles";
 import { isLiveNow } from "@/lib/schedule";
-import { pragueNow } from "@/lib/time";
+import { pragueNow, toIso } from "@/lib/time";
 import styles from "../classes.module.css";
 
 export const metadata: Metadata = { title: "Kurzy" };
@@ -17,18 +19,24 @@ export default async function CoursesPage() {
   const now = pragueNow();
 
   // Admin vidí celou nabídku, ostatní kurzy, které navštěvují nebo učí.
-  const courses = isAdmin(user.role)
+  const allCourses = isAdmin(user.role)
     ? (await listActivities()).filter((a) => a.kind === "kurz")
     : await activitiesForUser(user, "kurz");
-  const teachers = await getUsersByIds([...new Set(courses.map((c) => c.teacherId))]);
+  const today = toIso(now);
+  const period = currentPeriod(await listPeriods(), today);
+  // Kurzy končí s kurzovým obdobím; proběhlé jen ve skrytém seznamu.
+  const courses = allCourses.filter((c) => !hasEnded(c, today));
+  const ended = allCourses.filter((c) => hasEnded(c, today));
+  const teachers = await getUsersByIds([...new Set(allCourses.map((c) => c.teacherId))]);
   const teacherOf = (id: string) => teachers.find((t) => t.id === id) ?? null;
 
+  const prefix = period ? `${period.name} (${formatDateRange(period.startsOn, period.endsOn)}) · ` : "";
   const subtitle =
     user.role === "student"
-      ? `Blok 1 · ${courses.length} ${plural(courses.length, "kurz", "kurzy", "kurzů")}, do kterých chodíš`
+      ? `${prefix}${courses.length} ${plural(courses.length, "kurz", "kurzy", "kurzů")}, do kterých chodíš`
       : user.role === "admin"
-        ? `Blok 1 · všech ${courses.length} ${plural(courses.length, "kurz", "kurzy", "kurzů")} v nabídce`
-        : `Blok 1 · ${courses.length} ${plural(courses.length, "kurz", "kurzy", "kurzů")}, které učíš`;
+        ? `${prefix}všech ${courses.length} ${plural(courses.length, "kurz", "kurzy", "kurzů")} v nabídce`
+        : `${prefix}${courses.length} ${plural(courses.length, "kurz", "kurzy", "kurzů")}, které učíš`;
 
   return (
     <>
@@ -52,6 +60,20 @@ export default async function CoursesPage() {
             />
           ))}
         </div>
+      )}
+
+      {ended.length > 0 && (
+        <details className={styles.past}>
+          <summary>Proběhlé kurzy ({ended.length})</summary>
+          {ended.map((c) => (
+            <Link key={c.id} href={activityHref(c)} className={styles.pastRow}>
+              <span className={styles.rowTitle}>{c.title}</span>
+              <span className={styles.rowMeta}>
+                {[c.period?.name, teacherOf(c.teacherId)?.name].filter(Boolean).join(" · ")}
+              </span>
+            </Link>
+          ))}
+        </details>
       )}
     </>
   );

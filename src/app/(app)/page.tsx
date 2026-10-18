@@ -10,7 +10,7 @@ import { plural } from "@/lib/format";
 import { activitiesForUser, getHomeSummary, getUserById, getUsersByIds } from "@/lib/data";
 import { activityHref } from "@/lib/links";
 import { canTeach, firstNameVocative, initials } from "@/lib/roles";
-import { currentOrNext, weekEntries } from "@/lib/schedule";
+import { currentOrNext, weekAllDay, weekEntries } from "@/lib/schedule";
 import {
   DAYS_SHORT,
   defaultWeekStart,
@@ -36,6 +36,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
   const activities = await activitiesForUser(user);
   const entries = weekEntries(activities, monday, now);
+  const allDay = weekAllDay(activities, monday);
   const upcoming = currentOrNext(activities, now);
   const upcomingTeacher = upcoming ? await getUserById(upcoming.activity.teacherId) : null;
   const home = await getHomeSummary();
@@ -70,7 +71,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             </div>
             <div className={styles.bannerMeta}>
               {!upcoming.live && !sameDate(upcoming.date, now) && `${DAYS_SHORT[isoWeekdayOf(upcoming.date) - 1]} ${upcoming.date.d}. ${upcoming.date.m}. · `}
-              {formatRange(upcoming.slot)} · {upcomingTeacher?.name} · {upcoming.activity.room}
+              {formatRange(upcoming.slot)} · {upcomingTeacher?.name}
+              {upcoming.activity.location ? ` · ${upcoming.activity.location}` : ""}
             </div>
           </div>
           <Link href={activityHref(upcoming.activity)} className="btn btn-outline">
@@ -138,7 +140,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
       <div className={styles.columns}>
         <div className={styles.schedule}>
-          <ScheduleWeek entries={entries} monday={monday} now={now} title={teaching ? "Můj rozvrh výuky" : "Rozvrh týdne"} />
+          <ScheduleWeek entries={entries} allDay={allDay} monday={monday} now={now} title={teaching ? "Můj rozvrh výuky" : "Rozvrh týdne"} />
         </div>
 
         <div className={styles.side}>

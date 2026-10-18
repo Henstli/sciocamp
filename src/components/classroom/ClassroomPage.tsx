@@ -9,7 +9,8 @@ import { plural } from "@/lib/format";
 import { KIND_LABEL } from "@/lib/links";
 import { initials } from "@/lib/roles";
 import { currentOrNext } from "@/lib/schedule";
-import { DAYS_SHORT, formatRange, formatSlots, isoWeekdayOf, pragueNow } from "@/lib/time";
+import { describeWhen } from "@/lib/periods";
+import { DAYS_SHORT, formatRange, isoWeekdayOf, pragueNow } from "@/lib/time";
 import { STATE_CHIP, STATE_LABEL, isOpen, needsReview, workState } from "@/lib/assignments";
 import { assignmentsForActivity, workMap } from "@/lib/data-assignments";
 import { formatDue, formatStamp } from "@/lib/time";
@@ -77,7 +78,7 @@ export async function ClassroomPage({
           live: next.live,
         }
       : null,
-    room: activity.room,
+    location: activity.location,
     meetUrl: activity.meetUrl,
     canEditMeet: isTeacher,
     slug: activity.id,
@@ -96,7 +97,7 @@ export async function ClassroomPage({
         <div aria-hidden="true" className={`${styles.blob} ${styles.blob2}`} />
         <div className={styles.heroText}>
           <div className={styles.heroMeta}>
-            {[KIND_LABEL[activity.kind], formatSlots(activity.slots), activity.room].filter(Boolean).join(" · ")}
+            {[KIND_LABEL[activity.kind], describeWhen(activity), activity.location, activity.period?.name].filter(Boolean).join(" · ")}
           </div>
           <h1 className={styles.heroTitle}>{activity.title}</h1>
           <div className={styles.heroSub}>

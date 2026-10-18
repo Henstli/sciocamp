@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Icon } from "./Icon";
 import { activityHref } from "@/lib/links";
-import { hourRange, type ScheduleEntry } from "@/lib/schedule";
+import { hourRange, type AllDayEntry, type ScheduleEntry } from "@/lib/schedule";
 import { DAYS_SHORT, addDays, formatRange, formatWeekRange, sameDate, toIso, toMinutes, type PlainDate, type PragueNow } from "@/lib/time";
 import styles from "./ScheduleWeek.module.css";
 
@@ -9,11 +9,14 @@ const PX_PER_MIN = 1; // 60 px na hodinu, stejně jako v návrhu
 
 export function ScheduleWeek({
   entries,
+  allDay = [],
   monday,
   now,
   title = "Rozvrh týdne",
 }: {
   entries: ScheduleEntry[];
+  /** Vícedenní akce bez rozvrhu (expedice) — celodenní pruh nad hodinami */
+  allDay?: AllDayEntry[];
   monday: PlainDate;
   now: PragueNow;
   title?: string;
@@ -41,18 +44,37 @@ export function ScheduleWeek({
 
       <div className={styles.scroller}>
         <div className={styles.grid}>
-          <div />
+          <div style={{ gridRow: 1 }} />
           {days.map((d, i) => {
             const today = sameDate(d, now);
             return (
-              <div key={i} className={styles.dayHead} data-today={today}>
+              <div key={i} className={styles.dayHead} data-today={today} style={{ gridRow: 1 }}>
                 {DAYS_SHORT[i]}
                 <span>{d.d}</span>
               </div>
             );
           })}
 
-          <div className={styles.hours} style={{ height }}>
+          {allDay.length > 0 && (
+            <div className={styles.allDay}>
+              <div className={styles.allDayLabel}>celý den</div>
+              {allDay.map((e, i) => (
+                <Link
+                  key={e.activity.id}
+                  href={activityHref(e.activity)}
+                  className={styles.allDayEntry}
+                  data-kind={e.activity.kind}
+                  style={{ gridColumn: `${e.days[0] + 1} / ${e.days[e.days.length - 1] + 2}`, gridRow: i + 1 }}
+                  title={[e.activity.title, e.activity.location].filter(Boolean).join(" · ")}
+                >
+                  <span className={styles.entryTitle}>{e.activity.title}</span>
+                  {e.activity.location && <span className={styles.entryTime}>{e.activity.location}</span>}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <div className={styles.hours} style={{ height, gridRow: 3 }}>
             {Array.from({ length: to - from }, (_, i) => (
               <div key={i} className={styles.hour} style={{ top: i * 60 * PX_PER_MIN }}>
                 {from + i}:00
@@ -64,7 +86,7 @@ export function ScheduleWeek({
             const today = sameDate(d, now);
             const dayEntries = entries.filter((e) => e.slot.day === i + 1);
             return (
-              <div key={i} className={styles.dayCol} data-today={today} style={{ height }}>
+              <div key={i} className={styles.dayCol} data-today={today} style={{ height, gridRow: 3 }}>
                 {dayEntries.map((e) => {
                   const top = (toMinutes(e.slot.start) - from * 60) * PX_PER_MIN;
                   const h = (toMinutes(e.slot.end) - toMinutes(e.slot.start)) * PX_PER_MIN;

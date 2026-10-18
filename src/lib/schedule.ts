@@ -1,5 +1,6 @@
+import { activityRange, runsOn } from "./periods";
 import type { Activity, Slot } from "./types";
-import { addDays, isoWeekdayOf, sameDate, toMinutes, type PlainDate, type PragueNow } from "./time";
+import { addDays, isoWeekdayOf, sameDate, toIso, toMinutes, type PlainDate, type PragueNow } from "./time";
 
 export type ScheduleEntry = {
   activity: Activity;
@@ -15,6 +16,8 @@ export function weekEntries(activities: Activity[], monday: PlainDate, now: Prag
   for (const activity of activities) {
     for (const slot of activity.slots) {
       const date = addDays(monday, slot.day - 1);
+      // Hodiny jen v době, kdy aktivita běží (kurzové období, termín ateliéru).
+      if (!runsOn(activity, date)) continue;
       entries.push({ activity, slot, date, ...status(date, slot, now) });
     }
   }
@@ -39,6 +42,7 @@ export function currentOrNext(activities: Activity[], now: PragueNow): ScheduleE
     const wd = isoWeekdayOf(date);
     if (wd > 5) continue;
     const candidates = activities
+      .filter((activity) => runsOn(activity, date))
       .flatMap((activity) => activity.slots.filter((s) => s.day === wd).map((slot) => ({ activity, slot })))
       .map((c) => ({ ...c, date, ...status(date, c.slot, now) }))
       .filter((e) => !e.past)
@@ -61,7 +65,26 @@ export function hourRange(entries: ScheduleEntry[]): { from: number; to: number 
 
 /** Probíhá teď některá z hodin aktivity? */
 export function isLiveNow(activity: Activity, now: PragueNow): boolean {
+  if (!runsOn(activity, now)) return false;
   return activity.slots.some(
     (s) => s.day === now.isoWeekday && now.minutes >= toMinutes(s.start) && now.minutes < toMinutes(s.end),
   );
+}
+
+export type AllDayEntry = { activity: Activity; days: number[]; from: string; to: string };
+
+/**
+ * Vícedenní akce bez rozvrhu (expedice, výjezdní ateliér) v daném týdnu:
+ * ve kterých dnech po–pá probíhají.
+ */
+export function weekAllDay(activities: Activity[], monday: PlainDate): AllDayEntry[] {
+  const out: AllDayEntry[] = [];
+  for (const activity of activities) {
+    if (activity.slots.length > 0 || (!activity.startsOn && !activity.endsOn)) continue;
+    const days = [1, 2, 3, 4, 5].filter((d) => runsOn(activity, addDays(monday, d - 1)));
+    if (days.length === 0) continue;
+    const r = activityRange(activity);
+    out.push({ activity, days, from: r.from ?? toIso(monday), to: r.to ?? toIso(addDays(monday, 4)) });
+  }
+  return out;
 }

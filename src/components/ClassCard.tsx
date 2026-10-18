@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Icon } from "./Icon";
 import { MeetLink } from "./MeetLink";
 import { activityHref } from "@/lib/links";
-import { formatSlots } from "@/lib/time";
+import { describeWhen } from "@/lib/periods";
 import type { Activity, User } from "@/lib/types";
 import styles from "./ClassCard.module.css";
 
@@ -25,8 +25,7 @@ export function ClassCard({
     <article className={`card ${styles.card}`} data-big={big}>
       <Link href={href} className={styles.head} data-tone={activity.tone}>
         <div className={styles.when}>
-          {formatSlots(activity.slots)}
-          {big && ` · ${activity.room}`}
+          {describeWhen(activity) || "Bez rozvrhu"}
         </div>
         <div className={styles.title}>{activity.title}</div>
         <div className={styles.lector}>{teacher?.name}</div>
@@ -34,10 +33,18 @@ export function ClassCard({
       <div className={styles.body}>
         {extra ?? (
           <>
-            <div className={styles.line}>
-              <Icon name="pin" size={16} />
-              {activity.room}
-            </div>
+            {activity.location && (
+              <div className={styles.line}>
+                <Icon name="pin" size={16} />
+                {activity.location}
+              </div>
+            )}
+            {activity.period && (
+              <div className={styles.line}>
+                <Icon name="clock" size={16} />
+                {activity.period.name}
+              </div>
+            )}
             <div className={styles.line}>
               <Icon name="users" size={16} />
               {activity.studentIds.length} studentů{activity.capacity ? ` z ${activity.capacity} míst` : ""}

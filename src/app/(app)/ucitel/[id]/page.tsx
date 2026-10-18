@@ -7,7 +7,8 @@ import { DeleteActivity } from "@/components/manage/DeleteActivity";
 import { EnrollmentManager } from "@/components/manage/EnrollmentManager";
 import { PageHeader } from "@/components/PageHeader";
 import { requireTeacher } from "@/lib/auth";
-import { getActivity, getUserById, listStaff, listStudents, teachesActivity } from "@/lib/data";
+import { getActivity, getUserById, listActivities, listPeriods, listStaff, listStudents, teachesActivity } from "@/lib/data";
+import { atelierConflicts } from "@/lib/periods";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { initials, isAdmin } from "@/lib/roles";
 import styles from "../ucitel.module.css";
@@ -27,6 +28,8 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
   const admin = isAdmin(user.role);
   const staff = admin ? (await listStaff()).map((s) => ({ id: s.id, name: s.name })) : [];
   const teacher = await getUserById(activity.teacherId);
+  const periods = await listPeriods();
+  const conflicts = atelierConflicts(activity, await listActivities());
   const students = (await listStudents()).map((s) => ({
     id: s.id,
     name: s.name,
@@ -64,10 +67,12 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
         enrolledIds={activity.studentIds}
         allowedGrades={activity.allowedGrades}
         capacity={activity.capacity ?? null}
+        conflicts={conflicts}
       />
 
       <h2 className="section-title">Údaje a rozvrh</h2>
       <ActivityForm
+        periods={periods}
         canPickTeacher={admin}
         staff={staff}
         initial={{
@@ -75,7 +80,10 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
           kind: activity.kind,
           title: activity.title,
           description: activity.description ?? "",
-          room: activity.room,
+          location: activity.location ?? "",
+          periodId: activity.period?.id ?? "",
+          startsOn: activity.startsOn ?? "",
+          endsOn: activity.endsOn ?? "",
           capacity: activity.capacity ? String(activity.capacity) : "",
           meetUrl: activity.meetUrl ?? "",
           teacherId: activity.teacherId,

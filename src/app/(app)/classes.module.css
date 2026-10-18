@@ -60,3 +60,30 @@
     grid-template-columns: 1fr;
   }
 }
+
+.past {
+  border-radius: var(--r-card);
+  background: var(--card);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.past summary {
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+  min-height: var(--tap);
+}
+.pastRow {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-soft);
+  text-decoration: none;
+  color: var(--text);
+}
+.pastRow:hover {
+  background: #fbfcfe;
+  color: var(--text);
+}

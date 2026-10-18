@@ -2,7 +2,9 @@
 
 import { keepForm } from "@/lib/use-keep-form";
 import { useActionState, useState } from "react";
+import { DateInput, TimeInput } from "@/components/fields/DateTime";
 import { saveActivity, type ActivityFormState } from "@/lib/actions/activities";
+import { formatDateRange } from "@/lib/periods";
 import type { ActivityKind } from "@/lib/types";
 import styles from "./manage.module.css";
 
@@ -11,7 +13,11 @@ export type ActivityFormValues = {
   kind: ActivityKind;
   title: string;
   description: string;
-  room: string;
+  location: string;
+  periodId: string;
+  /** „rrrr-mm-dd“ nebo prázdné */
+  startsOn: string;
+  endsOn: string;
   capacity: string;
   meetUrl: string;
   teacherId: string;
@@ -25,7 +31,7 @@ export type ActivityFormValues = {
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek"];
 const KIND_OPTIONS: { value: ActivityKind; label: string; hint: string }[] = [
   { value: "kurz", label: "Kurz", hint: "Pravidelná výuka předmětu" },
-  { value: "atelier", label: "Ateliér", hint: "Dlouhodobý projekt, často v týmech" },
+  { value: "atelier", label: "Ateliér", hint: "Kratší projekt uvnitř období, často v týmech" },
   { value: "ostatni", label: "Ostatní", hint: "Třídnická hodina, expedice, seminář …" },
 ];
 
@@ -33,15 +39,24 @@ export function ActivityForm({
   initial,
   staff,
   canPickTeacher,
+  periods,
 }: {
   initial: ActivityFormValues;
+  /** Kurzová období (zakládá je admin ve Správě) */
+  periods: { id: string; name: string; startsOn: string; endsOn: string }[];
   /** Vyučující na výběr (jen pro admina). */
   staff: { id: string; name: string }[];
   canPickTeacher: boolean;
 }) {
   const [state, action, pending] = useActionState<ActivityFormState, FormData>(saveActivity, {});
   const [kind, setKind] = useState<ActivityKind>(initial.kind);
-  const [slots, setSlots] = useState(initial.slots.length ? initial.slots : [{ day: 1, start: "", end: "" }]);
+  // Každá hodina má stálé id, aby pole s časem po odebrání řádku nepřeskakovala.
+  const [slots, setSlots] = useState(() =>
+    (initial.slots.length ? initial.slots : initial.kind === "ostatni" ? [] : [{ day: 1, start: "", end: "" }]).map((s, i) => ({ ...s, uid: i })),
+  );
+  const [nextUid, setNextUid] = useState(100);
+  const [periodId, setPeriodId] = useState(initial.periodId);
+  const period = periods.find((p) => p.id === periodId) ?? null;
   const [hasProject, setHasProject] = useState(!!initial.projectName);
   const fe = state.fieldErrors ?? {};
   const editing = !!initial.slug;
@@ -52,7 +67,7 @@ export function ActivityForm({
   return (
     <form onSubmit={keepForm(action)} className={`card ${styles.form}`} noValidate>
       {initial.slug && <input type="hidden" name="slug" value={initial.slug} />}
-      <input type="hidden" name="slots" value={JSON.stringify(slots)} />
+      <input type="hidden" name="slots" value={JSON.stringify(slots.map(({ day, start, end }) => ({ day, start, end })))} />
 
       <fieldset className={styles.fieldset}>
         <legend className={styles.legend}>Typ</legend>
@@ -98,8 +113,8 @@ export function ActivityForm({
             </select>
           </Field>
         )}
-        <Field label="Učebna / místo">
-          <input name="room" defaultValue={initial.room} className={styles.input} placeholder="Např. učebna 204" />
+        <Field label="Místo (nepovinné)" hint="Výuka je online. Vyplň, jen když se někde potkáte — např. kam se jede na expedici.">
+          <input name="location" defaultValue={initial.location} maxLength={160} className={styles.input} placeholder="Např. Javorníky, chata pod Kohútkou" />
         </Field>
         <Field label="Kapacita (nepovinné)" error={fe.capacity}>
           <input name="capacity" type="number" min={1} max={500} defaultValue={initial.capacity} className={styles.input} placeholder="Bez omezení" />
@@ -114,6 +129,49 @@ export function ActivityForm({
           </span>
         </Field>
       </div>
+
+      <fieldset className={styles.fieldset}>
+        <legend className={styles.legend}>Kdy</legend>
+        <div className={styles.grid}>
+          <Field
+            label={kind === "ostatni" ? "Kurzové období (nepovinné)" : "Kurzové období"}
+            error={fe.periodId}
+            hint={
+              periods.length === 0
+                ? "Admin zatím nezaložil kurzová období (Správa → Kurzová období)."
+                : kind === "kurz"
+                  ? "Kurz trvá celé období. V dalším období se zapisuje znovu."
+                  : undefined
+            }
+          >
+            <select name="periodId" value={periodId} onChange={(e) => setPeriodId(e.target.value)} className={styles.input}>
+              <option value="">{periods.length === 0 ? "Žádné období" : kind === "ostatni" ? "Mimo období" : "Vyber období…"}</option>
+              {periods.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({formatDateRange(p.startsOn, p.endsOn)})
+                </option>
+              ))}
+            </select>
+          </Field>
+          {kind !== "kurz" && (
+            <>
+              <Field label={kind === "atelier" ? "Od (nepovinné)" : "Od"} error={fe.startsOn}>
+                <DateInput name="startsOn" defaultValue={initial.startsOn} ariaLabel="Začátek" />
+              </Field>
+              <Field label={kind === "atelier" ? "Do (nepovinné)" : "Do"} error={fe.endsOn}>
+                <DateInput name="endsOn" defaultValue={initial.endsOn} ariaLabel="Konec" />
+              </Field>
+            </>
+          )}
+        </div>
+        <span className={styles.hint}>
+          {kind === "atelier"
+            ? `Ateliér trvá jen část období${period ? ` (${formatDateRange(period.startsOn, period.endsOn)})` : ""}; bez data platí celé období. Student může být v jednu dobu jen v jednom ateliéru.`
+            : kind === "ostatni"
+              ? "Např. expedice na 1–5 dní. Jednodenní akce: stejné datum Od i Do."
+              : null}
+        </span>
+      </fieldset>
 
       <fieldset className={styles.fieldset}>
         <legend className={styles.legend}>Pro které ročníky</legend>
@@ -137,7 +195,7 @@ export function ActivityForm({
         )}
         <div className={styles.slots}>
           {slots.map((s, i) => (
-            <div key={i} className={styles.slot}>
+            <div key={s.uid} className={styles.slot}>
               <select
                 aria-label={`Den ${i + 1}. hodiny`}
                 value={s.day}
@@ -150,22 +208,16 @@ export function ActivityForm({
                   </option>
                 ))}
               </select>
-              <input
-                type="time"
-                aria-label={`Začátek ${i + 1}. hodiny`}
-                value={s.start}
-                step={300}
-                onChange={(e) => setSlot(i, { start: e.target.value })}
-                className={styles.input}
+              <TimeInput
+                ariaLabel={`Začátek ${i + 1}. hodiny`}
+                defaultValue={s.start}
+                onChange={(v) => setSlot(i, { start: v === null ? "neplatne" : v })}
               />
               <span aria-hidden="true">–</span>
-              <input
-                type="time"
-                aria-label={`Konec ${i + 1}. hodiny`}
-                value={s.end}
-                step={300}
-                onChange={(e) => setSlot(i, { end: e.target.value })}
-                className={styles.input}
+              <TimeInput
+                ariaLabel={`Konec ${i + 1}. hodiny`}
+                defaultValue={s.end}
+                onChange={(v) => setSlot(i, { end: v === null ? "neplatne" : v })}
               />
               <button
                 type="button"
@@ -182,11 +234,18 @@ export function ActivityForm({
           type="button"
           className="btn btn-outline"
           style={{ alignSelf: "flex-start", minHeight: 40 }}
-          onClick={() => setSlots((all) => [...all, { day: all.at(-1)?.day ?? 1, start: "", end: "" }])}
+          onClick={() => {
+            setSlots((all) => [...all, { day: all.at(-1)?.day ?? 1, start: "", end: "", uid: nextUid }]);
+            setNextUid((n) => n + 1);
+          }}
         >
           + Přidat hodinu
         </button>
-        <span className={styles.hint}>Hodiny se opakují každý týden. Bez rozvrhu se aktivita v rozvrhu neukáže.</span>
+        <span className={styles.hint}>
+          {kind === "ostatni"
+            ? "Nepovinné. Vícedenní akce bez rozvrhu se v rozvrhu ukáže jako celodenní."
+            : "Hodiny se opakují každý týden po dobu trvání. Čas piš ve 24h formátu, např. 9:00–11:30."}
+        </span>
       </fieldset>
 
       {kind === "atelier" && (
@@ -227,11 +286,24 @@ export function ActivityForm({
   );
 }
 
-function Field({ label, error, wide, children }: { label: string; error?: string; wide?: boolean; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  hint,
+  wide,
+  children,
+}: {
+  label: string;
+  error?: string;
+  hint?: string;
+  wide?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <label className={styles.field} data-wide={wide} data-invalid={!!error}>
       <span className={styles.label}>{label}</span>
       {children}
+      {hint && !error && <span className={styles.hint}>{hint}</span>}
       {error && <span className={styles.fieldError}>{error}</span>}
     </label>
   );

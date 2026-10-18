@@ -7,7 +7,8 @@ import { activitiesTaughtBy } from "@/lib/data";
 import { plural } from "@/lib/format";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { isLiveNow } from "@/lib/schedule";
-import { formatLongDate, formatSlots, pragueNow } from "@/lib/time";
+import { describeWhen } from "@/lib/periods";
+import { formatLongDate, pragueNow } from "@/lib/time";
 import styles from "./ucitel.module.css";
 
 export const metadata: Metadata = { title: "Moje třídy" };
@@ -45,7 +46,7 @@ export default async function TeacherPage({ searchParams }: PageProps<"/ucitel">
               <article key={c.id} className={`card ${styles.card}`}>
                 <div>
                   <div className={styles.kind}>
-                    {KIND_LABEL[c.kind]} · {formatSlots(c.slots)}
+                    {[KIND_LABEL[c.kind], describeWhen(c)].filter(Boolean).join(" · ")}
                   </div>
                   <h2 className={styles.title}>{c.title}</h2>
                 </div>
@@ -53,7 +54,8 @@ export default async function TeacherPage({ searchParams }: PageProps<"/ucitel">
                   <span>
                     {c.studentIds.length} {plural(c.studentIds.length, "student", "studenti", "studentů")}
                   </span>
-                  <span>{c.room}</span>
+                  {c.location && <span>{c.location}</span>}
+                  {c.period && <span>{c.period.name}</span>}
                   {live && <span className="chip chip-primary">Právě probíhá</span>}
                 </div>
                 <div className={styles.actions}>

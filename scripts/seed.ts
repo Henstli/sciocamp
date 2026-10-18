@@ -59,7 +59,9 @@ for (const a of DEMO_ACTIVITIES) {
       kind: a.kind,
       title: a.title,
       teacher_id: idOf.get(a.teacherId),
-      room: a.room,
+      location: a.location,
+      starts_on: a.startsOn,
+      ends_on: a.endsOn,
       // Ukázkové odkazy nevedou na skutečné schůzky — Meet si vloží vyučující.
       meet_url: null,
       capacity: a.capacity ?? null,

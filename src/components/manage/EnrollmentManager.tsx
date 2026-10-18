@@ -16,8 +16,11 @@ export function EnrollmentManager({
   enrolledIds,
   allowedGrades,
   capacity,
+  conflicts = {},
 }: {
   slug: string;
+  /** Ateliér: studenti, kteří jsou v té době už v jiném ateliéru (id → název ateliéru) */
+  conflicts?: Record<string, string>;
   students: Student[];
   enrolledIds: string[];
   allowedGrades: number[] | null;
@@ -132,9 +135,10 @@ export function EnrollmentManager({
           <ul className={styles.list}>
             {candidates.map((s) => (
               <li key={s.id}>
-                <label className={styles.row} data-picked={picked.has(s.id)}>
+                <label className={styles.row} data-picked={picked.has(s.id)} data-disabled={!!conflicts[s.id]}>
                   <input
                     type="checkbox"
+                    disabled={!!conflicts[s.id]}
                     checked={picked.has(s.id)}
                     onChange={(e) =>
                       setPicked((prev) => {
@@ -148,7 +152,10 @@ export function EnrollmentManager({
                   <Avatar initials={s.initials} size={34} />
                   <span className={styles.rowMain}>
                     <span className={styles.rowName}>{s.name}</span>
-                    <span className={styles.hint}>{s.grade ? `${s.grade}. ročník` : "bez ročníku"}</span>
+                    <span className={styles.hint}>
+                      {s.grade ? `${s.grade}. ročník` : "bez ročníku"}
+                      {conflicts[s.id] && ` · v té době v ateliéru ${conflicts[s.id]}`}
+                    </span>
                   </span>
                 </label>
               </li>

@@ -46,7 +46,7 @@
   min-width: 600px;
   display: grid;
   grid-template-columns: 52px repeat(5, minmax(100px, 1fr));
-  grid-template-rows: 44px auto;
+  grid-template-rows: 44px auto auto;
 }
 
 .dayHead {
@@ -172,4 +172,51 @@
 }
 .legend i[data-kind="live"] {
   background: var(--primary);
+}
+
+.allDay {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: 52px repeat(5, minmax(100px, 1fr));
+  grid-auto-rows: minmax(36px, auto);
+  gap: 4px 0;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.allDayLabel {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  align-self: center;
+}
+.allDayEntry {
+  margin: 0 4px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  overflow: hidden;
+  background: var(--other-bg);
+  color: var(--other);
+}
+.allDayEntry[data-kind="atelier"] {
+  background: var(--atelier-bg);
+  color: var(--atelier-text);
+}
+.allDayEntry[data-kind="kurz"] {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+.allDayEntry .entryTitle,
+.allDayEntry .entryTime {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
