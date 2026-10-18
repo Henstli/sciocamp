@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { activitiesForUser, getUserById } from "@/lib/data";
+import { activitiesForUser } from "@/lib/data";
 import { activityHref } from "@/lib/links";
 import { ROLE_LABEL, initials } from "@/lib/roles";
 import styles from "./profil.module.css";
@@ -13,7 +13,6 @@ export default async function ProfilePage() {
   const activities = await activitiesForUser(user);
   const courses = activities.filter((a) => a.kind === "kurz");
   const ateliers = activities.filter((a) => a.kind === "atelier");
-  const homeroom = user.homeroomTeacherId ? await getUserById(user.homeroomTeacherId) : null;
   const teaching = activities.filter((a) => a.teacherId === user.id);
 
   return (
@@ -56,7 +55,6 @@ export default async function ProfilePage() {
         <section aria-label="Kontakt" className={`card ${styles.panel}`} style={{ flex: "1 1 300px" }}>
           <h2 className={styles.h2}>Kontakt</h2>
           <Field label="Školní e-mail" value={user.email} />
-          {homeroom && <Field label="Třídní učitel" value={homeroom.name} />}
           <Link href="/zpravy" className="btn btn-soft">
             Napsat zprávu
           </Link>

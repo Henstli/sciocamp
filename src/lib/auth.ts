@@ -2,13 +2,25 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { getUserById } from "./data";
+import { isSchoolEmail, isSupabase } from "./config";
+import { getOwnProfile, getUserById } from "./data";
 import { canTeach, isAdmin } from "./roles";
 import { SESSION_COOKIE, SESSION_MAX_AGE, createSessionToken, readSessionToken } from "./session";
+import { createClient } from "./supabase/server";
 import type { User } from "./types";
 
 /** Přihlášený uživatel, nebo null. Výsledek se v rámci jednoho požadavku cachuje. */
 export const getCurrentUser = cache(async (): Promise<User | null> => {
+  if (isSupabase) {
+    const sb = await createClient();
+    const { data } = await sb.auth.getClaims();
+    const claims = data?.claims;
+    if (!claims?.sub || !isSchoolEmail(claims.email as string | undefined)) return null;
+    const profile = await getOwnProfile(claims.sub);
+    if (!profile || profile.blocked) return null;
+    return profile;
+  }
+
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const uid = await readSessionToken(token);
   if (!uid) return null;
@@ -35,7 +47,9 @@ export async function requireAdmin(): Promise<User> {
   return user;
 }
 
-export async function startSession(userId: string, remember: boolean) {
+// --- Ukázkový režim: vlastní podepsaná cookie ---
+
+export async function startDemoSession(userId: string, remember: boolean) {
   (await cookies()).set(SESSION_COOKIE, await createSessionToken(userId), {
     httpOnly: true,
     sameSite: "lax",
@@ -46,5 +60,9 @@ export async function startSession(userId: string, remember: boolean) {
 }
 
 export async function endSession() {
+  if (isSupabase) {
+    await (await createClient()).auth.signOut();
+    return;
+  }
   (await cookies()).delete(SESSION_COOKIE);
 }

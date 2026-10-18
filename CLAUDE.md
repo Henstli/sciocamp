@@ -22,8 +22,12 @@
 
 - Role: student, učitel, admin. Úkoly a kurzy zadává učitel i admin. Účty zakládá admin (žádná veřejná registrace).
 - Přihlášení primárně přes Google, ale jen účty s doménou `@scioskola.cz` (školní Google Workspace); jiné domény odmítnout (ověřovat na serveru, ne jen parametrem `hd`).
+- Studenti pod 18 let mají v Google Workspace for Education přihlášení přes Google do aplikací třetích stran ve výchozím stavu blokované, dokud ho admin Workspace nepovolí. Proto je e-mail + heslo plnohodnotná cesta, ne jen záloha. Autor k Workspace přístup nemá; škola si Google (a později Meet přes Calendar API) povolí sama.
 - Záloha: přihlášení stejným školním e-mailem a vlastním heslem do aplikace (Supabase e-mail + heslo). Heslo si uživatel nastaví sám přes odkaz z pozvánky a přes „Zapomenuté heslo?“ si ho obnoví e-mailem.
 - Každý předmět, ateliér a událost v rozvrhu má odkaz na Google Meet (vytvářený přes Google Calendar API, přístup pro školní doménu). Vlastní kalendář aplikace, Google Kalendář jen jako volitelná synchronizace.
+- Odkaz na Meet u kurzu/ateliéru může vložit nebo změnit vyučující dané třídy a admin (tlačítko „Vytvořit nový Meet“ otevře meet.google.com/new). Automatické vytváření přes Calendar API přijde, až ho škola povolí.
+- Škola nemá třídy, jen ročníky (1.–4.). Kurzy a ateliéry jsou otevřené všem ročníkům, některé jen pro vybrané (např. maturanti) — pole „povolené ročníky“.
+- Hodnocení bez známek: body z maxima, které učitel nastaví u úkolu; stav úkolu splněno / nesplněno / vráceno k doplnění (s požadavkem); slovní hodnocení.
 - Kurzy a ateliéry mají funkce jako Google Classroom: nástěnka, úkoly a materiály podle témat, odevzdávání souborů a Google dokumentů, soukromé komentáře s vyučujícím, týmové úkoly s týmovým chatem, chat třídy, hodnocení s body, kvízy.
 - Stack: Next.js (App Router) + TypeScript, Supabase (Postgres, auth, realtime, storage), hosting Vercel.
 
@@ -40,4 +44,9 @@
 - Next.js 16.4 má zapnuté Cache Components: vše, co čte cookies/session, musí být za `<Suspense>` (layout `src/app/(app)/layout.tsx` to řeší pro všechny stránky). Middleware se jmenuje `src/proxy.ts`. Před psaním kódu čti dokumentaci v `node_modules/next/dist/docs/`.
 - Data jen přes `src/lib/data.ts` (async funkce, připravené na Supabase). Čas vždy přes `src/lib/time.ts` (pásmo Europe/Prague).
 - Styly: design tokeny v `src/app/globals.css`, komponenty přes CSS moduly.
-- Ukázkový režim: změny (role v adminu, chat) se neukládají; odkazy na Meet jsou ukázkové.
+- Napojení na Supabase je napsané a otestované v PGlite, ale zatím neověřené proti skutečnému projektu (autor ho zakládá).
+- Dva režimy (`src/lib/config.ts`): s proměnnými Supabase naostro, bez nich ukázkový režim s `src/lib/demo-data.ts`. Oba musí fungovat.
+- Supabase: schéma a RLS v `supabase/migrations/` (testy `npm run test:db` v PGlite — při každé změně oprávnění přidat test). Klienti v `src/lib/supabase/`. Secret key jen v serverových akcích admina po `requireAdmin()`.
+- Přihlášení: `/auth/callback` (Google, PKCE), `/auth/confirm` (odkazy z e-mailů, token_hash), `/nastavit-heslo`. Po přihlášení `finishSignIn` znovu ověří doménu a profil. Registrace v Supabase je vypnutá, účty zakládá admin pozvánkou.
+- Serverové akce v `src/lib/actions/`. Návod k nastavení Supabase: `docs/supabase-nastaveni.md`.
+- Ukázkový režim: změny (role v adminu, Meet, chat) se neukládají a UI to říká.

@@ -185,3 +185,48 @@
     flex: 1 1 100%;
   }
 }
+
+.msgError {
+  color: var(--late);
+  font-weight: 600;
+  font-size: 13px;
+}
+.invite {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 2px solid var(--primary);
+}
+.inviteHead {
+  display: flex;
+  align-items: center;
+}
+.inviteNote {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.inviteGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 14px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.textInput {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-input);
+  font-size: 14px;
+  font-weight: 500;
+}
+.field .select {
+  height: 44px;
+}

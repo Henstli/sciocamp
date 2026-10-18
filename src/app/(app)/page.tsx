@@ -36,7 +36,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const upcoming = currentOrNext(activities, now);
   const upcomingTeacher = upcoming ? await getUserById(upcoming.activity.teacherId) : null;
   const home = await getHomeSummary();
-  const senders = await getUsersByIds(home.messages.from);
+  const senders = home ? await getUsersByIds(home.messages.from) : [];
   const teaching = canTeach(user.role);
 
   return (
@@ -80,6 +80,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         </div>
       )}
 
+      {home && (
       <section aria-label="Přehled" className={styles.stats}>
         {teaching ? (
           <StatCard href="/ucitel" icon="monitor" title="K opravení" value={home.toGrade} unit="odevzdaných prací">
@@ -121,12 +122,14 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           </div>
         </StatCard>
       </section>
+      )}
 
       <div className={styles.columns}>
         <div className={styles.schedule}>
           <ScheduleWeek entries={entries} monday={monday} now={now} title={teaching ? "Můj rozvrh výuky" : "Rozvrh týdne"} />
         </div>
 
+        {home && (
         <div className={styles.side}>
           <section aria-label="Nejbližší termíny" className={`card ${styles.panel}`}>
             <div className={styles.panelHead}>
@@ -172,6 +175,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             </Link>
           </section>
         </div>
+        )}
       </div>
     </>
   );

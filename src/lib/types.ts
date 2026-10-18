@@ -8,12 +8,13 @@ export type User = {
   name: string;
   email: string;
   role: Role;
-  /** Ročník u studentů, úvazek u vyučujících. */
+  /** Ročník 1–4 u studentů, jinak null. */
+  grade: number | null;
+  /** Ročník u studentů („3. ročník“), úvazek u vyučujících — jen pro zobrazení. */
   group: string;
   /** false = pozvánka odeslána, účet ještě nebyl použit. */
   active: boolean;
   bio?: string;
-  homeroomTeacherId?: string;
 };
 
 export type ActivityKind = "kurz" | "atelier" | "ostatni";
@@ -36,13 +37,16 @@ export type Project = {
 
 /** Kurz, ateliér nebo jiná aktivita (třídnická hodina, příprava expedice …). */
 export type Activity = {
+  /** Slug pro adresu (/kurzy/<id>). */
   id: string;
   kind: ActivityKind;
   title: string;
   teacherId: string;
   room: string;
-  /** Odkaz na Google Meet. Později ho vytvoří Google Calendar API. */
-  meetUrl: string;
+  /** Odkaz na Google Meet; vkládá ho vyučující nebo admin. Null = zatím není. */
+  meetUrl: string | null;
+  /** Pro které ročníky je aktivita; null = pro všechny. */
+  allowedGrades: number[] | null;
   slots: Slot[];
   studentIds: string[];
   capacity?: number;

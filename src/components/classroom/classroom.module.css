@@ -388,3 +388,34 @@
     width: 100%;
   }
 }
+
+.linkButton {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 32px;
+}
+.meetForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+.meetActions {
+  display: flex;
+  gap: 8px;
+}
+.formError {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--late);
+}
+.meetForm .composerInput {
+  flex: none;
+}

@@ -8,13 +8,22 @@ export function MeetLink({
   className = "",
   title,
 }: {
-  url: string;
+  url: string | null;
   variant?: "primary" | "soft" | "white";
   label?: string;
   className?: string;
   title?: string;
 }) {
   const cls = variant === "primary" ? "btn btn-primary" : variant === "white" ? "btn btn-white" : "btn btn-soft";
+  if (!url) {
+    // Odkaz zatím nikdo nevložil — tlačítko zůstane na místě, ať se rozvržení nemění.
+    return (
+      <span className={`${cls} ${className}`} aria-disabled="true" title="Vyučující zatím nevložil odkaz na Meet">
+        <Icon name="video" size={18} />
+        Meet zatím není
+      </span>
+    );
+  }
   return (
     <a
       href={url}

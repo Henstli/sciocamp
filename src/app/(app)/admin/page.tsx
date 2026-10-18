@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/PageHeader";
 import { requireAdmin } from "@/lib/auth";
+import { isSupabase } from "@/lib/config";
 import { listActivities, listUsers } from "@/lib/data";
 import { KIND_LABEL } from "@/lib/links";
 import { initials } from "@/lib/roles";
@@ -32,6 +33,7 @@ export default async function AdminPage() {
       </div>
 
       <AdminTabs
+        live={isSupabase}
         users={users.map((u) => ({
           id: u.id,
           name: u.name,

@@ -9,7 +9,9 @@ npm install
 npm run dev
 ```
 
-Aplikace běží na http://localhost:3000. Lokálně funguje bez nastavení; na Vercelu je potřeba proměnná `SESSION_SECRET` (aspoň 32 znaků, viz `.env.example`).
+Aplikace běží na http://localhost:3000. Bez nastavení běží v ukázkovém režimu. Napojení na Supabase popisuje [docs/supabase-nastaveni.md](docs/supabase-nastaveni.md); proměnné prostředí jsou v `.env.example`.
+
+Testy oprávnění v databázi: `npm run test:db`.
 
 ## Ukázkový režim (etapa 1)
 

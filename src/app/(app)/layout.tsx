@@ -36,10 +36,10 @@ async function UserSidebar() {
       showTeach={teach}
       showAdmin={isAdmin(user.role)}
       badges={{
-        ukoly: user.role === "student" ? home.tasks.open : undefined,
-        hlasovani: home.polls.waiting,
-        zpravy: home.messages.unread,
-        vyuka: teach ? home.toGrade : undefined,
+        ukoly: home && user.role === "student" ? home.tasks.open : undefined,
+        hlasovani: home?.polls.waiting,
+        zpravy: home?.messages.unread,
+        vyuka: home && teach ? home.toGrade : undefined,
       }}
     />
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "../Icon";
 import { Avatar, EmptyNote } from "../PageHeader";
+import { MeetEditor } from "./MeetEditor";
 import type { Role, WorkItemKind, WorkStatus, WorkTopic } from "@/lib/types";
 import styles from "./classroom.module.css";
 
@@ -33,7 +34,9 @@ export type ClassView = {
   upcoming: { title: string; when: string; urgent: boolean }[];
   next: { label: string; live: boolean } | null;
   room: string;
-  meetUrl: string;
+  meetUrl: string | null;
+  canEditMeet: boolean;
+  slug: string;
   kindLabel: string;
 };
 
@@ -99,6 +102,9 @@ function Stream({ view }: { view: ClassView }) {
           />
         </div>
 
+        {view.stream.length === 0 && (
+          <EmptyNote>Nástěnka je zatím prázdná. Příspěvky a oznámení přidáme v etapě 3.</EmptyNote>
+        )}
         {view.stream.map((item) =>
           item.type === "post" ? (
             <article key={item.id} className={`card ${styles.post}`}>
@@ -168,11 +174,17 @@ function Stream({ view }: { view: ClassView }) {
           <h2 className={styles.h2}>{view.next?.live ? "Hodina" : "Příští hodina"}</h2>
           {view.next && <div className={styles.nextLabel}>{view.next.label}</div>}
           <div className={styles.meta}>
-            {view.room[0].toUpperCase() + view.room.slice(1)} nebo online. Odkaz na Meet je stejný pro celý blok.
+            {view.room ? `${view.room[0].toUpperCase()}${view.room.slice(1)} nebo online.` : "Online."} Odkaz na Meet je stejný
+            pro celý blok.
           </div>
-          <a href={view.meetUrl} target="_blank" rel="noopener noreferrer" className="btn btn-soft">
-            {view.meetUrl.replace(/^https:\/\//, "")}
-          </a>
+          {view.meetUrl ? (
+            <a href={view.meetUrl} target="_blank" rel="noopener noreferrer" className="btn btn-soft">
+              {view.meetUrl.replace(/^https:\/\//, "")}
+            </a>
+          ) : (
+            <div className={styles.meta}>Odkaz na Meet zatím není.</div>
+          )}
+          {view.canEditMeet && <MeetEditor activity={view.slug} current={view.meetUrl} />}
         </section>
       </div>
     </div>

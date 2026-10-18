@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/PageHeader";
+import { changeRole, inviteUser, type InviteState } from "@/lib/actions/users";
 import type { ActivityKind, Role } from "@/lib/types";
 import styles from "./admin.module.css";
 
@@ -16,7 +17,7 @@ type AdminCourse = {
   when: string;
   taken: number;
   cap: number;
-  meetUrl: string;
+  meetUrl: string | null;
 };
 
 const FILTERS = [
@@ -29,11 +30,23 @@ const FILTERS = [
 // Porovnání bez diakritiky, aby "simon" našlo "Šimon".
 const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
-export function AdminTabs({ users, courses }: { users: AdminUser[]; courses: AdminCourse[] }) {
+export function AdminTabs({ users, courses, live }: { users: AdminUser[]; courses: AdminCourse[]; live: boolean }) {
   const [tab, setTab] = useState<"users" | "courses">("users");
   const [filter, setFilter] = useState<(typeof FILTERS)[number][0]>("all");
   const [query, setQuery] = useState("");
   const [roles, setRoles] = useState<Record<string, Role>>({});
+  const [roleMsg, setRoleMsg] = useState<{ error?: string; info?: string }>({});
+  const [, startTransition] = useTransition();
+  const [inviting, setInviting] = useState(false);
+
+  const onRole = (id: string, role: Role, previous: Role) => {
+    setRoles((r) => ({ ...r, [id]: role }));
+    startTransition(async () => {
+      const res = await changeRole(id, role);
+      setRoleMsg(res);
+      if (res.error) setRoles((r) => ({ ...r, [id]: previous }));
+    });
+  };
 
   const shown = useMemo(() => {
     const q = fold(query.trim());
@@ -55,6 +68,13 @@ export function AdminTabs({ users, courses }: { users: AdminUser[]; courses: Adm
           Kurzy a ateliéry
         </button>
       </div>
+
+      {tab === "users" && !inviting && (
+        <button type="button" className="btn btn-primary" style={{ alignSelf: "flex-start" }} onClick={() => setInviting(true)}>
+          + Přidat uživatele
+        </button>
+      )}
+      {tab === "users" && inviting && <InviteForm live={live} onClose={() => setInviting(false)} />}
 
       {tab === "users" && (
         <section aria-label="Uživatelé" className={`card ${styles.table}`}>
@@ -97,7 +117,7 @@ export function AdminTabs({ users, courses }: { users: AdminUser[]; courses: Adm
                   <select
                     aria-label={`Role uživatele ${u.name}`}
                     value={u.role}
-                    onChange={(e) => setRoles((r) => ({ ...r, [u.id]: e.target.value as Role }))}
+                    onChange={(e) => onRole(u.id, e.target.value as Role, u.role)}
                     className={styles.select}
                   >
                     <option value="student">Student</option>
@@ -112,9 +132,10 @@ export function AdminTabs({ users, courses }: { users: AdminUser[]; courses: Adm
               ))}
             </div>
           </div>
-          <div className={styles.footer}>
+          <div className={styles.footer} role="status">
             Zobrazeno {shown.length} z {users.length} uživatelů
-            {changed && " · Ukázkový režim: změny rolí se uloží až po napojení databáze."}
+            {changed && roleMsg.error && <span className={styles.msgError}> · {roleMsg.error}</span>}
+            {changed && !roleMsg.error && roleMsg.info && ` · ${roleMsg.info}`}
           </div>
         </section>
       )}
@@ -143,14 +164,83 @@ export function AdminTabs({ users, courses }: { users: AdminUser[]; courses: Adm
                     <div style={{ width: `${Math.min(100, Math.round((c.taken / c.cap) * 100))}%` }} data-full={full} />
                   </div>
                 </div>
-                <a href={c.meetUrl} target="_blank" rel="noopener noreferrer" className="chip chip-ok" style={{ textDecoration: "none" }}>
-                  Meet připraven
-                </a>
+                {c.meetUrl ? (
+                  <a href={c.meetUrl} target="_blank" rel="noopener noreferrer" className="chip chip-ok" style={{ textDecoration: "none" }}>
+                    Meet připraven
+                  </a>
+                ) : (
+                  <span className="chip chip-wait">Bez Meetu</span>
+                )}
               </div>
             );
           })}
         </section>
       )}
     </>
+  );
+}
+
+function InviteForm({ live, onClose }: { live: boolean; onClose: () => void }) {
+  const [state, action, pending] = useActionState<InviteState, FormData>(inviteUser, {});
+  const [role, setRole] = useState<Role>("student");
+  return (
+    <form action={action} className={`card ${styles.invite}`}>
+      <div className={styles.inviteHead}>
+        <h2 className="section-title">Přidat uživatele</h2>
+        <button type="button" className="btn btn-outline" style={{ marginLeft: "auto", minHeight: 40 }} onClick={onClose}>
+          Zavřít
+        </button>
+      </div>
+      <p className={styles.inviteNote}>
+        Na školní e-mail přijde pozvánka s odkazem na nastavení hesla. Přihlásit se pak může i přes Google.
+        {!live && " (Ukázkový režim: pozvánka se neodešle.)"}
+      </p>
+      <div className={styles.inviteGrid}>
+        <label className={styles.field}>
+          Celé jméno
+          <input name="fullName" required autoComplete="off" className={styles.textInput} />
+        </label>
+        <label className={styles.field}>
+          Školní e-mail
+          <input name="email" type="email" required placeholder="jmeno.prijmeni@scioskola.cz" autoComplete="off" className={styles.textInput} />
+        </label>
+        <label className={styles.field}>
+          Role
+          <select name="role" value={role} onChange={(e) => setRole(e.target.value as Role)} className={styles.select}>
+            <option value="student">Student</option>
+            <option value="ucitel">Učitel</option>
+            <option value="admin">Admin</option>
+          </select>
+        </label>
+        {role === "student" ? (
+          <label className={styles.field}>
+            Ročník
+            <select name="grade" defaultValue="" className={styles.select} required>
+              <option value="" disabled>
+                Vyber…
+              </option>
+              {[1, 2, 3, 4].map((g) => (
+                <option key={g} value={g}>
+                  {g}. ročník
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <label className={styles.field}>
+            Úvazek / popisek
+            <input name="staffNote" placeholder="Např. Plný úvazek" className={styles.textInput} />
+          </label>
+        )}
+      </div>
+      {(state.error || state.info) && (
+        <p role="status" className={state.error ? styles.msgError : styles.inviteNote}>
+          {state.error ?? state.info}
+        </p>
+      )}
+      <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-start" }} disabled={pending}>
+        {pending ? "Odesílám…" : "Poslat pozvánku"}
+      </button>
+    </form>
   );
 }

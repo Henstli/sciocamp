@@ -5,28 +5,28 @@ import type { Activity, ClassroomContent, User } from "./types";
 
 export const DEMO_USERS: User[] = [
   // Vedení a vyučující
-  { id: "u-pavel", name: "Miroslav Pavel", email: "miroslav.pavel@scioskola.cz", role: "admin", group: "Třídní 3. ročníku", active: true },
-  { id: "u-jakubcova", name: "Anežka Jakubcová", email: "anezka.jakubcova@scioskola.cz", role: "ucitel", group: "Plný úvazek", active: true },
-  { id: "u-hankova", name: "Tereza Hanková", email: "tereza.hankova@scioskola.cz", role: "ucitel", group: "Externí lektorka", active: true },
-  { id: "u-pietraszek", name: "Martin Pietraszek", email: "martin.pietraszek@scioskola.cz", role: "ucitel", group: "Plný úvazek", active: true },
-  { id: "u-kumstat", name: "Honza Kumstát", email: "honza.kumstat@scioskola.cz", role: "ucitel", group: "Plný úvazek", active: true },
-  { id: "u-kubesova", name: "Kateřina Kubešová", email: "katerina.kubesova@scioskola.cz", role: "ucitel", group: "Částečný úvazek", active: true },
-  { id: "u-lukes", name: "Petr Lukeš", email: "petr.lukes@scioskola.cz", role: "ucitel", group: "Externí lektor", active: true },
+  { id: "u-pavel", name: "Miroslav Pavel", email: "miroslav.pavel@scioskola.cz", role: "admin", grade: null, group: "Vedení školy", active: true },
+  { id: "u-jakubcova", name: "Anežka Jakubcová", email: "anezka.jakubcova@scioskola.cz", role: "ucitel", grade: null, group: "Plný úvazek", active: true },
+  { id: "u-hankova", name: "Tereza Hanková", email: "tereza.hankova@scioskola.cz", role: "ucitel", grade: null, group: "Externí lektorka", active: true },
+  { id: "u-pietraszek", name: "Martin Pietraszek", email: "martin.pietraszek@scioskola.cz", role: "ucitel", grade: null, group: "Plný úvazek", active: true },
+  { id: "u-kumstat", name: "Honza Kumstát", email: "honza.kumstat@scioskola.cz", role: "ucitel", grade: null, group: "Plný úvazek", active: true },
+  { id: "u-kubesova", name: "Kateřina Kubešová", email: "katerina.kubesova@scioskola.cz", role: "ucitel", grade: null, group: "Částečný úvazek", active: true },
+  { id: "u-lukes", name: "Petr Lukeš", email: "petr.lukes@scioskola.cz", role: "ucitel", grade: null, group: "Externí lektor", active: true },
   // Studenti
-  { id: "u-liska", name: "Šimon Samuel Liška", email: "simon.liska@scioskola.cz", role: "student", group: "3. ročník", active: true, bio: "Baví mě film, šachy a cestování. Letos chci zvládnout první vlastní TEDx talk.", homeroomTeacherId: "u-pavel" },
-  { id: "u-komarek", name: "Eliot Komárek", email: "eliot.komarek@scioskola.cz", role: "student", group: "3. ročník", active: true, homeroomTeacherId: "u-pavel" },
-  { id: "u-kolarova", name: "Tereza Kolářová", email: "tereza.kolarova@scioskola.cz", role: "student", group: "2. ročník", active: true },
-  { id: "u-cerny", name: "Jáchym Černý", email: "jachym.cerny@scioskola.cz", role: "student", group: "3. ročník", active: true, homeroomTeacherId: "u-pavel" },
-  { id: "u-jaukner", name: "Standa Jaukner", email: "standa.jaukner@scioskola.cz", role: "student", group: "2. ročník", active: true },
-  { id: "u-novotna", name: "Petra Novotná", email: "petra.novotna@scioskola.cz", role: "student", group: "2. ročník", active: true },
-  { id: "u-kubicek", name: "Vavřinec Kubíček", email: "vavrinec.kubicek@scioskola.cz", role: "student", group: "1. ročník", active: true },
-  { id: "u-maly", name: "Ondřej Malý", email: "ondrej.maly@scioskola.cz", role: "student", group: "1. ročník", active: true },
-  { id: "u-svobodova", name: "Klára Svobodová", email: "klara.svobodova@scioskola.cz", role: "student", group: "3. ročník", active: true },
-  { id: "u-benes", name: "Adam Beneš", email: "adam.benes@scioskola.cz", role: "student", group: "2. ročník", active: true },
-  { id: "u-dvorakova", name: "Lucie Dvořáková", email: "lucie.dvorakova@scioskola.cz", role: "student", group: "1. ročník", active: true },
-  { id: "u-kral", name: "Matěj Král", email: "matej.kral@scioskola.cz", role: "student", group: "2. ročník", active: true },
-  { id: "u-horakova", name: "Ema Horáková", email: "ema.horakova@scioskola.cz", role: "student", group: "1. ročník", active: false },
-  { id: "u-vesely", name: "Filip Veselý", email: "filip.vesely@scioskola.cz", role: "student", group: "3. ročník", active: true },
+  { id: "u-liska", name: "Šimon Samuel Liška", email: "simon.liska@scioskola.cz", role: "student", grade: 3, group: "3. ročník", active: true, bio: "Baví mě film, šachy a cestování. Letos chci zvládnout první vlastní TEDx talk." },
+  { id: "u-komarek", name: "Eliot Komárek", email: "eliot.komarek@scioskola.cz", role: "student", grade: 3, group: "3. ročník", active: true },
+  { id: "u-kolarova", name: "Tereza Kolářová", email: "tereza.kolarova@scioskola.cz", role: "student", grade: 2, group: "2. ročník", active: true },
+  { id: "u-cerny", name: "Jáchym Černý", email: "jachym.cerny@scioskola.cz", role: "student", grade: 3, group: "3. ročník", active: true },
+  { id: "u-jaukner", name: "Standa Jaukner", email: "standa.jaukner@scioskola.cz", role: "student", grade: 2, group: "2. ročník", active: true },
+  { id: "u-novotna", name: "Petra Novotná", email: "petra.novotna@scioskola.cz", role: "student", grade: 2, group: "2. ročník", active: true },
+  { id: "u-kubicek", name: "Vavřinec Kubíček", email: "vavrinec.kubicek@scioskola.cz", role: "student", grade: 1, group: "1. ročník", active: true },
+  { id: "u-maly", name: "Ondřej Malý", email: "ondrej.maly@scioskola.cz", role: "student", grade: 1, group: "1. ročník", active: true },
+  { id: "u-svobodova", name: "Klára Svobodová", email: "klara.svobodova@scioskola.cz", role: "student", grade: 3, group: "3. ročník", active: true },
+  { id: "u-benes", name: "Adam Beneš", email: "adam.benes@scioskola.cz", role: "student", grade: 2, group: "2. ročník", active: true },
+  { id: "u-dvorakova", name: "Lucie Dvořáková", email: "lucie.dvorakova@scioskola.cz", role: "student", grade: 1, group: "1. ročník", active: true },
+  { id: "u-kral", name: "Matěj Král", email: "matej.kral@scioskola.cz", role: "student", grade: 2, group: "2. ročník", active: true },
+  { id: "u-horakova", name: "Ema Horáková", email: "ema.horakova@scioskola.cz", role: "student", grade: 1, group: "1. ročník", active: false },
+  { id: "u-vesely", name: "Filip Veselý", email: "filip.vesely@scioskola.cz", role: "student", grade: 3, group: "3. ročník", active: true },
 ];
 
 const ALL_STUDENTS = DEMO_USERS.filter((u) => u.role === "student").map((u) => u.id);
@@ -34,25 +34,25 @@ const PRESENTACE = ["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner"
 
 export const DEMO_ACTIVITIES: Activity[] = [
   // Kurzy
-  { id: "psychoterapeuticke-minimum", kind: "kurz", title: "Psychoterapeutické minimum", teacherId: "u-pietraszek", room: "učebna 101", meetUrl: "https://meet.google.com/psy-mini-tue", slots: [{ day: 2, start: "09:00", end: "10:00" }], studentIds: ["u-liska", "u-komarek", "u-kolarova", "u-jaukner", "u-novotna", "u-svobodova", "u-benes", "u-kral", "u-vesely", "u-cerny", "u-maly"], capacity: 16, tone: "blue" },
-  { id: "chemie-leku-a-jedu", kind: "kurz", title: "Chemie léků a jedů", teacherId: "u-pietraszek", room: "laboratoř", meetUrl: "https://meet.google.com/che-leky-jed", slots: [{ day: 2, start: "10:00", end: "11:00" }], studentIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna", "u-kubicek", "u-maly", "u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-vesely", "u-horakova"], capacity: 16, tone: "teal" },
-  { id: "literatura-ve-filmu", kind: "kurz", title: "Literatura ve filmu", teacherId: "u-jakubcova", room: "učebna 204", meetUrl: "https://meet.google.com/lit-film-tue", slots: [{ day: 2, start: "11:30", end: "12:30" }], studentIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna", "u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-vesely"], capacity: 18, tone: "violet" },
-  { id: "umim-se-ucit", kind: "kurz", title: "Umím se učit", teacherId: "u-jakubcova", room: "učebna 101", meetUrl: "https://meet.google.com/umi-ucit-wed", slots: [{ day: 3, start: "09:00", end: "10:00" }], studentIds: PRESENTACE, capacity: 16, tone: "blueDark" },
-  { id: "komplexni-cisla-a-fraktaly", kind: "kurz", title: "Komplexní čísla a fraktály", teacherId: "u-pavel", room: "učebna 102", meetUrl: "https://meet.google.com/kom-frak-wed", slots: [{ day: 3, start: "10:00", end: "11:00" }], studentIds: ["u-liska", "u-komarek", "u-cerny", "u-svobodova", "u-vesely", "u-benes", "u-kral"], capacity: 14, tone: "blueDark" },
-  { id: "cestomanie", kind: "kurz", title: "Cestománie", teacherId: "u-kumstat", room: "učebna 204", meetUrl: "https://meet.google.com/ces-toma-wed", slots: [{ day: 3, start: "11:30", end: "12:30" }], studentIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna", "u-kubicek", "u-maly", "u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-vesely", "u-horakova"], capacity: 16, tone: "blue" },
-  { id: "jak-cist-film", kind: "kurz", title: "Jak číst film", teacherId: "u-kubesova", room: "promítací sál", meetUrl: "https://meet.google.com/jak-cist-flm", slots: [{ day: 1, start: "12:00", end: "13:00" }, { day: 4, start: "12:00", end: "13:00" }], studentIds: ["u-liska", "u-kolarova", "u-jaukner", "u-novotna", "u-kubicek", "u-dvorakova", "u-kral", "u-horakova"], capacity: 16, tone: "violet" },
+  { id: "psychoterapeuticke-minimum", kind: "kurz", title: "Psychoterapeutické minimum", teacherId: "u-pietraszek", room: "učebna 101", meetUrl: "https://meet.google.com/psy-mini-tue", allowedGrades: null, slots: [{ day: 2, start: "09:00", end: "10:00" }], studentIds: ["u-liska", "u-komarek", "u-kolarova", "u-jaukner", "u-novotna", "u-svobodova", "u-benes", "u-kral", "u-vesely", "u-cerny", "u-maly"], capacity: 16, tone: "blue" },
+  { id: "chemie-leku-a-jedu", kind: "kurz", title: "Chemie léků a jedů", teacherId: "u-pietraszek", room: "laboratoř", meetUrl: "https://meet.google.com/che-leky-jed", allowedGrades: null, slots: [{ day: 2, start: "10:00", end: "11:00" }], studentIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna", "u-kubicek", "u-maly", "u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-vesely", "u-horakova"], capacity: 16, tone: "teal" },
+  { id: "literatura-ve-filmu", kind: "kurz", title: "Literatura ve filmu", teacherId: "u-jakubcova", room: "učebna 204", meetUrl: "https://meet.google.com/lit-film-tue", allowedGrades: null, slots: [{ day: 2, start: "11:30", end: "12:30" }], studentIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna", "u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-vesely"], capacity: 18, tone: "violet" },
+  { id: "umim-se-ucit", kind: "kurz", title: "Umím se učit", teacherId: "u-jakubcova", room: "učebna 101", meetUrl: "https://meet.google.com/umi-ucit-wed", allowedGrades: null, slots: [{ day: 3, start: "09:00", end: "10:00" }], studentIds: PRESENTACE, capacity: 16, tone: "blueDark" },
+  { id: "komplexni-cisla-a-fraktaly", kind: "kurz", title: "Komplexní čísla a fraktály", teacherId: "u-pavel", room: "učebna 102", meetUrl: "https://meet.google.com/kom-frak-wed", allowedGrades: null, slots: [{ day: 3, start: "10:00", end: "11:00" }], studentIds: ["u-liska", "u-komarek", "u-cerny", "u-svobodova", "u-vesely", "u-benes", "u-kral"], capacity: 14, tone: "blueDark" },
+  { id: "cestomanie", kind: "kurz", title: "Cestománie", teacherId: "u-kumstat", room: "učebna 204", meetUrl: "https://meet.google.com/ces-toma-wed", allowedGrades: null, slots: [{ day: 3, start: "11:30", end: "12:30" }], studentIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna", "u-kubicek", "u-maly", "u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-vesely", "u-horakova"], capacity: 16, tone: "blue" },
+  { id: "jak-cist-film", kind: "kurz", title: "Jak číst film", teacherId: "u-kubesova", room: "promítací sál", meetUrl: "https://meet.google.com/jak-cist-flm", allowedGrades: null, slots: [{ day: 1, start: "12:00", end: "13:00" }, { day: 4, start: "12:00", end: "13:00" }], studentIds: ["u-liska", "u-kolarova", "u-jaukner", "u-novotna", "u-kubicek", "u-dvorakova", "u-kral", "u-horakova"], capacity: 16, tone: "violet" },
 
   // Ateliéry
-  { id: "prezentacni-schopnosti", kind: "atelier", title: "Prezentační schopnosti", teacherId: "u-hankova", room: "učebna 204", meetUrl: "https://meet.google.com/abc-defg-hij", slots: [{ day: 1, start: "09:00", end: "11:30" }], studentIds: PRESENTACE, capacity: 14, tone: "violet", project: { name: "Týmová prezentace", milestonesDone: 3, milestonesTotal: 5 } },
-  { id: "sachy", kind: "atelier", title: "Šachy", teacherId: "u-lukes", room: "knihovna", meetUrl: "https://meet.google.com/sac-hyat-thu", slots: [{ day: 4, start: "09:00", end: "11:30" }], studentIds: ["u-liska", "u-kubicek", "u-maly", "u-kral", "u-benes", "u-vesely", "u-dvorakova", "u-svobodova"], capacity: 12, tone: "blueDark", project: { name: "Rozbor vlastních partií", milestonesDone: 4, milestonesTotal: 5 } },
-  { id: "autonomni-at", kind: "atelier", title: "Autonomní AT", teacherId: "u-lukes", room: "dílna", meetUrl: "https://meet.google.com/aut-onom-thu", slots: [{ day: 4, start: "09:00", end: "11:30" }], studentIds: ["u-komarek", "u-cerny", "u-jaukner", "u-novotna", "u-kolarova", "u-horakova"], capacity: 12, tone: "teal", project: { name: "Robot pro školní zahradu", milestonesDone: 2, milestonesTotal: 5 } },
-  { id: "sedm-hrichu-pameti", kind: "atelier", title: "Sedm hříchů paměti", teacherId: "u-jakubcova", room: "učebna 101", meetUrl: "https://meet.google.com/sed-hric-mon", slots: [{ day: 1, start: "09:00", end: "11:30" }], studentIds: ["u-kolarova", "u-novotna", "u-dvorakova", "u-kral", "u-vesely", "u-benes", "u-horakova"], capacity: 10, tone: "violet", project: { name: "Výstava o paměti", milestonesDone: 1, milestonesTotal: 4 } },
-  { id: "debatni-klub", kind: "atelier", title: "Debatní klub", teacherId: "u-kumstat", room: "aula", meetUrl: "https://meet.google.com/deb-klub-mon", slots: [{ day: 1, start: "09:00", end: "11:30" }], studentIds: ["u-komarek", "u-cerny", "u-jaukner", "u-svobodova", "u-maly", "u-kubicek"], capacity: 12, tone: "blue", project: { name: "Turnaj s gymnáziem", milestonesDone: 2, milestonesTotal: 4 } },
+  { id: "prezentacni-schopnosti", kind: "atelier", title: "Prezentační schopnosti", teacherId: "u-hankova", room: "učebna 204", meetUrl: "https://meet.google.com/abc-defg-hij", allowedGrades: null, slots: [{ day: 1, start: "09:00", end: "11:30" }], studentIds: PRESENTACE, capacity: 14, tone: "violet", project: { name: "Týmová prezentace", milestonesDone: 3, milestonesTotal: 5 } },
+  { id: "sachy", kind: "atelier", title: "Šachy", teacherId: "u-lukes", room: "knihovna", meetUrl: "https://meet.google.com/sac-hyat-thu", allowedGrades: null, slots: [{ day: 4, start: "09:00", end: "11:30" }], studentIds: ["u-liska", "u-kubicek", "u-maly", "u-kral", "u-benes", "u-vesely", "u-dvorakova", "u-svobodova"], capacity: 12, tone: "blueDark", project: { name: "Rozbor vlastních partií", milestonesDone: 4, milestonesTotal: 5 } },
+  { id: "autonomni-at", kind: "atelier", title: "Autonomní AT", teacherId: "u-lukes", room: "dílna", meetUrl: "https://meet.google.com/aut-onom-thu", allowedGrades: null, slots: [{ day: 4, start: "09:00", end: "11:30" }], studentIds: ["u-komarek", "u-cerny", "u-jaukner", "u-novotna", "u-kolarova", "u-horakova"], capacity: 12, tone: "teal", project: { name: "Robot pro školní zahradu", milestonesDone: 2, milestonesTotal: 5 } },
+  { id: "sedm-hrichu-pameti", kind: "atelier", title: "Sedm hříchů paměti", teacherId: "u-jakubcova", room: "učebna 101", meetUrl: "https://meet.google.com/sed-hric-mon", allowedGrades: null, slots: [{ day: 1, start: "09:00", end: "11:30" }], studentIds: ["u-kolarova", "u-novotna", "u-dvorakova", "u-kral", "u-vesely", "u-benes", "u-horakova"], capacity: 10, tone: "violet", project: { name: "Výstava o paměti", milestonesDone: 1, milestonesTotal: 4 } },
+  { id: "debatni-klub", kind: "atelier", title: "Debatní klub", teacherId: "u-kumstat", room: "aula", meetUrl: "https://meet.google.com/deb-klub-mon", allowedGrades: null, slots: [{ day: 1, start: "09:00", end: "11:30" }], studentIds: ["u-komarek", "u-cerny", "u-jaukner", "u-svobodova", "u-maly", "u-kubicek"], capacity: 12, tone: "blue", project: { name: "Turnaj s gymnáziem", milestonesDone: 2, milestonesTotal: 4 } },
 
   // Ostatní (pro všechny studenty)
-  { id: "mezioborovy-seminar", kind: "ostatni", title: "Mezioborový seminář", teacherId: "u-pavel", room: "aula", meetUrl: "https://meet.google.com/mez-semi-tue", slots: [{ day: 2, start: "13:00", end: "14:00" }], studentIds: ALL_STUDENTS, tone: "teal" },
-  { id: "tridnicka-hodina", kind: "ostatni", title: "Třídnická hodina", teacherId: "u-pavel", room: "kmenová třída", meetUrl: "https://meet.google.com/tri-hodi-fri", slots: [{ day: 5, start: "09:00", end: "10:00" }], studentIds: ALL_STUDENTS, tone: "teal" },
-  { id: "priprava-expedice", kind: "ostatni", title: "Příprava expedice", teacherId: "u-kumstat", room: "aula", meetUrl: "https://meet.google.com/exp-edic-fri", slots: [{ day: 5, start: "10:30", end: "12:00" }], studentIds: ALL_STUDENTS, tone: "teal" },
+  { id: "mezioborovy-seminar", kind: "ostatni", title: "Mezioborový seminář", teacherId: "u-pavel", room: "aula", meetUrl: "https://meet.google.com/mez-semi-tue", allowedGrades: null, slots: [{ day: 2, start: "13:00", end: "14:00" }], studentIds: ALL_STUDENTS, tone: "teal" },
+  { id: "tridnicka-hodina", kind: "ostatni", title: "Třídnická hodina", teacherId: "u-pavel", room: "kmenová třída", meetUrl: "https://meet.google.com/tri-hodi-fri", allowedGrades: null, slots: [{ day: 5, start: "09:00", end: "10:00" }], studentIds: ALL_STUDENTS, tone: "teal" },
+  { id: "priprava-expedice", kind: "ostatni", title: "Příprava expedice", teacherId: "u-kumstat", room: "aula", meetUrl: "https://meet.google.com/exp-edic-fri", allowedGrades: null, slots: [{ day: 5, start: "10:30", end: "12:00" }], studentIds: ALL_STUDENTS, tone: "teal" },
 ];
 
 // Obsah tříd (nástěnka, témata, týmy, chat). Plný obsah má ateliér z návrhu,

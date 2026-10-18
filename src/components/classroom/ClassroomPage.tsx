@@ -62,6 +62,8 @@ export async function ClassroomPage({ id, kinds, back }: { id: string; kinds: Ac
       : null,
     room: activity.room,
     meetUrl: activity.meetUrl,
+    canEditMeet: isTeacher,
+    slug: activity.id,
     kindLabel: activity.kind === "atelier" ? "ateliéru" : "kurzu",
   };
 
@@ -77,7 +79,7 @@ export async function ClassroomPage({ id, kinds, back }: { id: string; kinds: Ac
         <div aria-hidden="true" className={`${styles.blob} ${styles.blob2}`} />
         <div className={styles.heroText}>
           <div className={styles.heroMeta}>
-            {KIND_LABEL[activity.kind]} · {formatSlots(activity.slots)} · {activity.room}
+            {[KIND_LABEL[activity.kind], formatSlots(activity.slots), activity.room].filter(Boolean).join(" · ")}
           </div>
           <h1 className={styles.heroTitle}>{activity.title}</h1>
           <div className={styles.heroSub}>
