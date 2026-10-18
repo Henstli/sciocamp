@@ -58,3 +58,5 @@
 - Učebny nejsou (výuka je online), místo `activities.location` je nepovinné.
 - Datum a čas ve formulářích jen přes `src/components/fields/DateTime.tsx` (dd. mm. rrrr, 24h, kalendář a nabídka časů, volné psaní „1 11“, „1230“) — nativní `<input type="date|time">` se řídí jazykem prohlížeče.
 - Vyučující přikládá k úkolům a materiálům soubory (Storage bucket `materialy`, cesta `<id úkolu>/<čas>-<název>`, nahrávání přes `src/lib/upload.ts`). Počet „odevzdalo X z Y“ nezapočítává vrácené práce (`isHandedIn`).
+- Výkon: funkce na Vercelu běží ve Frankfurtu (`vercel.json` → `regions: ["fra1"]`, blízko Supabase). Datové funkce v `data.ts`/`data-assignments.ts` jsou obalené `cache()` z Reactu, aby se v jednom požadavku nedotazovalo dvakrát.
+- Odevzdání po termínu je povolené; vyučující vidí „pozdě o …“ (`lateBy()` v `src/lib/assignments.ts`).

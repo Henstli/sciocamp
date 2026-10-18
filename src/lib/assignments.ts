@@ -43,6 +43,29 @@ export function isOpen(state: WorkState): boolean {
   return state === "ceka" || state === "pozde" || state === "vraceno";
 }
 
+/**
+ * O kolik student odevzdal po termínu (v ms), nebo null když včas / bez termínu.
+ * Znovuodevzdání po vrácení se za pozdní nepočítá — doplnění si vyžádal vyučující.
+ */
+export function lateBy(a: Pick<Assignment, "dueAt">, work: Work | null): number | null {
+  const at = work?.submission?.submittedAt;
+  if (!a.dueAt || !at || !work?.submission) return null;
+  if (work.submission.status !== "odevzdano" && !work.review) return null;
+  if (work.review?.result === "vraceno" || (work.review && at > work.review.reviewedAt)) return null;
+  const diff = new Date(at).getTime() - new Date(a.dueAt).getTime();
+  return diff > 0 ? diff : null;
+}
+
+/** „o 40 min“, „o 3 h“, „o 2 dny“ */
+export function formatLate(ms: number): string {
+  const min = Math.round(ms / 60000);
+  if (min < 60) return `o ${Math.max(1, min)} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `o ${h} h`;
+  const d = Math.round(h / 24);
+  return `o ${d} ${d === 1 ? "den" : d < 5 ? "dny" : "dní"}`;
+}
+
 /** Má student práci odevzdanou? Vrácená práce se nepočítá, dokud ji znovu neodevzdá. */
 export function isHandedIn(state: WorkState): boolean {
   return state === "odevzdano" || state === "splneno" || state === "nesplneno";

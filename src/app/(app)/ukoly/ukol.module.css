@@ -246,3 +246,16 @@
   color: var(--late);
   background: var(--late-bg);
 }
+.lateText {
+  color: var(--late);
+  font-weight: 700;
+}
+.lateNote {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--late);
+  background: var(--late-bg);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin: 0;
+}

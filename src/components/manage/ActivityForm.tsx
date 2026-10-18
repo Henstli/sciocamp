@@ -3,6 +3,7 @@
 import { keepForm } from "@/lib/use-keep-form";
 import { useActionState, useState } from "react";
 import { DateInput, TimeInput } from "@/components/fields/DateTime";
+import { Icon } from "@/components/Icon";
 import { saveActivity, type ActivityFormState } from "@/lib/actions/activities";
 import { formatDateRange } from "@/lib/periods";
 import type { ActivityKind } from "@/lib/types";
@@ -213,7 +214,9 @@ export function ActivityForm({
                 defaultValue={s.start}
                 onChange={(v) => setSlot(i, { start: v === null ? "neplatne" : v })}
               />
-              <span aria-hidden="true">–</span>
+              <span aria-hidden="true" className={styles.slotDash}>
+                –
+              </span>
               <TimeInput
                 ariaLabel={`Konec ${i + 1}. hodiny`}
                 defaultValue={s.end}
@@ -225,7 +228,7 @@ export function ActivityForm({
                 aria-label={`Odebrat ${i + 1}. hodinu`}
                 onClick={() => setSlots((all) => all.filter((_, j) => j !== i))}
               >
-                ×
+                <Icon name="trash" size={18} />
               </button>
             </div>
           ))}

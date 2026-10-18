@@ -2,6 +2,7 @@
 // jako přihlášený uživatel (oprávnění hlídá RLS), jinak vrací ukázková data.
 
 import "server-only";
+import { cache } from "react";
 import { isSupabase } from "./config";
 import { DEMO_ACTIVITIES, DEMO_CLASSROOMS, DEMO_HOME, DEMO_PERIODS, DEMO_USERS } from "./demo-data";
 import { canTeach, isAdmin } from "./roles";
@@ -105,7 +106,7 @@ function fail(what: string, error: { message: string }): never {
 // Uživatelé
 // ---------------------------------------------------------------------------
 
-export async function getUserById(id: string): Promise<User | null> {
+async function getUserByIdUncached(id: string): Promise<User | null> {
   if (!isSupabase) return DEMO_USERS.find((u) => u.id === id) ?? null;
   const sb = await createClient();
   const { data, error } = await sb.from("profiles").select(PROFILE_COLUMNS).eq("id", id).maybeSingle();
@@ -127,7 +128,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   return DEMO_USERS.find((u) => u.email === e) ?? null;
 }
 
-export async function listUsers(): Promise<User[]> {
+async function listUsersUncached(): Promise<User[]> {
   if (!isSupabase) return DEMO_USERS;
   const sb = await createClient();
   const { data, error } = await sb.from("profiles").select(PROFILE_COLUMNS).order("full_name");
@@ -138,10 +139,8 @@ export async function listUsers(): Promise<User[]> {
 export async function getUsersByIds(ids: string[]): Promise<User[]> {
   if (ids.length === 0) return [];
   if (!isSupabase) return ids.map((id) => DEMO_USERS.find((u) => u.id === id)).filter((u): u is User => !!u);
-  const sb = await createClient();
-  const { data, error } = await sb.from("profiles").select(PROFILE_COLUMNS).in("id", ids);
-  if (error) fail("uživatele", error);
-  const users = (data as ProfileRow[]).map(toUser);
+  // Uživatelů je jen pár stovek: jeden (sdílený) seznam je rychlejší než další dotaz.
+  const users = await listUsers();
   return ids.map((id) => users.find((u) => u.id === id)).filter((u): u is User => !!u);
 }
 
@@ -174,17 +173,14 @@ async function fetchActivities() {
   return (data as unknown as ActivityRow[]).map(toActivity);
 }
 
-export async function listActivities(): Promise<Activity[]> {
+async function listActivitiesUncached(): Promise<Activity[]> {
   if (!isSupabase) return DEMO_ACTIVITIES;
   return fetchActivities();
 }
 
-export async function getActivity(id: string): Promise<Activity | null> {
-  if (!isSupabase) return DEMO_ACTIVITIES.find((a) => a.id === id) ?? null;
-  const sb = await createClient();
-  const { data, error } = await sb.from("activities").select(ACTIVITY_COLUMNS).eq("slug", id).maybeSingle();
-  if (error) fail("kurz", error);
-  return data ? toActivity(data as unknown as ActivityRow) : null;
+async function getActivityUncached(id: string): Promise<Activity | null> {
+  // Seznam aktivit se během požadavku stejně načítá (menu, rozvrh) — hledat v něm.
+  return (await listActivities()).find((a) => a.id === id) ?? null;
 }
 
 /** Aktivity, kterých se uživatel účastní jako student nebo je učí. */
@@ -245,10 +241,18 @@ export async function getHomeSummary(): Promise<typeof DEMO_HOME | null> {
 // Kurzová období
 // ---------------------------------------------------------------------------
 
-export async function listPeriods(): Promise<Period[]> {
+async function listPeriodsUncached(): Promise<Period[]> {
   if (!isSupabase) return DEMO_PERIODS;
   const sb = await createClient();
   const { data, error } = await sb.from("blocks").select("id, name, starts_on, ends_on").order("starts_on");
   if (error) fail("kurzová období", error);
   return (data as PeriodRow[]).map(toPeriod);
 }
+
+// Výsledky se v rámci jednoho požadavku sdílí (React cache) — stránka, menu
+// i pomocné funkce se ptají na stejná data a do databáze se jde jen jednou.
+export const listUsers = cache(listUsersUncached);
+export const listActivities = cache(listActivitiesUncached);
+export const getActivity = cache(getActivityUncached);
+export const listPeriods = cache(listPeriodsUncached);
+export const getUserById = cache(getUserByIdUncached);

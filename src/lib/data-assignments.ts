@@ -2,6 +2,7 @@
 // naostro čte ze Supabase jako přihlášený uživatel (RLS), jinak ukázková data.
 
 import "server-only";
+import { cache } from "react";
 import { isSupabase } from "./config";
 import { getActivity, listActivities } from "./data";
 import { DEMO_ASSIGNMENTS, DEMO_COMMENTS, DEMO_WORK } from "./demo-assignments";
@@ -79,7 +80,7 @@ export async function assignmentsForActivity(activity: Activity): Promise<Assign
 }
 
 /** Student: úkoly ze všech jeho tříd. Vyučující: úkoly ze tříd, které učí. */
-export async function assignmentsForUser(user: User): Promise<Assignment[]> {
+async function assignmentsForUserUncached(user: User): Promise<Assignment[]> {
   const teaching = canTeach(user.role);
   if (!isSupabase) {
     const activities = await listActivities();
@@ -102,7 +103,7 @@ export async function assignmentsForUser(user: User): Promise<Assignment[]> {
   return rows.sort(byDue);
 }
 
-export async function getAssignment(id: string): Promise<Assignment | null> {
+async function getAssignmentUncached(id: string): Promise<Assignment | null> {
   if (!isSupabase) return (await demoAssignments()).find((a) => a.id === id) ?? null;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const sb = await createClient();
@@ -209,7 +210,7 @@ async function listFiles(assignmentId: string, studentId: string): Promise<Submi
 }
 
 /** Soubory, které k úkolu nebo materiálu přiložil vyučující. */
-export async function assignmentFiles(assignmentId: string): Promise<SubmissionFile[]> {
+async function assignmentFilesUncached(assignmentId: string): Promise<SubmissionFile[]> {
   if (!isSupabase) return [];
   return signedList(MATERIAL_BUCKET, assignmentId);
 }
@@ -267,7 +268,7 @@ export async function commentCounts(assignmentId: string): Promise<Map<string, n
 export type StudentTask = { assignment: Assignment; state: WorkState; work: Work | null };
 
 /** Úkoly (bez materiálů) ze všech tříd studenta se stavem jeho práce. */
-export async function tasksForStudent(user: User): Promise<StudentTask[]> {
+async function tasksForStudentUncached(user: User): Promise<StudentTask[]> {
   const tasks = (await assignmentsForUser(user)).filter((a) => a.kind === "ukol");
   const works = await workMap(
     tasks.map((a) => a.id),
@@ -291,7 +292,7 @@ export type TeacherTask = {
 };
 
 /** Úkoly a materiály ze tříd, které vyučující učí, s počty odevzdaných a neohodnocených prací. */
-export async function tasksForTeacher(user: User): Promise<TeacherTask[]> {
+async function tasksForTeacherUncached(user: User): Promise<TeacherTask[]> {
   const list = await assignmentsForUser(user);
   if (list.length === 0) return [];
   const activities = await listActivities();
@@ -325,7 +326,7 @@ export type HomeTasks = {
 };
 
 /** Souhrn úkolů pro Domov a odznaky v menu. */
-export async function homeTasks(user: User): Promise<HomeTasks> {
+async function homeTasksUncached(user: User): Promise<HomeTasks> {
   const now = Date.now();
   const soon = (iso: string) => new Date(iso).getTime() - now < 48 * 3600 * 1000;
   if (canTeach(user.role)) {
@@ -373,3 +374,12 @@ export async function homeTasks(user: User): Promise<HomeTasks> {
     deadlines,
   };
 }
+
+// Výsledky se v rámci jednoho požadavku sdílí (React cache) — stránka, menu
+// i pomocné funkce se ptají na stejná data a do databáze se jde jen jednou.
+export const assignmentsForUser = cache(assignmentsForUserUncached);
+export const getAssignment = cache(getAssignmentUncached);
+export const homeTasks = cache(homeTasksUncached);
+export const tasksForStudent = cache(tasksForStudentUncached);
+export const tasksForTeacher = cache(tasksForTeacherUncached);
+export const assignmentFiles = cache(assignmentFilesUncached);

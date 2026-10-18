@@ -156,19 +156,25 @@
 }
 .slot {
   display: grid;
-  grid-template-columns: minmax(120px, 1.4fr) minmax(96px, 1fr) auto minmax(96px, 1fr) 40px;
+  grid-template-columns: minmax(140px, 220px) 96px 12px 96px 44px;
   align-items: center;
   gap: 8px;
-  max-width: 560px;
+}
+.slotDash {
+  text-align: center;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 .remove {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--r-btn);
   border: 1px solid var(--border);
   background: var(--card);
-  color: var(--text-2);
-  font-size: 20px;
+  color: var(--text-muted);
   cursor: pointer;
 }
 .remove:hover {
@@ -280,7 +286,7 @@ label.row:hover,
     padding: 18px;
   }
   .slot {
-    grid-template-columns: 1fr 1fr auto 1fr 40px;
+    grid-template-columns: 1fr 12px 1fr 44px;
   }
   .slot select {
     grid-column: 1 / -1;

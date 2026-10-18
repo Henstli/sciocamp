@@ -7,7 +7,7 @@ import { StudentWork } from "@/components/assignments/StudentWork";
 import { ReviewSummary, WorkFiles } from "@/components/assignments/WorkFiles";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/PageHeader";
-import { STATE_CHIP, STATE_LABEL, isHandedIn, linkTitle, workState } from "@/lib/assignments";
+import { STATE_CHIP, STATE_LABEL, formatLate, isHandedIn, lateBy, linkTitle, workState } from "@/lib/assignments";
 import { requireUser } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
 import { canOpenActivity, getActivity, getUsersByIds, teachesActivity } from "@/lib/data";
@@ -150,17 +150,19 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
     const counts = await commentCounts(a.id);
     const rows = students.map((s) => {
       const work = works.get(`${a.id}:${s.id}`) ?? null;
-      return { s, work, state: workState(a, work) };
+      return { s, work, state: workState(a, work), late: lateBy(a, work) };
     });
     const order = { odevzdano: 0, vraceno: 1, pozde: 2, ceka: 3, splneno: 4, nesplneno: 5, material: 6 } as const;
     rows.sort((x, y) => order[x.state] - order[y.state] || x.s.name.localeCompare(y.s.name, "cs"));
     const toReview = rows.filter((r) => r.state === "odevzdano").length;
     const submitted = rows.filter((r) => isHandedIn(r.state)).length;
+    const lateCount = rows.filter((r) => r.late !== null).length;
 
     const selectedId = typeof student === "string" && activity.studentIds.includes(student) ? student : null;
     const selected = selectedId ? people.get(selectedId)! : null;
     const selectedWork = selectedId ? await getWork(a.id, selectedId) : null;
     const selectedState = selectedId ? workState(a, selectedWork) : null;
+    const selectedLate = selectedWork ? lateBy(a, selectedWork) : null;
     const thread = selectedId ? toView(await getComments(a.id, selectedId)) : [];
 
     return (
@@ -178,10 +180,11 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                   <span className="chip chip-info">
                     odevzdalo {submitted} z {rows.length}
                   </span>
+                  {lateCount > 0 && <span className="chip chip-late">{lateCount} po termínu</span>}
                 </div>
               </div>
               {rows.length === 0 && <p className={styles.emptyRow}>Ve třídě zatím nejsou zapsaní žádní studenti.</p>}
-              {rows.map(({ s, work, state }) => {
+              {rows.map(({ s, work, state, late }) => {
                 const n = counts.get(s.id) ?? 0;
                 return (
                   <Link
@@ -195,7 +198,10 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                     <span className={styles.studentMain}>
                       <span className={styles.studentName}>{s.name}</span>
                       <span className={styles.studentMeta}>
-                        {work?.submission?.submittedAt ? `odevzdáno ${formatStamp(work.submission.submittedAt)}` : "nic neodevzdal(a)"}
+                        {work?.submission?.submittedAt && (isHandedIn(state) || state === "vraceno")
+                          ? `odevzdáno ${formatStamp(work.submission.submittedAt)}`
+                          : "nic neodevzdal(a)"}
+                        {late !== null && <strong className={styles.lateText}> · pozdě {formatLate(late)}</strong>}
                         {n > 0 && ` · ${n} ${plural(n, "komentář", "komentáře", "komentářů")}`}
                       </span>
                     </span>
@@ -219,6 +225,12 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                     <h2 className={styles.h2}>{selected.name}</h2>
                     <span className={`chip ${STATE_CHIP[selectedState]}`}>{STATE_LABEL[selectedState]}</span>
                   </div>
+                  {selectedLate !== null && selectedWork.submission?.submittedAt && (
+                    <p className={styles.lateNote}>
+                      Odevzdáno po termínu ({formatLate(selectedLate)}) — {formatStamp(selectedWork.submission.submittedAt)}, termín byl{" "}
+                      {formatDue(a.dueAt!)}.
+                    </p>
+                  )}
                   <WorkFiles
                     files={selectedWork.submission?.files ?? []}
                     links={selectedWork.submission?.links ?? []}
@@ -284,6 +296,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
             submission={work.submission}
             review={work.review}
             maxPoints={a.maxPoints}
+            late={lateBy(a, work)}
           />
           <PrivateComments
             assignmentId={a.id}

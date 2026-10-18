@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { Icon } from "../Icon";
-import { STATE_CHIP, STATE_LABEL } from "@/lib/assignments";
+import { STATE_CHIP, STATE_LABEL, formatLate } from "@/lib/assignments";
 import { addSubmissionLink, filesChanged, removeSubmissionLink, setSubmitted } from "@/lib/actions/assignments";
 import { removeFile, uploadFiles } from "@/lib/upload";
 import type { Review, Submission, WorkState } from "@/lib/types";
@@ -20,6 +20,7 @@ export function StudentWork({
   submission,
   review,
   maxPoints,
+  late = null,
 }: {
   assignmentId: string;
   userId: string;
@@ -29,6 +30,8 @@ export function StudentWork({
   submission: Submission | null;
   review: Review | null;
   maxPoints: number | null;
+  /** O kolik ms po termínu bylo odevzdáno (null = včas) */
+  late?: number | null;
 }) {
   const [pending, start] = useTransition();
   const [message, setMessage] = useState<{ error?: string; info?: string }>({});
@@ -77,6 +80,11 @@ export function StudentWork({
         <h2 className={styles.h2}>Tvoje práce</h2>
         <span className={`chip ${STATE_CHIP[state]}`}>{STATE_LABEL[state]}</span>
       </div>
+
+      {late !== null && <p className={styles.lateNote}>Odevzdáno po termínu ({formatLate(late)}). Vyučující to uvidí.</p>}
+      {state === "pozde" && (
+        <p className={styles.lateNote}>Termín už uplynul, ale pořád můžeš odevzdat. Vyučující uvidí, že je práce pozdě.</p>
+      )}
 
       {review && <ReviewSummary review={review} maxPoints={maxPoints} forStudent />}
 

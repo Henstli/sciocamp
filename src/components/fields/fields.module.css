@@ -24,7 +24,7 @@
   border-color: var(--late);
 }
 .time {
-  width: 88px;
+  width: 100%;
 }
 .error {
   font-size: 12px;
@@ -173,6 +173,7 @@
 /* Nabídka časů */
 .timeWrap {
   flex: none;
+  width: 96px;
 }
 .timeList {
   width: 100%;
