@@ -1,0 +1,44 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  background: var(--bg);
+}
+
+.side {
+  flex: 0 0 260px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+}
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 28px 32px 48px;
+}
+
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    flex-direction: column;
+  }
+  .side {
+    flex: none;
+    border-right: 0;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .main {
+    padding: 20px 16px 40px;
+  }
+  .inner {
+    gap: 20px;
+  }
+}

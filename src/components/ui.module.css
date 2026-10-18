@@ -1,0 +1,94 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.headerText {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.eyebrow {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.h1 {
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 6px;
+}
+.headerAvatar {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 22px;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+}
+.headerAvatar:hover {
+  color: #fff;
+  background: var(--primary-dark);
+}
+
+.avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.avatar_student {
+  background: #dce7ff;
+  color: var(--primary-text);
+}
+.avatar_ucitel {
+  background: #e9e4ff;
+  color: #4b3bb5;
+}
+.avatar_admin {
+  background: var(--primary-text);
+  color: #fff;
+}
+.avatar_me {
+  background: var(--primary);
+  color: #fff;
+}
+.avatar_late {
+  background: var(--late-bg);
+  color: var(--late);
+}
+.avatar_teal {
+  background: var(--other-bg);
+  color: var(--other);
+}
+
+.empty {
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px dashed var(--border-input);
+  background: var(--card);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .h1 {
+    font-size: 26px;
+  }
+}

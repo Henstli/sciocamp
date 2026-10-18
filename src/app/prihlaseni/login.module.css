@@ -1,0 +1,286 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--card);
+}
+
+.hero {
+  flex: 1 1 420px;
+  position: relative;
+  overflow: hidden;
+  background: var(--primary);
+  color: #fff;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+  min-height: 360px;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+}
+.blob1 {
+  width: 520px;
+  height: 520px;
+  background: #4a7be6;
+  right: -180px;
+  top: -160px;
+}
+.blob2 {
+  width: 360px;
+  height: 360px;
+  background: #3466d6;
+  left: -120px;
+  bottom: -140px;
+}
+.blob3 {
+  width: 120px;
+  height: 120px;
+  background: #5a88ec;
+  right: 22%;
+  bottom: 18%;
+}
+
+.brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brandMark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brandName {
+  font-weight: 800;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+
+.pitch {
+  position: relative;
+  max-width: 460px;
+}
+.pitch h1 {
+  font-size: 44px;
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.pitch p {
+  margin-top: 18px;
+  font-size: 17px;
+  line-height: 1.55;
+  font-weight: 500;
+}
+
+.pills {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pills span {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.main {
+  flex: 1 1 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.form {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.title {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  margin-top: 8px;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border-input);
+  background: var(--card);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.google:hover {
+  border-color: var(--primary-line);
+  background: var(--primary-tint);
+}
+
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--primary-tint);
+  border: 1px solid var(--primary-line);
+}
+.demoNote {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+  padding-bottom: 4px;
+}
+.demoAccount {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  text-align: left;
+  cursor: pointer;
+}
+.demoAccount:hover {
+  border-color: var(--primary);
+}
+.demoName {
+  font-size: 14px;
+  font-weight: 700;
+}
+.demoMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.divider span {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.field label {
+  font-size: 14px;
+  font-weight: 700;
+}
+.labelRow {
+  display: flex;
+  align-items: baseline;
+}
+.linkButton {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary-text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.linkButton:hover {
+  color: var(--primary-hover-text);
+}
+.hint {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-2);
+  font-weight: 500;
+  min-height: var(--tap);
+  margin-top: -8px;
+}
+.remember input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  margin: 0;
+}
+
+.error {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--late);
+  background: var(--late-bg);
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.footnote {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 28px 24px;
+    gap: 28px;
+    min-height: 0;
+  }
+  .pitch h1 {
+    font-size: 32px;
+  }
+  .pitch p {
+    font-size: 15px;
+  }
+  .main {
+    padding: 32px 20px 48px;
+  }
+}
