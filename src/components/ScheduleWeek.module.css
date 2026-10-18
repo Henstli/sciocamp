@@ -135,6 +135,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.entry[data-short="true"] .entryTitle {
+  white-space: nowrap;
+}
 .entryTime {
   font-weight: 500;
   margin-top: 2px;

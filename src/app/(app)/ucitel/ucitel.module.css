@@ -1,0 +1,35 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 16px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+.kind {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.title {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 800;
+}
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}

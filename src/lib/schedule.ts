@@ -58,3 +58,10 @@ export function hourRange(entries: ScheduleEntry[]): { from: number; to: number 
   }
   return { from, to };
 }
+
+/** Probíhá teď některá z hodin aktivity? */
+export function isLiveNow(activity: Activity, now: PragueNow): boolean {
+  return activity.slots.some(
+    (s) => s.day === now.isoWeekday && now.minutes >= toMinutes(s.start) && now.minutes < toMinutes(s.end),
+  );
+}

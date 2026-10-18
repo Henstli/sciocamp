@@ -1,0 +1,187 @@
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.stat {
+  padding: 18px 20px;
+}
+.statLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.statValue {
+  font-size: 30px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.table {
+  overflow: hidden;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.filter {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--card);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.filter[aria-pressed="true"] {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  border-color: var(--primary-line);
+}
+.search {
+  margin-left: auto;
+  flex: 0 1 280px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--tap);
+  padding: 0 14px;
+  background: var(--bg);
+  border-radius: var(--r-btn);
+  color: var(--text-muted);
+}
+.search input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 14px;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+
+.scroll {
+  overflow-x: auto;
+}
+.rows {
+  min-width: 720px;
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-soft);
+}
+.headRow {
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: #fbfcfe;
+  border-top: 0;
+}
+.person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.personText {
+  min-width: 0;
+}
+.name {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.email {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.select {
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-input);
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.group {
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.footer {
+  padding: 14px 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-soft);
+}
+
+.courseRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-soft);
+}
+.courseMain {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.chipAtelier {
+  background: var(--atelier-bg);
+  color: var(--atelier-text);
+}
+.capacity {
+  flex: 0 0 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.capLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.capBar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-soft);
+}
+.capBar div {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--primary);
+}
+.capBar div[data-full="true"] {
+  background: #c93b3b;
+}
+
+@media (max-width: 640px) {
+  .search {
+    margin-left: 0;
+    flex: 1 1 100%;
+  }
+}

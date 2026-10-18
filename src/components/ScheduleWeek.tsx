@@ -75,6 +75,8 @@ export function ScheduleWeek({
                       className={styles.entry}
                       data-kind={e.activity.kind}
                       data-live={e.live}
+                      data-short={h <= 60}
+                      title={`${e.activity.title}, ${formatRange(e.slot)}`}
                       style={{ top: top + 2, height: h - 4 }}
                     >
                       <span className={styles.entryTitle}>

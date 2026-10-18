@@ -87,6 +87,12 @@
   color: var(--text-muted);
 }
 
+@media (max-width: 900px) {
+  /* Na mobilu je profil v menu, avatar by jen zalamoval hlavičku. */
+  .headerAvatar {
+    display: none;
+  }
+}
 @media (max-width: 640px) {
   .h1 {
     font-size: 26px;

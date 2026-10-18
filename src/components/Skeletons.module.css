@@ -1,0 +1,97 @@
+.side {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px;
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+.mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.navLines {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 12px;
+}
+.line,
+.title,
+.card,
+.big {
+  background: linear-gradient(90deg, var(--border-soft), #f7f9fc, var(--border-soft));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+.line {
+  height: 16px;
+  border-radius: 8px;
+  width: 80%;
+}
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.title {
+  height: 36px;
+  width: 260px;
+  max-width: 70%;
+  border-radius: 10px;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.card {
+  height: 140px;
+  border-radius: var(--r-card);
+}
+.big {
+  height: 360px;
+  border-radius: var(--r-card);
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .line,
+  .title,
+  .card,
+  .big {
+    animation: none;
+  }
+}
+@media (max-width: 900px) {
+  .side {
+    padding: 10px 12px 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand .mark {
+    width: 38px;
+    height: 38px;
+  }
+  .navLines {
+    display: none;
+  }
+}

@@ -32,3 +32,11 @@
 2. Úkoly, odevzdávání a hodnocení
 3. Chaty, nástěnka a notifikace
 4. Zápisy, hlasování a návrhy
+
+## Implementace (stav)
+
+- Etapa 1 hotová na ukázkových datech: přihlášení (ukázkové účty místo Google OAuth), role, Domov s rozvrhem a Meetem, Kurzy, Ateliéry, detail třídy (`/kurzy/[id]`, `/ateliery/[id]`), Moje třídy, Správa, Profil. Ostatní stránky jsou zástupné.
+- Next.js 16.4 má zapnuté Cache Components: vše, co čte cookies/session, musí být za `<Suspense>` (layout `src/app/(app)/layout.tsx` to řeší pro všechny stránky). Middleware se jmenuje `src/proxy.ts`. Před psaním kódu čti dokumentaci v `node_modules/next/dist/docs/`.
+- Data jen přes `src/lib/data.ts` (async funkce, připravené na Supabase). Čas vždy přes `src/lib/time.ts` (pásmo Europe/Prague).
+- Styly: design tokeny v `src/app/globals.css`, komponenty přes CSS moduly.
+- Ukázkový režim: změny (role v adminu, chat) se neukládají; odkazy na Meet jsou ukázkové.

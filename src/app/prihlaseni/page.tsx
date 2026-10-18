@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { Icon } from "@/components/Icon";
 import { getCurrentUser } from "@/lib/auth";
 import { listDemoAccounts } from "@/lib/data";
@@ -9,16 +10,7 @@ import styles from "./login.module.css";
 
 export const metadata: Metadata = { title: "Přihlášení" };
 
-export default async function LoginPage() {
-  if (await getCurrentUser()) redirect("/");
-
-  const demo = (await listDemoAccounts()).map((u) => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    caption: roleCaption(u),
-  }));
-
+export default function LoginPage() {
   return (
     <div className={styles.page}>
       <section aria-label="O aplikaci" className={styles.hero}>
@@ -46,8 +38,22 @@ export default async function LoginPage() {
       </section>
 
       <main className={styles.main}>
-        <LoginForm demoAccounts={demo} />
+        <Suspense fallback={<div className={styles.form} aria-busy="true" />}>
+          <LoginGate />
+        </Suspense>
       </main>
     </div>
   );
+}
+
+/** Přihlášeného pošle rovnou na Domov, ostatním ukáže formulář. */
+async function LoginGate() {
+  if (await getCurrentUser()) redirect("/");
+  const demo = (await listDemoAccounts()).map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    caption: roleCaption(u),
+  }));
+  return <LoginForm demoAccounts={demo} />;
 }

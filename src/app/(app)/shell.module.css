@@ -6,6 +6,8 @@
 
 .side {
   flex: 0 0 260px;
+  width: 260px;
+  min-width: 0;
   background: var(--card);
   border-right: 1px solid var(--border);
 }
@@ -30,6 +32,7 @@
   }
   .side {
     flex: none;
+    width: auto;
     border-right: 0;
     position: sticky;
     top: 0;

@@ -1,0 +1,110 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.card[data-big="true"] {
+  border-radius: 20px;
+}
+
+.head {
+  display: block;
+  padding: 20px;
+  text-decoration: none;
+  color: #fff;
+  background: var(--primary);
+}
+.head:hover {
+  color: #fff;
+  filter: brightness(0.96);
+}
+.head[data-tone="blueDark"] {
+  background: var(--primary-dark);
+}
+.head[data-tone="violet"] {
+  background: var(--atelier);
+}
+.head[data-tone="teal"] {
+  background: var(--other);
+}
+.card[data-big="true"] .head {
+  padding: 22px;
+}
+
+.when {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.92;
+}
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-top: 6px;
+}
+.card[data-big="true"] .title {
+  font-size: 22px;
+}
+.lector {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+.card[data-big="true"] .body {
+  padding: 20px 20px 14px;
+  gap: 14px;
+}
+.line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 20px;
+}
+
+.msHead {
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+}
+.msHead span:last-child {
+  margin-left: auto;
+}
+.ms {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+.ms div {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border);
+}
+.ms div[data-done="true"] {
+  background: var(--primary);
+}
+.ms[data-tone="blueDark"] div[data-done="true"] {
+  background: var(--primary-dark);
+}
+.ms[data-tone="violet"] div[data-done="true"] {
+  background: var(--atelier);
+}
+.ms[data-tone="teal"] div[data-done="true"] {
+  background: var(--other);
+}
