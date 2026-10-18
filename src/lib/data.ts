@@ -242,6 +242,34 @@ async function listPeriodsUncached(): Promise<Period[]> {
   return (data as PeriodRow[]).map(toPeriod);
 }
 
+// ---------------------------------------------------------------------------
+// Kontakty
+// ---------------------------------------------------------------------------
+
+/** Ukázková čísla (vyučující a ukázkový student). */
+const DEMO_PHONES: Record<string, string> = {
+  "u-jakubcova": "+420 777 123 456",
+  "u-hankova": "+420 603 222 111",
+  "u-pavel": "+420 724 555 010",
+  "u-liska": "+420 731 444 222",
+};
+
+/**
+ * Telefon člověka, pokud ho divák smí vidět: číslo učitele vidí všichni,
+ * číslo studenta jen učitelé, admini a student sám (hlídá RLS).
+ */
+export async function getPhone(viewer: User, personId: string): Promise<string | null> {
+  if (!isSupabase) {
+    const person = DEMO_USERS.find((u) => u.id === personId);
+    if (!person) return null;
+    const visible = viewer.id === personId || canTeach(viewer.role) || canTeach(person.role);
+    return visible ? (DEMO_PHONES[personId] ?? null) : null;
+  }
+  const sb = await createClient();
+  const { data } = await sb.from("profile_contacts").select("phone").eq("user_id", personId).maybeSingle();
+  return data?.phone ?? null;
+}
+
 // Výsledky se v rámci jednoho požadavku sdílí (React cache) — stránka, menu
 // i pomocné funkce se ptají na stejná data a do databáze se jde jen jednou.
 export const listUsers = cache(listUsersUncached);

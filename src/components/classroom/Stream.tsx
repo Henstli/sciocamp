@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { Icon } from "../Icon";
-import { Avatar, EmptyNote } from "../PageHeader";
+import { Avatar, EmptyNote, profileHref } from "../PageHeader";
 import { addPostComment, createPost, deletePost, deletePostComment } from "@/lib/actions/communication";
 import { linkTitle } from "@/lib/assignments";
 import type { LinkItem, SubmissionFile } from "@/lib/types";
@@ -243,7 +243,7 @@ function PostCard({ post, me, live }: { post: StreamPost; me: Person; live: bool
   return (
     <article className={`card ${styles.post}`}>
       <div className={styles.postHead}>
-        <Avatar initials={post.author.initials} size={40} tone={toneFor(post.author, me.id)} />
+        <Avatar initials={post.author.initials} size={40} tone={toneFor(post.author, me.id)} href={profileHref(post.author.id)} title={post.author.name} />
         <div className={styles.grow}>
           <div className={styles.strong}>{post.author.name}</div>
           <div className={styles.meta}>{post.when} · oznámení</div>
@@ -302,7 +302,7 @@ function PostCard({ post, me, live }: { post: StreamPost; me: Person; live: bool
         <div className={styles.commentList}>
           {post.comments.map((c) => (
             <div key={c.id} className={styles.comment}>
-              <Avatar initials={c.author.initials} size={32} tone={toneFor(c.author, me.id)} />
+              <Avatar initials={c.author.initials} size={32} tone={toneFor(c.author, me.id)} href={profileHref(c.author.id)} title={c.author.name} />
               <div className={styles.grow}>
                 <div className={styles.msgHead}>
                   <span className={styles.strong}>{c.author.name}</span>

@@ -519,4 +519,17 @@ await test("chat třídy: přílohy jen pro třídu, zprávy notifikují příje
   assert.equal((await as(student2, `select id from public.notifications where kind = 'zprava'`)).length, 0, "odesílatel nic");
 });
 
+await test("telefon: učitele vidí všichni, studenta jen učitelé a admin", async () => {
+  await as(teacher, `insert into public.profile_contacts (user_id, phone) values ($1, '+420 777 111 222')`, [teacher]);
+  await as(student, `insert into public.profile_contacts (user_id, phone) values ($1, '777 333 444')`, [student]);
+  await assert.rejects(() => as(student, `insert into public.profile_contacts (user_id, phone) values ($1, '777 000 000')`, [student2]));
+  await assert.rejects(() => as(student2, `insert into public.profile_contacts (user_id, phone) values ($1, 'zavolej mi')`, [student2]));
+  const seen = async (uid) => (await as(uid, `select user_id from public.profile_contacts`)).map((r) => r.user_id).sort();
+  assert.deepEqual(await seen(student2), [teacher], "student vidí jen učitele");
+  assert.deepEqual(await seen(student), [teacher, student].sort(), "student vidí sebe a učitele");
+  assert.deepEqual(await seen(teacher2), [teacher, student].sort(), "učitel vidí všechny");
+  assert.equal((await as(student2, `update public.profile_contacts set phone = '777 999 999' returning user_id`)).length, 0);
+  assert.equal((await as(outsider, `select user_id from public.profile_contacts`)).length, 1);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

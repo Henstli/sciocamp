@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../Icon";
-import { Avatar } from "../PageHeader";
+import { Avatar, profileHref } from "../PageHeader";
 import { createClient } from "@/lib/supabase/client";
 import { formatStamp } from "@/lib/time";
 import type { SubmissionFile } from "@/lib/types";
@@ -159,7 +159,7 @@ export function ClassChat({
           const author = people[m.authorId] ?? (m.authorId === me.id ? me : UNKNOWN_PERSON);
           return (
             <div key={m.id} className={styles.msg}>
-              <Avatar initials={author.initials} size={36} tone={toneFor(author, me.id)} />
+              <Avatar initials={author.initials} size={36} tone={toneFor(author, me.id)} href={author.id !== "?" ? profileHref(author.id) : undefined} title={author.name} />
               <div className={styles.grow}>
                 <div className={styles.msgHead}>
                   <span className={styles.strong}>{author.name}</span>

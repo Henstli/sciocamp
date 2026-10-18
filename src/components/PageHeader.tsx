@@ -37,20 +37,32 @@ export function Avatar({
   initials,
   size = 36,
   tone = "student",
+  href,
+  title,
 }: {
   initials: string;
   size?: number;
   tone?: "student" | "ucitel" | "admin" | "me" | "late" | "teal";
+  /** Odkaz na profil člověka — avatar je pak klikací */
+  href?: string;
+  title?: string;
 }) {
-  return (
-    <span
-      className={`${styles.avatar} ${styles[`avatar_${tone}`]}`}
-      style={{ width: size, height: size, borderRadius: size / 2, fontSize: size >= 44 ? 15 : size >= 40 ? 13 : 12 }}
-    >
-      {initials}
-    </span>
-  );
+  const props = {
+    className: `${styles.avatar} ${styles[`avatar_${tone}`]}`,
+    style: { width: size, height: size, borderRadius: size / 2, fontSize: size >= 44 ? 15 : size >= 40 ? 13 : 12 },
+  };
+  if (href) {
+    return (
+      <Link href={href} {...props} className={`${props.className} ${styles.avatarLink}`} aria-label={title ? `Profil: ${title}` : "Profil"} title={title}>
+        {initials}
+      </Link>
+    );
+  }
+  return <span {...props}>{initials}</span>;
 }
+
+/** Adresa profilu člověka. */
+export const profileHref = (id: string) => `/lide/${id}`;
 
 export function EmptyNote({ children }: { children: React.ReactNode }) {
   return <div className={styles.empty}>{children}</div>;

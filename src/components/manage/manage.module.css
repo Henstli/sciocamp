@@ -297,3 +297,8 @@ label.row:hover,
   opacity: 0.55;
   cursor: not-allowed;
 }
+.input:disabled {
+  background: var(--bg);
+  color: var(--text-2);
+  cursor: not-allowed;
+}

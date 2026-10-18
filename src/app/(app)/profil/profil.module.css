@@ -155,3 +155,63 @@
   background: var(--other);
   color: #fff;
 }
+
+/* Barvy podle druhu aktivity — stejné jako v rozvrhu */
+.pill[data-kind="kurz"] {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+.pill[data-kind="atelier"] {
+  background: var(--atelier);
+  color: #fff;
+}
+.pill[data-kind="ostatni"] {
+  background: var(--wait-bg);
+  color: var(--wait);
+}
+.pill[data-kind="expedice"] {
+  background: var(--other-bg);
+  color: var(--other);
+}
+.pill:hover {
+  filter: brightness(0.96);
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.legend i[data-kind="kurz"] {
+  background: var(--primary-line);
+}
+.legend i[data-kind="atelier"] {
+  background: var(--atelier);
+}
+.legend i[data-kind="ostatni"] {
+  background: #f6dcae;
+}
+.legend i[data-kind="expedice"] {
+  background: #bfe5de;
+}
+.empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.fieldValue a {
+  color: var(--primary-text);
+  font-weight: 600;
+}

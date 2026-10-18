@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../Icon";
 import { Attachment } from "../Attachment";
-import { Avatar } from "../PageHeader";
+import { Avatar, profileHref } from "../PageHeader";
 import { markConversationRead, startConversation } from "@/lib/actions/communication";
 import { createClient } from "@/lib/supabase/client";
 import { formatClock, formatDayLabel } from "@/lib/time";
@@ -275,7 +275,7 @@ export function Messenger({
               <Link href="/zpravy" className={styles.back} aria-label="Zpět na seznam">
                 <Icon name="chevronLeft" size={20} />
               </Link>
-              <Avatar initials={activePerson.initials} size={42} tone={tone(activePerson.role)} />
+              <Avatar initials={activePerson.initials} size={42} tone={tone(activePerson.role)} href={profileHref(activePerson.id)} title={activePerson.name} />
               <div>
                 <div className={styles.headName}>{activePerson.name}</div>
                 <div className={styles.headCaption}>{activePerson.caption}</div>

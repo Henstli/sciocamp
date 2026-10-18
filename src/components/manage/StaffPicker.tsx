@@ -53,7 +53,7 @@ export function StaffPicker({
           <span key={s.id} className={styles.chip}>
             {s.name}
             <button type="button" aria-label={`Odebrat ${s.name}`} onClick={() => onChange(selected.filter((x) => x !== s.id))}>
-              <Icon name="close" size={14} />
+              <Icon name="close" size={16} strokeWidth={2.5} />
             </button>
           </span>
         ))}

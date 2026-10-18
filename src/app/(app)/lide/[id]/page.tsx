@@ -1,0 +1,29 @@
+import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
+import { BackButton } from "@/components/BackButton";
+import { ProfileView } from "@/components/ProfileView";
+import { requireUser } from "@/lib/auth";
+import { activitiesForUser, getPhone, getUserById } from "@/lib/data";
+import { pragueNow, toIso } from "@/lib/time";
+
+export async function generateMetadata({ params }: PageProps<"/lide/[id]">): Promise<Metadata> {
+  const person = await getUserById((await params).id).catch(() => null);
+  return { title: person?.name ?? "Profil" };
+}
+
+/** Profil jiného člověka ze školy (kliknutím na jeho avatar). */
+export default async function PersonPage({ params }: PageProps<"/lide/[id]">) {
+  const viewer = await requireUser();
+  const { id } = await params;
+  if (id === viewer.id) redirect("/profil");
+  const person = await getUserById(id);
+  if (!person) notFound();
+  // Aktivity, které divák smí vidět (u studentů jen společné třídy — hlídá RLS u zápisů).
+  const [activities, phone] = await Promise.all([activitiesForUser(person), getPhone(viewer, person.id)]);
+  return (
+    <>
+      <BackButton />
+      <ProfileView person={person} isMe={false} phone={phone} activities={activities} todayIso={toIso(pragueNow())} />
+    </>
+  );
+}

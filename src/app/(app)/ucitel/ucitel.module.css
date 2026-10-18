@@ -1,6 +1,6 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: 16px;
 }
 .card {
@@ -30,8 +30,14 @@
 }
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: auto;
+}
+/* Tlačítka se při úzké kartě zalomí, místo aby přetekla ven. */
+.actions > * {
+  flex: 1 1 auto;
+  white-space: nowrap;
 }
 .back {
   align-self: flex-start;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "../Icon";
-import { Avatar, EmptyNote } from "../PageHeader";
+import { Avatar, EmptyNote, profileHref } from "../PageHeader";
 import { ClassChat, type ChatLine } from "./ClassChat";
 import { MeetEditor } from "./MeetEditor";
 import { type Person } from "./people";
@@ -192,7 +192,7 @@ function People({ view }: { view: ClassView }) {
       <section aria-label="Vyučující" className={`card ${styles.peopleSide}`}>
         <h2 className={styles.h2}>Vyučující</h2>
         <div className={styles.teacherRow}>
-          <Avatar initials={view.teacher.initials} size={44} tone="late" />
+          <Avatar initials={view.teacher.initials} size={44} tone="late" href={profileHref(view.teacher.id)} title={view.teacher.name} />
           <div className={styles.grow}>
             <div className={styles.strong} style={{ fontSize: 15 }}>
               {view.teacher.name}
@@ -224,7 +224,7 @@ function People({ view }: { view: ClassView }) {
         <div className={styles.studentGrid}>
           {view.students.map((s) => (
             <div key={s.id} className={styles.student}>
-              <Avatar initials={s.initials} size={36} tone={s.id === view.me.id ? "me" : "student"} />
+              <Avatar initials={s.initials} size={36} tone={s.id === view.me.id ? "me" : "student"} href={profileHref(s.id)} title={s.name} />
               <span className={styles.grow}>{s.name}</span>
               {s.id !== view.me.id && (
                 <Link href={`/zpravy?s=${s.id}`} aria-label={`Napsat: ${s.name}`} className={styles.studentMsg}>

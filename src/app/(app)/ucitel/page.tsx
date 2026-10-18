@@ -60,7 +60,7 @@ export default async function TeacherPage({ searchParams }: PageProps<"/ucitel">
                   {live && <span className="chip chip-primary">Právě probíhá</span>}
                 </div>
                 <div className={styles.actions}>
-                  <Link href={activityHref(c)} className="btn btn-outline" style={{ flex: 1 }}>
+                  <Link href={activityHref(c)} className="btn btn-outline">
                     Otevřít
                   </Link>
                   <Link href={`/ucitel/${c.id}`} className="btn btn-outline" aria-label={`Upravit: ${c.title}`}>
