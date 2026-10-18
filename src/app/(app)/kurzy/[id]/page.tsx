@@ -10,5 +10,5 @@ export async function generateMetadata({ params }: PageProps<"/kurzy/[id]">): Pr
 export default async function CoursePage({ params, searchParams }: PageProps<"/kurzy/[id]">) {
   const { id } = await params;
   const { tab } = await searchParams;
-  return <ClassroomPage id={id} kinds={["kurz", "ostatni"]} back={{ href: "/kurzy", label: "Kurzy" }} tab={typeof tab === "string" ? tab : undefined} />;
+  return <ClassroomPage id={id} kinds={["kurz"]} back={{ href: "/kurzy", label: "Kurzy" }} tab={typeof tab === "string" ? tab : undefined} />;
 }

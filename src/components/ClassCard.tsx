@@ -12,9 +12,12 @@ export function ClassCard({
   isTeacher,
   live,
   extra,
+  teacherLabel,
 }: {
   activity: Activity;
   teacher: User | null;
+  /** Přepíše řádek s vyučujícím (např. všichni vyučující expedice) */
+  teacherLabel?: string;
   isTeacher: boolean;
   live: boolean;
   extra?: React.ReactNode;
@@ -28,7 +31,7 @@ export function ClassCard({
           {describeWhen(activity) || "Bez rozvrhu"}
         </div>
         <div className={styles.title}>{activity.title}</div>
-        <div className={styles.lector}>{teacher?.name}</div>
+        <div className={styles.lector}>{teacherLabel ?? teacher?.name}</div>
       </Link>
       <div className={styles.body}>
         {extra ?? (

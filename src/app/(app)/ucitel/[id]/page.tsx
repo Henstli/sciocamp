@@ -26,7 +26,7 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
   if (!activity || !teachesActivity(user, activity)) notFound();
 
   const admin = isAdmin(user.role);
-  const staff = admin ? (await listStaff()).map((s) => ({ id: s.id, name: s.name })) : [];
+  const staff = (await listStaff()).map((s) => ({ id: s.id, name: s.name }));
   const teacher = await getUserById(activity.teacherId);
   const periods = await listPeriods();
   const conflicts = atelierConflicts(activity, await listActivities());
@@ -92,6 +92,7 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
           milestonesDone: activity.project?.milestonesDone ?? 0,
           milestonesTotal: activity.project?.milestonesTotal ?? 5,
           slots: activity.slots.map((s) => ({ day: s.day, start: s.start, end: s.end })),
+          coTeacherIds: activity.coTeacherIds ?? [],
         }}
       />
 

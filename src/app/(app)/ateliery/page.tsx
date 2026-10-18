@@ -9,7 +9,7 @@ import { currentPeriod, describeWhen, hasEnded } from "@/lib/periods";
 import { plural } from "@/lib/format";
 import { activityHref } from "@/lib/links";
 import { initials } from "@/lib/roles";
-import { isLiveNow } from "@/lib/schedule";
+import { expeditionBlocker, isLiveNow } from "@/lib/schedule";
 import { pragueNow, toIso } from "@/lib/time";
 import styles from "../classes.module.css";
 
@@ -18,6 +18,7 @@ export const metadata: Metadata = { title: "Ateliéry" };
 export default async function AteliersPage() {
   const user = await requireUser();
   const now = pragueNow();
+  const blocked = expeditionBlocker(await listActivities());
   const today = toIso(now);
   const period = currentPeriod(await listPeriods(), today);
   const byStart = (x: { startsOn: string | null }, y: { startsOn: string | null }) => (x.startsOn ?? "").localeCompare(y.startsOn ?? "");
@@ -58,7 +59,7 @@ export default async function AteliersPage() {
               activity={activity}
               teacher={teachers.find((t) => t.id === activity.teacherId) ?? null}
               isTeacher={activity.teacherId === user.id}
-              live={isLiveNow(activity, now)}
+              live={isLiveNow(activity, now, blocked)}
               extra={
                 <>
                   {activity.project && (

@@ -63,7 +63,7 @@ export default async function ProfilePage() {
         <section aria-label="Kurzy a ateliéry" className={`card ${styles.panel}`} style={{ flex: "2 1 420px" }}>
           <h2 className={styles.h2}>{user.role === "student" ? "Kurzy a ateliéry" : "Výuka"}</h2>
           <div className={styles.pills}>
-            {[...ateliers, ...courses, ...activities.filter((a) => a.kind === "ostatni" && a.teacherId === user.id)].map((a) => (
+            {[...ateliers, ...courses, ...activities.filter((a) => a.kind === "expedice" || (a.kind === "ostatni" && a.teacherId === user.id))].map((a) => (
               <Link key={a.id} href={activityHref(a)} className={styles.pill} data-tone={a.kind === "atelier" ? a.tone : "soft"}>
                 {a.title}
               </Link>

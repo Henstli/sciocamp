@@ -27,13 +27,16 @@ export type ActivityFormValues = {
   milestonesDone: number;
   milestonesTotal: number;
   slots: { day: number; start: string; end: string }[];
+  /** Další vyučující */
+  coTeacherIds: string[];
 };
 
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek"];
 const KIND_OPTIONS: { value: ActivityKind; label: string; hint: string }[] = [
   { value: "kurz", label: "Kurz", hint: "Pravidelná výuka předmětu" },
   { value: "atelier", label: "Ateliér", hint: "Kratší projekt uvnitř období, často v týmech" },
-  { value: "ostatni", label: "Ostatní", hint: "Třídnická hodina, expedice, seminář …" },
+  { value: "ostatni", label: "Událost", hint: "Třídnická konzultace, seminář, jednorázová akce" },
+  { value: "expedice", label: "Expedice", hint: "Výjezd na 1–5 dní, jedou aspoň 2 vyučující" },
 ];
 
 export function ActivityForm({
@@ -45,7 +48,7 @@ export function ActivityForm({
   initial: ActivityFormValues;
   /** Kurzová období (zakládá je admin ve Správě) */
   periods: { id: string; name: string; startsOn: string; endsOn: string }[];
-  /** Vyučující na výběr (jen pro admina). */
+  /** Učitelé a admini (výběr hlavního vyučujícího pro admina, další vyučující pro všechny). */
   staff: { id: string; name: string }[];
   canPickTeacher: boolean;
 }) {
@@ -59,6 +62,8 @@ export function ActivityForm({
   const [periodId, setPeriodId] = useState(initial.periodId);
   const period = periods.find((p) => p.id === periodId) ?? null;
   const [hasProject, setHasProject] = useState(!!initial.projectName);
+  const [leadId, setLeadId] = useState(initial.teacherId);
+  const [coTeachers, setCoTeachers] = useState<string[]>(initial.coTeacherIds);
   const fe = state.fieldErrors ?? {};
   const editing = !!initial.slug;
 
@@ -105,7 +110,7 @@ export function ActivityForm({
         </Field>
         {canPickTeacher && (
           <Field label="Vyučující" error={fe.teacherId}>
-            <select name="teacherId" defaultValue={initial.teacherId} className={styles.input}>
+            <select name="teacherId" value={leadId} onChange={(e) => setLeadId(e.target.value)} className={styles.input}>
               {staff.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -135,7 +140,7 @@ export function ActivityForm({
         <legend className={styles.legend}>Kdy</legend>
         <div className={styles.grid}>
           <Field
-            label={kind === "ostatni" ? "Kurzové období (nepovinné)" : "Kurzové období"}
+            label={kind === "ostatni" || kind === "expedice" ? "Kurzové období (nepovinné)" : "Kurzové období"}
             error={fe.periodId}
             hint={
               periods.length === 0
@@ -146,7 +151,7 @@ export function ActivityForm({
             }
           >
             <select name="periodId" value={periodId} onChange={(e) => setPeriodId(e.target.value)} className={styles.input}>
-              <option value="">{periods.length === 0 ? "Žádné období" : kind === "ostatni" ? "Mimo období" : "Vyber období…"}</option>
+              <option value="">{periods.length === 0 ? "Žádné období" : kind === "ostatni" || kind === "expedice" ? "Mimo období" : "Vyber období…"}</option>
               {periods.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({formatDateRange(p.startsOn, p.endsOn)})
@@ -156,10 +161,10 @@ export function ActivityForm({
           </Field>
           {kind !== "kurz" && (
             <>
-              <Field label={kind === "atelier" ? "Od (nepovinné)" : "Od"} error={fe.startsOn}>
+              <Field label={kind === "atelier" || kind === "ostatni" ? "Od (nepovinné)" : "Od"} error={fe.startsOn}>
                 <DateInput name="startsOn" defaultValue={initial.startsOn} ariaLabel="Začátek" />
               </Field>
-              <Field label={kind === "atelier" ? "Do (nepovinné)" : "Do"} error={fe.endsOn}>
+              <Field label={kind === "atelier" || kind === "ostatni" ? "Do (nepovinné)" : "Do"} error={fe.endsOn}>
                 <DateInput name="endsOn" defaultValue={initial.endsOn} ariaLabel="Konec" />
               </Field>
             </>
@@ -169,8 +174,40 @@ export function ActivityForm({
           {kind === "atelier"
             ? `Ateliér trvá jen část období${period ? ` (${formatDateRange(period.startsOn, period.endsOn)})` : ""}; bez data platí celé období. Student může být v jednu dobu jen v jednom ateliéru.`
             : kind === "ostatni"
-              ? "Např. expedice na 1–5 dní. Jednodenní akce: stejné datum Od i Do."
-              : null}
+              ? "Pravidelná událost (např. každý pátek): nech data prázdná a vyplň rozvrh. Jednorázová: stejné datum Od i Do."
+              : kind === "expedice"
+                ? "Expedice běží celé dny (obvykle po–pá). V těch dnech se ostatní výuka v rozvrhu nezobrazuje. Student může být jen na jedné expedici naráz."
+                : null}
+        </span>
+      </fieldset>
+
+      <fieldset className={styles.fieldset}>
+        <legend className={styles.legend}>{kind === "expedice" ? "Další vyučující (aspoň jeden)" : "Další vyučující (nepovinné)"}</legend>
+        {fe.coTeachers && (
+          <p role="alert" className={styles.fieldError}>
+            {fe.coTeachers}
+          </p>
+        )}
+        <div className={styles.grades}>
+          {staff
+            .filter((s) => s.id !== leadId)
+            .map((s) => (
+              <label key={s.id} className={styles.check}>
+                <input
+                  type="checkbox"
+                  name="coTeachers"
+                  value={s.id}
+                  checked={coTeachers.includes(s.id)}
+                  onChange={(e) => setCoTeachers((list) => (e.target.checked ? [...list, s.id] : list.filter((x) => x !== s.id)))}
+                />
+                {s.name}
+              </label>
+            ))}
+        </div>
+        <span className={styles.hint}>
+          {kind === "expedice"
+            ? "Na expedici jedou aspoň dva vyučující. Všichni můžou třídu spravovat: Meet, studenty, nástěnku i úkoly."
+            : "Spoluvyučující spravuje třídu stejně jako ty: Meet, studenty, nástěnku i úkoly."}
         </span>
       </fieldset>
 
@@ -187,8 +224,9 @@ export function ActivityForm({
         <span className={styles.hint}>Když nezaškrtneš nic, je aktivita pro všechny ročníky.</span>
       </fieldset>
 
+      {kind !== "expedice" && (
       <fieldset className={styles.fieldset}>
-        <legend className={styles.legend}>Rozvrh</legend>
+        <legend className={styles.legend}>{kind === "ostatni" ? "Rozvrh (nepovinné)" : "Rozvrh"}</legend>
         {fe.slots && (
           <p role="alert" className={styles.fieldError}>
             {fe.slots}
@@ -246,10 +284,11 @@ export function ActivityForm({
         </button>
         <span className={styles.hint}>
           {kind === "ostatni"
-            ? "Nepovinné. Vícedenní akce bez rozvrhu se v rozvrhu ukáže jako celodenní."
+            ? "Např. třídnická konzultace každý pátek 9:00–11:00. Akce bez rozvrhu s daty se ukáže jako celodenní."
             : "Hodiny se opakují každý týden po dobu trvání. Čas vyber z nabídky, nebo ho napiš (např. 930 nebo 9:30)."}
         </span>
       </fieldset>
+      )}
 
       {kind === "atelier" && (
         <fieldset className={styles.fieldset}>

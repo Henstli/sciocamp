@@ -2,6 +2,27 @@ import { activityRange, runsOn } from "./periods";
 import type { Activity, Slot } from "./types";
 import { addDays, isoWeekdayOf, sameDate, toIso, toMinutes, type PlainDate, type PragueNow } from "./time";
 
+/** Vrátí true pro dny, kdy běžná výuka neprobíhá (týden expedic). */
+export type DayBlocker = (date: PlainDate | string) => boolean;
+const NO_BLOCK: DayBlocker = () => false;
+
+/**
+ * Dny expedic. Expedice jsou pro celou školu ve stejném týdnu a v jejich dnech
+ * neprobíhají kurzy, ateliéry ani události — rozvrh ukáže jen expedice.
+ * Bere všechny aktivity školy (ne jen uživatelovy).
+ */
+export function expeditionBlocker(all: Activity[]): DayBlocker {
+  const ranges = all
+    .filter((a) => a.kind === "expedice")
+    .map((a) => activityRange(a))
+    .filter((r): r is { from: string; to: string } => !!r.from && !!r.to);
+  if (ranges.length === 0) return NO_BLOCK;
+  return (d) => {
+    const iso = typeof d === "string" ? d : toIso(d);
+    return ranges.some((r) => iso >= r.from && iso <= r.to);
+  };
+}
+
 export type ScheduleEntry = {
   activity: Activity;
   slot: Slot;
@@ -11,13 +32,14 @@ export type ScheduleEntry = {
 };
 
 /** Hodiny pro pracovní týden začínající pondělím `monday`. */
-export function weekEntries(activities: Activity[], monday: PlainDate, now: PragueNow): ScheduleEntry[] {
+export function weekEntries(activities: Activity[], monday: PlainDate, now: PragueNow, blocked: DayBlocker = NO_BLOCK): ScheduleEntry[] {
   const entries: ScheduleEntry[] = [];
   for (const activity of activities) {
     for (const slot of activity.slots) {
       const date = addDays(monday, slot.day - 1);
       // Hodiny jen v době, kdy aktivita běží (kurzové období, termín ateliéru).
       if (!runsOn(activity, date)) continue;
+      if (activity.kind !== "expedice" && blocked(date)) continue;
       entries.push({ activity, slot, date, ...status(date, slot, now) });
     }
   }
@@ -36,13 +58,13 @@ function status(date: PlainDate, slot: Slot, now: PragueNow) {
 }
 
 /** Právě probíhající hodina, jinak nejbližší další (do týdne dopředu). */
-export function currentOrNext(activities: Activity[], now: PragueNow): ScheduleEntry | null {
+export function currentOrNext(activities: Activity[], now: PragueNow, blocked: DayBlocker = NO_BLOCK): ScheduleEntry | null {
   for (let i = 0; i < 8; i++) {
     const date = addDays(now, i);
     const wd = isoWeekdayOf(date);
     if (wd > 5) continue;
     const candidates = activities
-      .filter((activity) => runsOn(activity, date))
+      .filter((activity) => runsOn(activity, date) && (activity.kind === "expedice" || !blocked(date)))
       .flatMap((activity) => activity.slots.filter((s) => s.day === wd).map((slot) => ({ activity, slot })))
       .map((c) => ({ ...c, date, ...status(date, c.slot, now) }))
       .filter((e) => !e.past)
@@ -64,8 +86,9 @@ export function hourRange(entries: ScheduleEntry[]): { from: number; to: number 
 }
 
 /** Probíhá teď některá z hodin aktivity? */
-export function isLiveNow(activity: Activity, now: PragueNow): boolean {
+export function isLiveNow(activity: Activity, now: PragueNow, blocked: DayBlocker = NO_BLOCK): boolean {
   if (!runsOn(activity, now)) return false;
+  if (activity.kind !== "expedice" && blocked(now)) return false;
   return activity.slots.some(
     (s) => s.day === now.isoWeekday && now.minutes >= toMinutes(s.start) && now.minutes < toMinutes(s.end),
   );
@@ -87,4 +110,11 @@ export function weekAllDay(activities: Activity[], monday: PlainDate): AllDayEnt
     out.push({ activity, days, from: r.from ?? toIso(monday), to: r.to ?? toIso(addDays(monday, 4)) });
   }
   return out;
+}
+
+/** Dny týdne (1 = po … 5 = pá), kdy je expedice a uživatel sám na žádné není. */
+export function blockedWeekdays(monday: PlainDate, blocked: DayBlocker, allDay: AllDayEntry[]): number[] {
+  return [1, 2, 3, 4, 5].filter(
+    (d) => blocked(addDays(monday, d - 1)) && !allDay.some((e) => e.activity.kind === "expedice" && e.days.includes(d)),
+  );
 }

@@ -16,9 +16,9 @@ export const metadata: Metadata = { title: "Nová aktivita" };
 export default async function NewActivityPage({ searchParams }: PageProps<"/ucitel/nova">) {
   const user = await requireTeacher();
   const { typ } = await searchParams;
-  const kind: ActivityKind = typ === "atelier" || typ === "ostatni" ? typ : "kurz";
+  const kind: ActivityKind = typ === "atelier" || typ === "ostatni" || typ === "expedice" ? typ : "kurz";
   const admin = isAdmin(user.role);
-  const staff = admin ? (await listStaff()).map((s) => ({ id: s.id, name: s.name })) : [];
+  const staff = (await listStaff()).map((s) => ({ id: s.id, name: s.name }));
   const periods = await listPeriods();
   const now = pragueNow();
   const current = currentPeriod(periods, toIso(now));
@@ -53,6 +53,7 @@ export default async function NewActivityPage({ searchParams }: PageProps<"/ucit
           milestonesDone: 0,
           milestonesTotal: 5,
           slots: [],
+          coTeacherIds: [],
         }}
       />
     </>

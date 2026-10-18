@@ -8,7 +8,7 @@ import { activityHref } from "@/lib/links";
 import { currentPeriod, formatDateRange, hasEnded } from "@/lib/periods";
 import { plural } from "@/lib/format";
 import { initials, isAdmin } from "@/lib/roles";
-import { isLiveNow } from "@/lib/schedule";
+import { expeditionBlocker, isLiveNow } from "@/lib/schedule";
 import { pragueNow, toIso } from "@/lib/time";
 import styles from "../classes.module.css";
 
@@ -17,6 +17,7 @@ export const metadata: Metadata = { title: "Kurzy" };
 export default async function CoursesPage() {
   const user = await requireUser();
   const now = pragueNow();
+  const blocked = expeditionBlocker(await listActivities());
 
   // Admin vidí celou nabídku, ostatní kurzy, které navštěvují nebo učí.
   const allCourses = isAdmin(user.role)
@@ -56,7 +57,7 @@ export default async function CoursesPage() {
               activity={c}
               teacher={teacherOf(c.teacherId)}
               isTeacher={c.teacherId === user.id}
-              live={isLiveNow(c, now)}
+              live={isLiveNow(c, now, blocked)}
             />
           ))}
         </div>

@@ -8,10 +8,10 @@ import { requireUser } from "@/lib/auth";
 import { homeTasks } from "@/lib/data-assignments";
 import { unreadMessages } from "@/lib/data-communication";
 import { plural } from "@/lib/format";
-import { activitiesForUser, getHomeSummary, getUserById, getUsersByIds } from "@/lib/data";
+import { activitiesForUser, getHomeSummary, getUserById, getUsersByIds, listActivities } from "@/lib/data";
 import { activityHref } from "@/lib/links";
 import { canTeach, firstNameVocative, initials } from "@/lib/roles";
-import { currentOrNext, weekAllDay, weekEntries } from "@/lib/schedule";
+import { blockedWeekdays, currentOrNext, expeditionBlocker, weekAllDay, weekEntries } from "@/lib/schedule";
 import {
   DAYS_SHORT,
   defaultWeekStart,
@@ -36,9 +36,12 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const monday = picked ? mondayOf(picked) : defaultWeekStart(now);
 
   const activities = await activitiesForUser(user);
-  const entries = weekEntries(activities, monday, now);
+  // Týden expedic platí pro celou školu — počítá se ze všech expedic.
+  const blocked = expeditionBlocker(await listActivities());
+  const entries = weekEntries(activities, monday, now, blocked);
   const allDay = weekAllDay(activities, monday);
-  const upcoming = currentOrNext(activities, now);
+  const blockedDays = blockedWeekdays(monday, blocked, allDay);
+  const upcoming = currentOrNext(activities, now, blocked);
   const upcomingTeacher = upcoming ? await getUserById(upcoming.activity.teacherId) : null;
   const home = await getHomeSummary();
   const tasks = await homeTasks(user);
@@ -139,7 +142,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
       <div className={styles.columns}>
         <div className={styles.schedule}>
-          <ScheduleWeek entries={entries} allDay={allDay} monday={monday} now={now} title={teaching ? "Můj rozvrh výuky" : "Rozvrh týdne"} />
+          <ScheduleWeek entries={entries} allDay={allDay} blockedDays={blockedDays} monday={monday} now={now} title={teaching ? "Můj rozvrh výuky" : "Rozvrh týdne"} />
         </div>
 
         <div className={styles.side}>

@@ -463,4 +463,35 @@ await test("příspěvky: přílohy nahrává vyučující, čte třída", async
   assert.equal((await as(outsider, `select name from storage.objects where bucket_id = 'prispevky'`)).length, 0);
 });
 
+// ---------------------------------------------------------------------------
+// Expedice, události, spoluvyučující
+// ---------------------------------------------------------------------------
+
+await test("expedice: student jen na jedné naráz, spoluvyučující spravuje", async () => {
+  const mk = async (slug, lead) =>
+    (await db.query(
+      `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on) values ($1, 'expedice', $1, $2, '2026-11-16', '2026-11-20') returning id`,
+      [slug, lead],
+    )).rows[0].id;
+  const e1 = await mk("expedice-sumava", teacher);
+  const e2 = await mk("expedice-krkonose", teacher2);
+  // Spoluvyučující: učitel ano, student ne.
+  await as(teacher, `insert into public.activity_teachers (activity_id, teacher_id) values ($1, $2)`, [e1, teacher2]);
+  await assert.rejects(() => as(teacher, `insert into public.activity_teachers (activity_id, teacher_id) values ($1, $2)`, [e1, student]), /učitel nebo admin/);
+  await assert.rejects(() => as(student, `insert into public.activity_teachers (activity_id, teacher_id) values ($1, $2)`, [e2, teacher]));
+  // Spoluvyučující zapisuje studenty a mění Meet.
+  assert.equal((await as(teacher2, `insert into public.enrollments (activity_id, student_id) values ($1, $2) returning student_id`, [e1, student])).length, 1);
+  assert.equal((await as(teacher2, `update public.activities set meet_url = 'https://meet.google.com/aaa-bbbb-ccc' where id = $1 returning id`, [e1])).length, 1);
+  // Druhá expedice ve stejném týdnu nejde.
+  await assert.rejects(() => as(teacher2, `insert into public.enrollments (activity_id, student_id) values ($1, $2)`, [e2, student]), /expedici „expedice-sumava“/);
+  // Spoluvyučující dostává notifikace o odevzdání.
+  const [a] = await as(teacher, `insert into public.assignments (activity_id, title, created_by) values ($1, 'Deník z cesty', $2) returning id`, [e1, teacher]);
+  await as(student, `insert into public.submissions (assignment_id, student_id, status) values ($1, $2, 'odevzdano')`, [a.id, student]);
+  assert.equal((await as(teacher2, `select id from public.notifications where kind = 'odevzdani' and href like $1`, [`/ukoly/${a.id}%`])).length, 1);
+  assert.equal((await as(teacher, `select id from public.notifications where kind = 'odevzdani' and href like $1`, [`/ukoly/${a.id}%`])).length, 1);
+  // Odkaz na expedici vede do sekce Expedice.
+  const [{ class_href }] = await db.query(`select public.class_href($1)`, [e1]).then((r) => r.rows);
+  assert.equal(class_href, "/expedice/expedice-sumava");
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

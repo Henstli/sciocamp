@@ -13,7 +13,10 @@ export function ScheduleWeek({
   monday,
   now,
   title = "Rozvrh týdne",
+  blockedDays = [],
 }: {
+  /** Dny týdne expedic, kdy uživatel sám na expedici nejede (výuka neprobíhá). */
+  blockedDays?: number[];
   entries: ScheduleEntry[];
   /** Vícedenní akce bez rozvrhu (expedice) — celodenní pruh nad hodinami */
   allDay?: AllDayEntry[];
@@ -25,6 +28,14 @@ export function ScheduleWeek({
   const height = (to - from) * 60 * PX_PER_MIN;
   const days = [0, 1, 2, 3, 4].map((i) => addDays(monday, i));
   const prev = toIso(addDays(monday, -7));
+  // Souvislé úseky blokovaných dnů → jeden pruh „Týden expedic“.
+  const blockedRuns: number[][] = [];
+  for (const d of blockedDays) {
+    const last = blockedRuns.at(-1);
+    if (last && last.at(-1) === d - 1) last.push(d);
+    else blockedRuns.push([d]);
+  }
+  const laneCount = allDay.length + blockedRuns.length;
   const next = toIso(addDays(monday, 7));
 
   return (
@@ -55,7 +66,7 @@ export function ScheduleWeek({
             );
           })}
 
-          {allDay.length > 0 && (
+          {laneCount > 0 && (
             <div className={styles.allDay}>
               <div className={styles.allDayLabel}>celý den</div>
               {allDay.map((e, i) => (
@@ -70,6 +81,17 @@ export function ScheduleWeek({
                   <span className={styles.entryTitle}>{e.activity.title}</span>
                   {e.activity.location && <span className={styles.entryTime}>{e.activity.location}</span>}
                 </Link>
+              ))}
+              {blockedRuns.map((run, i) => (
+                <div
+                  key={`blok-${run[0]}`}
+                  className={styles.allDayEntry}
+                  data-kind="blocked"
+                  style={{ gridColumn: `${run[0] + 1} / ${run[run.length - 1] + 2}`, gridRow: allDay.length + i + 1 }}
+                >
+                  <span className={styles.entryTitle}>Týden expedic</span>
+                  <span className={styles.entryTime}>Kurzy, ateliéry ani události neprobíhají</span>
+                </div>
               ))}
             </div>
           )}
@@ -118,7 +140,8 @@ export function ScheduleWeek({
       <div className={styles.legend}>
         <span><i data-kind="kurz" />Kurz</span>
         <span><i data-kind="atelier" />Ateliér</span>
-        <span><i data-kind="ostatni" />Ostatní</span>
+        <span><i data-kind="ostatni" />Událost</span>
+        <span><i data-kind="expedice" />Expedice</span>
         <span><i data-kind="live" />Právě probíhá</span>
       </div>
     </section>

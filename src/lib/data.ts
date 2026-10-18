@@ -60,10 +60,11 @@ type ActivityRow = {
   milestones_total: number;
   activity_slots: { weekday: number; starts_at: string; ends_at: string }[];
   enrollments: { student_id: string }[];
+  activity_teachers: { teacher_id: string }[];
 };
 
 const ACTIVITY_COLUMNS =
-  "id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(id, name, starts_on, ends_on), meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id)";
+  "id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(id, name, starts_on, ends_on), meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id), activity_teachers(teacher_id)";
 
 function toActivity(r: ActivityRow): Activity {
   return {
@@ -84,6 +85,7 @@ function toActivity(r: ActivityRow): Activity {
       .sort((a, b) => a.day - b.day || a.start.localeCompare(b.start)),
     // RLS vrátí studentovi jen zápisy z jeho tříd — pro ostatní třídy je seznam prázdný.
     studentIds: r.enrollments.map((e) => e.student_id),
+    coTeacherIds: (r.activity_teachers ?? []).map((t) => t.teacher_id),
     capacity: r.capacity ?? undefined,
     tone: r.tone,
     project:
@@ -184,26 +186,31 @@ async function getActivityUncached(id: string): Promise<Activity | null> {
   return (await listActivities()).find((a) => a.id === id) ?? null;
 }
 
+/** Vyučuje člověk aktivitu (hlavní vyučující nebo spoluvyučující)? */
+export function isTeacherOf(activity: Activity, userId: string): boolean {
+  return activity.teacherId === userId || (activity.coTeacherIds ?? []).includes(userId);
+}
+
 /** Aktivity, kterých se uživatel účastní jako student nebo je učí. */
 export async function activitiesForUser(user: User, kind?: ActivityKind): Promise<Activity[]> {
   const all = await listActivities();
   return all.filter(
-    (a) => (a.studentIds.includes(user.id) || a.teacherId === user.id) && (!kind || a.kind === kind),
+    (a) => (a.studentIds.includes(user.id) || isTeacherOf(a, user.id)) && (!kind || a.kind === kind),
   );
 }
 
 export async function activitiesTaughtBy(user: User): Promise<Activity[]> {
-  return (await listActivities()).filter((a) => a.teacherId === user.id);
+  return (await listActivities()).filter((a) => isTeacherOf(a, user.id));
 }
 
 /** Kdo smí otevřít detail třídy: zapsaný student, vyučující a admin. */
 export function canOpenActivity(user: User, activity: Activity): boolean {
-  return isAdmin(user.role) || activity.teacherId === user.id || activity.studentIds.includes(user.id);
+  return isAdmin(user.role) || isTeacherOf(activity, user.id) || activity.studentIds.includes(user.id);
 }
 
 /** Smí měnit nastavení třídy (např. Meet): její vyučující a admin. */
 export function teachesActivity(user: User, activity: Activity): boolean {
-  return canTeach(user.role) && (activity.teacherId === user.id || isAdmin(user.role));
+  return canTeach(user.role) && (isTeacherOf(activity, user.id) || isAdmin(user.role));
 }
 
 // ---------------------------------------------------------------------------

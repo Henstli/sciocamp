@@ -93,15 +93,15 @@ export function describeWhen(a: Pick<Activity, "kind" | "slots" | "startsOn" | "
 }
 
 /**
- * Ateliér: kteří studenti jsou ve stejné době už v jiném ateliéru
- * (id studenta → název toho ateliéru). U kurzů a akcí prázdné.
+ * Ateliér a expedice: kteří studenti jsou ve stejné době už v jiném ateliéru
+ * (resp. na jiné expedici) — id studenta → název. U kurzů a událostí prázdné.
  */
 export function atelierConflicts(activity: Activity, all: Activity[]): Record<string, string> {
-  if (activity.kind !== "atelier") return {};
+  if (activity.kind !== "atelier" && activity.kind !== "expedice") return {};
   const range = activityRange(activity);
   const out: Record<string, string> = {};
   for (const other of all) {
-    if (other.kind !== "atelier" || other.id === activity.id) continue;
+    if (other.kind !== activity.kind || other.id === activity.id) continue;
     if (!overlaps(activityRange(other), range)) continue;
     for (const sid of other.studentIds) out[sid] ??= other.title;
   }

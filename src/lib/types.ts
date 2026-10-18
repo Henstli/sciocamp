@@ -17,7 +17,8 @@ export type User = {
   bio?: string;
 };
 
-export type ActivityKind = "kurz" | "atelier" | "ostatni";
+/** „ostatni“ se v aplikaci jmenuje Událost (třídnická konzultace, seminář…). */
+export type ActivityKind = "kurz" | "atelier" | "ostatni" | "expedice";
 
 /** Den v týdnu: 1 = pondělí … 5 = pátek. */
 export type Weekday = 1 | 2 | 3 | 4 | 5;
@@ -67,6 +68,8 @@ export type Activity = {
   allowedGrades: number[] | null;
   slots: Slot[];
   studentIds: string[];
+  /** Další vyučující kromě hlavního (expedice jich má aspoň jednoho). */
+  coTeacherIds?: string[];
   capacity?: number;
   /** Barva hlavičky karty (z návrhu). */
   tone: "blue" | "blueDark" | "violet" | "teal";

@@ -25,7 +25,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
   const students = users.filter((u) => u.role === "student").length;
   const staff = users.length - students;
-  const offered = activities.filter((a) => a.kind !== "ostatni");
+  const offered = activities.filter((a) => a.kind === "kurz" || a.kind === "atelier");
 
   return (
     <>

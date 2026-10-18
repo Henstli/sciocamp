@@ -3,10 +3,10 @@ import Link from "next/link";
 import { MeetLink } from "@/components/MeetLink";
 import { EmptyNote, PageHeader } from "@/components/PageHeader";
 import { requireTeacher } from "@/lib/auth";
-import { activitiesTaughtBy } from "@/lib/data";
+import { activitiesTaughtBy, listActivities } from "@/lib/data";
 import { plural } from "@/lib/format";
 import { KIND_LABEL, activityHref } from "@/lib/links";
-import { isLiveNow } from "@/lib/schedule";
+import { expeditionBlocker, isLiveNow } from "@/lib/schedule";
 import { describeWhen } from "@/lib/periods";
 import { formatLongDate, pragueNow } from "@/lib/time";
 import styles from "./ucitel.module.css";
@@ -16,6 +16,7 @@ export const metadata: Metadata = { title: "Moje třídy" };
 export default async function TeacherPage({ searchParams }: PageProps<"/ucitel">) {
   const user = await requireTeacher();
   const now = pragueNow();
+  const blocked = expeditionBlocker(await listActivities());
   const classes = await activitiesTaughtBy(user);
   const { smazano } = await searchParams;
 
@@ -41,7 +42,7 @@ export default async function TeacherPage({ searchParams }: PageProps<"/ucitel">
       ) : (
         <div className={styles.grid}>
           {classes.map((c) => {
-            const live = isLiveNow(c, now);
+            const live = isLiveNow(c, now, blocked);
             return (
               <article key={c.id} className={`card ${styles.card}`}>
                 <div>

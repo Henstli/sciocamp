@@ -124,6 +124,10 @@
   color: var(--atelier-text);
 }
 .entry[data-kind="ostatni"] {
+  background: var(--wait-bg);
+  color: var(--wait);
+}
+.entry[data-kind="expedice"] {
   background: var(--other-bg);
   color: var(--other);
 }
@@ -168,6 +172,9 @@
   background: #d7cffa;
 }
 .legend i[data-kind="ostatni"] {
+  background: #f6dcae;
+}
+.legend i[data-kind="expedice"] {
   background: #bfe5de;
 }
 .legend i[data-kind="live"] {
@@ -209,6 +216,14 @@
 .allDayEntry[data-kind="atelier"] {
   background: var(--atelier-bg);
   color: var(--atelier-text);
+}
+.allDayEntry[data-kind="ostatni"] {
+  background: var(--wait-bg);
+  color: var(--wait);
+}
+.allDayEntry[data-kind="blocked"] {
+  background: repeating-linear-gradient(135deg, var(--other-bg) 0 10px, #eaf6f3 10px 20px);
+  color: var(--other);
 }
 .allDayEntry[data-kind="kurz"] {
   background: var(--primary-soft);

@@ -38,6 +38,8 @@ export function Sidebar({ user, showTeach, showAdmin, badges }: SidebarProps) {
       items: [
         { href: "/kurzy", label: "Kurzy", icon: "book" },
         { href: "/ateliery", label: "Ateliéry", icon: "shapes" },
+        { href: "/udalosti", label: "Události", icon: "calendar" },
+        { href: "/expedice", label: "Expedice", icon: "mountain" },
         { href: "/navrhy", label: "Návrhy", icon: "bulb" },
       ],
     },

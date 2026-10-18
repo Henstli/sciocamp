@@ -1,17 +1,17 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Icon } from "../Icon";
 import { MeetLink } from "../MeetLink";
 import { ClassTabs, type ClassView } from "./ClassTabs";
 import { requireUser } from "@/lib/auth";
-import { canOpenActivity, getActivity, getClassroom, getUsersByIds, listStaff, teachesActivity } from "@/lib/data";
+import { canOpenActivity, getActivity, getClassroom, getUsersByIds, listActivities, listStaff, teachesActivity } from "@/lib/data";
 import { classChat, classPosts } from "@/lib/data-communication";
 import { isSupabase } from "@/lib/config";
 import type { Person } from "./people";
 import { plural } from "@/lib/format";
-import { KIND_LABEL } from "@/lib/links";
+import { KIND_LABEL, activityHref } from "@/lib/links";
 import { initials } from "@/lib/roles";
-import { currentOrNext } from "@/lib/schedule";
+import { currentOrNext, expeditionBlocker } from "@/lib/schedule";
 import { describeWhen } from "@/lib/periods";
 import { DAYS_SHORT, formatRange, isoWeekdayOf, pragueNow } from "@/lib/time";
 import { STATE_CHIP, STATE_LABEL, isHandedIn, isOpen, needsReview, workState } from "@/lib/assignments";
@@ -35,7 +35,9 @@ export async function ClassroomPage({
 }) {
   const user = await requireUser();
   const activity = await getActivity(id);
-  if (!activity || !kinds.includes(activity.kind) || !canOpenActivity(user, activity)) notFound();
+  if (!activity || !canOpenActivity(user, activity)) notFound();
+  // Stará adresa (např. událost pod /kurzy) → správná sekce.
+  if (!kinds.includes(activity.kind)) redirect(activityHref(activity) + (tab ? `?tab=${tab}` : ""));
 
   const now = pragueNow();
   const stamp = new Date();
@@ -50,7 +52,7 @@ export async function ClassroomPage({
   const byId = (uid: string) => people[uid] ?? person(undefined);
 
   const isTeacher = teachesActivity(user, activity);
-  const next = currentOrNext([activity], now);
+  const next = currentOrNext([activity], now, expeditionBlocker(await listActivities()));
   const feminine = teacher && /(ová|á)$/.test(teacher.name);
   const lectorWord = activity.kind === "atelier" ? (feminine ? "lektorce" : "lektorovi") : feminine ? "vyučující" : "vyučujícímu";
 

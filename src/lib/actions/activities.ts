@@ -15,8 +15,8 @@ export type ActivityFormState = { error?: string; info?: string; fieldErrors?: R
 
 type SlotInput = { day: number; start: string; end: string };
 
-const KINDS: ActivityKind[] = ["kurz", "atelier", "ostatni"];
-const TONE_BY_KIND = { kurz: "blue", atelier: "violet", ostatni: "teal" } as const;
+const KINDS: ActivityKind[] = ["kurz", "atelier", "ostatni", "expedice"];
+const TONE_BY_KIND = { kurz: "blue", atelier: "violet", ostatni: "teal", expedice: "teal" } as const;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** „Literatura ve filmu“ → „literatura-ve-filmu“ */
@@ -45,6 +45,7 @@ function parseForm(formData: FormData) {
   const capacityRaw = String(formData.get("capacity") ?? "").trim();
   const meetRaw = String(formData.get("meetUrl") ?? "").trim();
   const teacherId = String(formData.get("teacherId") ?? "").trim();
+  const coTeacherIds = [...new Set(formData.getAll("coTeachers").map(String).filter(Boolean))].slice(0, 10);
   const grades = formData
     .getAll("grades")
     .map(Number)
@@ -74,6 +75,8 @@ function parseForm(formData: FormData) {
     fieldErrors.slots = "Rozvrh se nepodařilo přečíst.";
   }
   slots = slots.filter((s) => s && (s.start || s.end));
+  // Expedice je celodenní výjezd, týdenní rozvrh nemá.
+  if (kind === "expedice") slots = [];
   for (const s of slots) {
     if (!(s.day >= 1 && s.day <= 5) || !TIME.test(s.start) || !TIME.test(s.end)) {
       fieldErrors.slots = "U každé hodiny vyplň začátek i konec ve 24h formátu, např. 9:00–11:30.";
@@ -96,6 +99,10 @@ function parseForm(formData: FormData) {
     if (startsOn && endsOn && endsOn < startsOn) fieldErrors.endsOn = "Konec musí být stejný den nebo po začátku.";
     if (kind === "ostatni" && !startsOn && !periodId && slots.length === 0) {
       fieldErrors.startsOn = "Vyplň datum akce, nebo rozvrh.";
+    }
+    if (kind === "expedice") {
+      if (!startsOn) fieldErrors.startsOn = fieldErrors.startsOn ?? "Vyplň, kdy expedice začíná.";
+      if (!endsOn) fieldErrors.endsOn = fieldErrors.endsOn ?? "Vyplň, kdy expedice končí.";
     }
   }
 
@@ -122,6 +129,7 @@ function parseForm(formData: FormData) {
       milestones_done: kind === "atelier" && projectName ? milestonesDone : 0,
     },
     teacherId,
+    coTeacherIds,
     slots,
   };
 }
@@ -130,14 +138,14 @@ function parseForm(formData: FormData) {
 export async function saveActivity(_prev: ActivityFormState, formData: FormData): Promise<ActivityFormState> {
   const user = await requireTeacher();
   const editingSlug = String(formData.get("slug") ?? "") || null;
-  const { fieldErrors, values, teacherId, slots } = parseForm(formData);
+  const { fieldErrors, values, teacherId, coTeacherIds: rawCoTeachers, slots } = parseForm(formData);
   if (Object.keys(fieldErrors).length) return { error: "Zkontroluj zvýrazněná pole.", fieldErrors };
 
   // Období: kurz a ateliér ho musí mít (pokud admin nějaká založil), data ateliéru musí ležet uvnitř.
   const periods = await listPeriods();
   const period = periods.find((p) => p.id === values.block_id) ?? null;
   if (values.block_id && !period) return { error: "Vybrané období neexistuje.", fieldErrors: { periodId: "Vyber období." } };
-  if (!period && periods.length > 0 && values.kind !== "ostatni") {
+  if (!period && periods.length > 0 && (values.kind === "kurz" || values.kind === "atelier")) {
     return { error: "Zkontroluj zvýrazněná pole.", fieldErrors: { periodId: "Vyber kurzové období." } };
   }
   if (period && values.kind === "atelier") {
@@ -159,6 +167,12 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
     teacher = t.id;
   }
 
+  // Další vyučující: jen učitelé a admini, bez hlavního vyučujícího. Expedice jich potřebuje aspoň jednoho.
+  const coTeachers = (await getUsersByIds(rawCoTeachers.filter((id) => id !== teacher))).filter((u) => canTeach(u.role)).map((u) => u.id);
+  if (values.kind === "expedice" && coTeachers.length === 0) {
+    return { error: "Zkontroluj zvýrazněná pole.", fieldErrors: { coTeachers: "Na expedici jedou aspoň dva vyučující — vyber dalšího." } };
+  }
+
   if (!isSupabase) return { info: "Ukázkový režim: změny se neukládají." };
 
   const sb = await createClient();
@@ -174,7 +188,8 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
       .single();
     if (error || !data) {
       // Nové termíny ateliéru by se překrývaly s jiným ateliérem zapsaných studentů.
-      if (error?.code === "23P01") return { error: error.message, fieldErrors: { startsOn: "Termín se překrývá s jiným ateliérem studentů." } };
+      if (error?.code === "23P01") return { error: error.message, fieldErrors: { startsOn: "Termín se překrývá s jiným ateliérem nebo expedicí studentů." } };
+      if (error?.code === "42501") return { error: "Hlavního vyučujícího může změnit jen admin." };
       return { error: "Změny se nepodařilo uložit." };
     }
     activityId = data.id;
@@ -205,6 +220,14 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
     if (ins.error) return { error: "Rozvrh se nepodařilo uložit." };
   }
 
+  // Další vyučující: nahradíme celé.
+  const delT = await sb.from("activity_teachers").delete().eq("activity_id", activityId);
+  if (delT.error) return { error: "Další vyučující se nepodařilo uložit." };
+  if (coTeachers.length) {
+    const insT = await sb.from("activity_teachers").insert(coTeachers.map((id) => ({ activity_id: activityId, teacher_id: id })));
+    if (insT.error) return { error: "Další vyučující se nepodařilo uložit." };
+  }
+
   if (!editingSlug) redirect(`/ucitel/${slug}?nova=1`);
   refresh();
   return { info: "Uloženo." };
@@ -230,12 +253,13 @@ export async function updateEnrollments(slug: string, add: string[], remove: str
   if (!activity || !teachesActivity(user, activity)) return { error: "Tuhle třídu upravovat nemůžeš." };
   if (!isSupabase) return { info: "Ukázkový režim: zápisy se neukládají." };
 
-  // Ateliér: student smí být v jednu dobu jen v jednom (hlídá i databáze).
+  // Ateliér a expedice: student smí být v jednu dobu jen v jednom (hlídá i databáze).
   const conflicts = atelierConflicts(activity, await listActivities());
   const blocked = add.filter((id) => conflicts[id]);
   if (blocked.length) {
     const names = (await getUsersByIds(blocked)).map((u) => `${u.name} (${conflicts[u.id]})`);
-    return { error: `V té době už jsou v jiném ateliéru: ${names.join(", ")}.` };
+    const where = activity.kind === "expedice" ? "na jiné expedici" : "v jiném ateliéru";
+    return { error: `V té době už jsou ${where}: ${names.join(", ")}.` };
   }
 
   const sb = await createClient();
