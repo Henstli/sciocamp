@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Návrhy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="navrhy" hint-size="100%,900px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div style="flex: 1 1 260px; min-width: 0">
+          <h1 style="margin: 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">Návrhy</h1>
+          <div style="font-size: 14px; color: #5A6782; font-weight: 500; margin-top: 6px">Návrh s podporou {{threshold}} lidí postupuje do hlasování celé školy.</div>
+        </div>
+        <div aria-label="Šimon Samuel Liška" style="width: 44px; height: 44px; border-radius: 22px; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">ŠL</div>
+      </header>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+        <section aria-label="Nový návrh" style="flex: 1 1 320px; min-width: 0; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 16px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 800">Podat návrh</h2>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <label for="n-title" style="font-size: 14px; font-weight: 700">Název</label>
+            <input id="n-title" type="text" placeholder="Např. Mikrovlnka do druhého patra" value="{{title}}" onChange="{{onTitle}}" style="height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid #D5DCEA; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <label for="n-cat" style="font-size: 14px; font-weight: 700">Oblast</label>
+            <select id="n-cat" value="{{cat}}" onChange="{{onCat}}" style="height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #D5DCEA; background: #FFFFFF; font: inherit; font-size: 14px; color: #111A33">
+              <option>Výuka a ateliéry</option>
+              <option>Rozvrh</option>
+              <option>Expedice</option>
+              <option>Prostory a vybavení</option>
+              <option>Jiné</option>
+            </select>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <label for="n-desc" style="font-size: 14px; font-weight: 700">Popis</label>
+            <textarea id="n-desc" rows="5" placeholder="Co navrhuješ a proč to pomůže?" value="{{desc}}" onChange="{{onDesc}}" style="padding: 12px 14px; border-radius: 12px; border: 1px solid #D5DCEA; font: inherit; font-size: 14px; line-height: 1.5; color: #111A33; resize: vertical"></textarea>
+          </div>
+          <button onClick="{{submit}}" style="min-height: 48px; border-radius: 12px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">Zveřejnit návrh</button>
+          <div style="font-size: 12px; color: #5A6782; line-height: 1.5">Návrhy schvaluje k hlasování vedení. Pod jménem je vidí celá škola.</div>
+        </section>
+
+        <section aria-label="Seznam návrhů" style="flex: 2 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+          <sc-for list="{{items}}" as="p" hint-placeholder-count="4">
+            <article style="display: flex; gap: 16px; padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px">
+              <button aria-label="Podpořit návrh" aria-pressed="{{p.pressed}}" onClick="{{p.toggle}}" style="{{p.voteStyle}}">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"></path></svg>
+                <span style="font-size: 15px; font-weight: 800">{{p.count}}</span>
+              </button>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+                  <span style="font-size: 12px; font-weight: 700; color: #3A4560; background: #EEF1F7; padding: 3px 9px; border-radius: 999px">{{p.cat}}</span>
+                  <span style="{{p.chipStyle}}">{{p.status}}</span>
+                </div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 800">{{p.title}}</h3>
+                <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #3A4560">{{p.desc}}</p>
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 12px; color: #5A6782; font-weight: 600">
+                  <span>{{p.author}} · {{p.when}}</span>
+                  <span>{{p.comments}} komentářů</span>
+                  <span style="flex: 1 1 120px; display: flex; align-items: center; gap: 8px">
+                    <span style="flex: 1; height: 6px; border-radius: 3px; background: #EEF1F7"><span style="{{p.barStyle}}"></span></span>
+                    {{p.count}}/{{p.need}}
+                  </span>
+                </div>
+              </div>
+            </article>
+          </sc-for>
+        </section>
+      </div>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"threshold":{"editor":"int","min":5,"max":60,"default":20},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { liked: { mikro: true }, title: '', cat: 'Výuka a ateliéry', desc: '', mine: [] };
+  }
+  renderVals() {
+    const need = this.props.threshold ?? 20;
+    const base = [
+      { id: 'mikro', title: 'Mikrovlnka do druhého patra', cat: 'Prostory a vybavení', desc: 'V jídelně se o přestávce stojí fronta na jedinou mikrovlnku. Druhá by ušetřila čas všem.', author: 'Šimon Samuel Liška', when: 'před 3 dny', comments: 6, count: 17, stage: 'support' },
+      { id: 'foto', title: 'Ateliér fotografie', cat: 'Výuka a ateliéry', desc: 'Ateliér zaměřený na reportážní fotku. Lektorka se už nabídla.', author: 'Tereza Hanková', when: 'před týdnem', comments: 11, count: 24, stage: 'vote' },
+      { id: 'expedice', title: 'Jarní expedice na kolech', cat: 'Expedice', desc: 'Třídenní cesta podél Vltavy s noclehy v kempech.', author: 'Eliot Komárek', when: 'včera', comments: 2, count: 8, stage: 'support' },
+      { id: 'mobily', title: 'Zákaz mobilů v ateliérech', cat: 'Výuka a ateliéry', desc: 'Telefony by se během ateliérů odkládaly do boxu.', author: 'Standa Jaukner', when: 'před 2 týdny', comments: 19, count: 9, stage: 'rejected' }
+    ];
+    const liked = this.state.liked;
+    const chip = 'font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;';
+    const st = {
+      fresh: { label: 'Nový', style: chip + 'background:#E8EFFD;color:#1F4FB8;' },
+      support: { label: 'Sbírá podporu', style: chip + 'background:#FDF1DC;color:#8A5300;' },
+      vote: { label: 'Ve hlasování', style: chip + 'background:#E3F4EC;color:#17704A;' },
+      rejected: { label: 'Zamítnuto vedením', style: chip + 'background:#FBE7E7;color:#A82E2E;' }
+    };
+    const all = this.state.mine.concat(base);
+    const items = all.map((p) => {
+      const on = !!liked[p.id];
+      const count = p.count + (on ? 1 : 0) - (p.id === 'mikro' ? 1 : 0);
+      const stage = p.stage === 'support' && count >= need ? 'vote' : p.stage;
+      return Object.assign({}, p, {
+        count: count, need: need, pressed: on ? 'true' : 'false',
+        status: st[stage].label, chipStyle: st[stage].style,
+        barStyle: 'display:block;height:6px;border-radius:3px;background:' + (count >= need ? '#1F8A5B' : '#3B6FE0') + ';width:' + Math.min(100, Math.round(count / need * 100)) + '%',
+        voteStyle: 'flex:none;width:56px;height:64px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;cursor:pointer;' + (on ? 'background:#3B6FE0;color:#FFFFFF;border:1px solid #3B6FE0;' : 'background:#FFFFFF;color:#3A4560;border:1px solid #D5DCEA;'),
+        toggle: () => { const n = Object.assign({}, this.state.liked); if (n[p.id]) { delete n[p.id]; } else { n[p.id] = true; } this.setState({ liked: n }); }
+      });
+    });
+    const submit = () => {
+      const t = (this.state.title || '').trim();
+      if (!t) return;
+      const id = 'mine' + this.state.mine.length;
+      const n = Object.assign({}, this.state.liked); n[id] = true;
+      this.setState({
+        mine: [{ id: id, title: t, cat: this.state.cat, desc: (this.state.desc || '').trim() || 'Bez popisu.', author: 'Šimon Samuel Liška', when: 'teď', comments: 0, count: 0, stage: 'fresh' }].concat(this.state.mine),
+        liked: n, title: '', desc: ''
+      });
+    };
+    return {
+      threshold: need, items: items,
+      title: this.state.title, cat: this.state.cat, desc: this.state.desc,
+      onTitle: (e) => this.setState({ title: e.target.value }),
+      onCat: (e) => this.setState({ cat: e.target.value }),
+      onDesc: (e) => this.setState({ desc: e.target.value }),
+      submit: submit
+    };
+  }
+}
+</script>
+</body>
+</html>

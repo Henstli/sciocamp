@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Zápisy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="zapisy" hint-size="100%,880px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div style="flex: 1 1 260px; min-width: 0">
+          <h1 style="margin: 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">Zápisy</h1>
+          <div style="font-size: 14px; color: #5A6782; font-weight: 500; margin-top: 6px">Blok 2 · listopad–prosinec</div>
+        </div>
+        <label style="flex: 0 1 320px; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 12px; color: #5A6782; box-sizing: border-box">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input type="search" aria-label="Hledat v nabídce" placeholder="Hledat v nabídce…" style="border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: #111A33; flex: 1; min-width: 0">
+        </label>
+        <div aria-label="Šimon Samuel Liška" style="width: 44px; height: 44px; border-radius: 22px; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">ŠL</div>
+      </header>
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 20px; border-radius: 16px; background: #E8EFFD; color: #163C8F">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        <div style="flex: 1 1 240px; font-size: 14px; font-weight: 600">Zápis končí v pátek 23. 10. ve 20:00. Máš zapsáno {{enrolledCount}} z 5 povinných aktivit.</div>
+        <div style="flex: 0 1 200px; height: 8px; border-radius: 4px; background: #C9D8FA"><div style="{{progressStyle}}"></div></div>
+      </div>
+
+      <div role="tablist" aria-label="Typ aktivity" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 5px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 14px; align-self: flex-start">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+          <button role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}<span style="{{t.countStyle}}">{{t.count}}</span></button>
+        </sc-for>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px">
+        <sc-for list="{{items}}" as="item" hint-placeholder-count="6">
+          <article style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-size: 12px; font-weight: 700; color: #1F4FB8; background: #E8EFFD; padding: 4px 10px; border-radius: 999px">{{item.when}}</span>
+              <sc-if value="{{item.isIn}}" hint-placeholder-val="{{false}}">
+                <span style="margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #17704A">
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"></path></svg>
+                  Zapsáno
+                </span>
+              </sc-if>
+            </div>
+            <div>
+              <h2 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em">{{item.title}}</h2>
+              <p style="margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: #5A6782">{{item.desc}}</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <div style="flex: none; width: 32px; height: 32px; border-radius: 16px; background: #DCE7FF; color: #1F4FB8; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">{{item.initials}}</div>
+              <div style="font-size: 14px; font-weight: 600">{{item.lector}}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: auto">
+              <div style="display: flex; font-size: 12px; font-weight: 600; color: #3A4560"><span>Obsazenost</span><span style="margin-left: auto">{{item.taken}} / {{item.cap}} míst</span></div>
+              <div style="height: 6px; border-radius: 3px; background: #EEF1F7"><div style="{{item.barStyle}}"></div></div>
+            </div>
+            <sc-if value="{{item.isIn}}" hint-placeholder-val="{{false}}">
+              <button onClick="{{item.toggle}}" style="min-height: 44px; border-radius: 12px; border: 1px solid #BFE0CF; background: #E3F4EC; color: #17704A; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Odhlásit se</button>
+            </sc-if>
+            <sc-if value="{{item.isOpen}}" hint-placeholder-val="{{true}}">
+              <button onClick="{{item.toggle}}" style="min-height: 44px; border-radius: 12px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Zapsat se</button>
+            </sc-if>
+            <sc-if value="{{item.isFull}}" hint-placeholder-val="{{false}}">
+              <button disabled style="min-height: 44px; border-radius: 12px; border: 0; background: #EEF1F7; color: #5A6782; font: inherit; font-size: 14px; font-weight: 700">Obsazeno · přidat se na čekačku</button>
+            </sc-if>
+          </article>
+        </sc-for>
+      </div>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'kurzy', enrolled: { lit: true, psy: true, frak: true, prez: true } };
+  }
+  renderVals() {
+    const data = {
+      kurzy: [
+        { id: 'cest', title: 'Cestománie', lector: 'Honza Kumstát', initials: 'HK', when: 'St · 11:30–12:30', taken: 14, cap: 16, desc: 'Plánování cest, rozpočet a orientace v neznámém prostředí.' },
+        { id: 'film', title: 'Jak číst film', lector: 'Kateřina Kubešová', initials: 'KK', when: 'Čt · 12:00–13:00', taken: 9, cap: 14, desc: 'Filmový jazyk, střih a kamera. Co film říká, aniž to vysloví.' },
+        { id: 'chem', title: 'Chemie léků a jedů', lector: 'Martin Pietraszek', initials: 'MP', when: 'Út · 10:00–11:00', taken: 16, cap: 16, desc: 'Kde končí lék a začíná jed. Dávky, účinky a příběhy z historie.' },
+        { id: 'lit', title: 'Literatura ve filmu', lector: 'Anežka Jakubcová', initials: 'AJ', when: 'Út · 11:30–12:30', taken: 10, cap: 18, desc: 'Knihy a jejich filmové adaptace. Co se při převodu ztrácí a co získává.' },
+        { id: 'psy', title: 'Psychoterapeutické minimum', lector: 'Martin Pietraszek', initials: 'MP', when: 'Út · 9:00–10:00', taken: 6, cap: 12, desc: 'Základy psychoterapeutických směrů a práce s klientem.' },
+        { id: 'frak', title: 'Komplexní čísla a fraktály', lector: 'Miroslav Pavel', initials: 'MP', when: 'St · 10:00–11:00', taken: 5, cap: 12, desc: 'Od imaginární jednotky k Mandelbrotově množině.' }
+      ],
+      ateliery: [
+        { id: 'prez', title: 'Prezentační schopnosti', lector: 'Tereza Hanková', initials: 'TH', when: 'Po · 9:00–11:30', taken: 11, cap: 14, desc: 'Struktura prezentace, práce s hlasem a tréma. Zakončeno vlastním TEDx vystoupením.' },
+        { id: 'sach', title: 'Šachy', lector: 'Petr Lukeš', initials: 'PL', when: 'Čt · 9:00–11:30', taken: 8, cap: 12, desc: 'Zahájení, taktika a rozbor vlastních partií.' },
+        { id: 'auto', title: 'Autonomní AT', lector: 'Jáchym Černý', initials: 'JČ', when: 'Čt · 9:00–11:30', taken: 12, cap: 12, desc: 'Vlastní projekt s mentorem. Téma si volíš sám.' },
+        { id: 'pamet', title: 'Sedm hříchů paměti', lector: 'Anežka Jakubcová', initials: 'AJ', when: 'Po · 9:00–11:30', taken: 7, cap: 14, desc: 'Jak paměť selhává a co s tím dělat při učení.' }
+      ],
+      expedice: [
+        { id: 'vlci', title: 'Za vlky do Javorníků', lector: 'Eliot Komárek', initials: 'EK', when: '3 dny · 9.–11. 11.', taken: 8, cap: 12, desc: 'Stopování, terénní výzkum a nocování v horách.' },
+        { id: 'evropa', title: 'Zažij Evropu!', lector: 'Vavřinec Kubíček', initials: 'VK', when: '5 dní · 23.–27. 11.', taken: 12, cap: 12, desc: 'Vlakem napříč čtyřmi zeměmi. Plán a rozpočet si připravíte sami.' },
+        { id: 'hvezdy', title: 'Astronomická noc', lector: 'Miroslav Pavel', initials: 'MP', when: '1 noc · 4. 12.', taken: 5, cap: 10, desc: 'Pozorování a výpočty drah na hvězdárně.' }
+      ]
+    };
+    const en = this.state.enrolled;
+    const toggle = (id) => () => {
+      const next = Object.assign({}, this.state.enrolled);
+      if (next[id]) { delete next[id]; } else { next[id] = true; }
+      this.setState({ enrolled: next });
+    };
+    const decorate = (x) => {
+      const isIn = !!en[x.id];
+      const baseTaken = x.taken;
+      const taken = isIn ? baseTaken + 1 : baseTaken;
+      const shownTaken = Math.min(taken, x.cap);
+      const full = !isIn && baseTaken >= x.cap;
+      const pct = Math.round((shownTaken / x.cap) * 100);
+      const color = shownTaken >= x.cap ? '#C93B3B' : '#3B6FE0';
+      return Object.assign({}, x, {
+        isIn: isIn, isOpen: !isIn && !full, isFull: full, taken: shownTaken,
+        barStyle: 'height:6px;border-radius:3px;background:' + color + ';width:' + pct + '%',
+        toggle: toggle(x.id)
+      });
+    };
+    const labels = { kurzy: 'Kurzy', ateliery: 'Ateliéry', expedice: 'Expedice' };
+    const tabs = Object.keys(labels).map((k) => {
+      const sel = this.state.tab === k;
+      return {
+        label: labels[k], count: data[k].length, selected: sel ? 'true' : 'false',
+        pick: () => this.setState({ tab: k }),
+        style: 'display:flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border-radius:10px;border:0;font:inherit;font-size:14px;font-weight:700;cursor:pointer;' + (sel ? 'background:#3B6FE0;color:#FFFFFF;' : 'background:transparent;color:#3A4560;'),
+        countStyle: 'font-size:12px;padding:1px 7px;border-radius:999px;' + (sel ? 'background:#2F5FCC;color:#FFFFFF;' : 'background:#EEF1F7;color:#3A4560;')
+      };
+    });
+    const enrolledCount = Object.keys(en).length;
+    return {
+      tabs: tabs,
+      items: data[this.state.tab].map(decorate),
+      enrolledCount: enrolledCount,
+      progressStyle: 'height:8px;border-radius:4px;background:#3B6FE0;width:' + Math.min(100, enrolledCount * 20) + '%'
+    };
+  }
+}
+</script>
+</body>
+</html>

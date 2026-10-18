@@ -1,0 +1,28 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-18T17:35:00Z"},
+  "title": "ScioCamp – redesign",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 1060, "title": "Domov", "expand": "fill", "is_interactive": true},
+    "Sidebar.dc.html": {"x": -340, "y": 0, "w": 260, "h": 1000, "title": "Navigace (komponenta)", "is_interactive": true},
+    "Prihlaseni.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "Přihlášení", "expand": "fill", "is_interactive": true},
+    "Zapisy.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 1000, "title": "Zápisy", "expand": "fill", "is_interactive": true},
+    "Ukoly.dc.html": {"x": 0, "y": 1180, "w": 1440, "h": 960, "title": "Úkoly", "expand": "fill", "is_interactive": true},
+    "Hlasovani.dc.html": {"x": 1520, "y": 1180, "w": 1440, "h": 1100, "title": "Hlasování", "expand": "fill", "is_interactive": true},
+    "Zpravy.dc.html": {"x": 3040, "y": 1180, "w": 1440, "h": 900, "title": "Zprávy", "expand": "fill", "is_interactive": true},
+    "Kurzy.dc.html": {"x": 0, "y": 2400, "w": 1440, "h": 1000, "title": "Kurzy", "expand": "fill", "is_interactive": true},
+    "Trida.dc.html": {"x": 1520, "y": 2400, "w": 1440, "h": 1200, "title": "Detail třídy (Classroom)", "expand": "fill", "is_interactive": true},
+    "UkolDetail.dc.html": {"x": 3040, "y": 2400, "w": 1440, "h": 1200, "title": "Detail úkolu", "expand": "fill", "is_interactive": true},
+    "Ateliery.dc.html": {"x": 0, "y": 3720, "w": 1440, "h": 1000, "title": "Ateliéry", "expand": "fill", "is_interactive": true},
+    "Navrhy.dc.html": {"x": 1520, "y": 3720, "w": 1440, "h": 1000, "title": "Návrhy", "expand": "fill", "is_interactive": true},
+    "Profil.dc.html": {"x": 3040, "y": 3720, "w": 1440, "h": 1000, "title": "Profil", "expand": "fill", "is_interactive": true},
+    "Nastaveni.dc.html": {"x": 0, "y": 4840, "w": 1440, "h": 1000, "title": "Nastavení", "expand": "fill", "is_interactive": true},
+    "Ucitel.dc.html": {"x": 1520, "y": 4840, "w": 1440, "h": 1100, "title": "Učitel – moje třídy", "expand": "fill", "is_interactive": true},
+    "Admin.dc.html": {"x": 3040, "y": 4840, "w": 1440, "h": 1000, "title": "Admin – správa", "expand": "fill", "is_interactive": true}
+  },
+  "order": ["Main.dc.html", "Sidebar.dc.html", "Prihlaseni.dc.html", "Zapisy.dc.html", "Ukoly.dc.html", "Hlasovani.dc.html", "Zpravy.dc.html", "Kurzy.dc.html", "Trida.dc.html", "UkolDetail.dc.html", "Ateliery.dc.html", "Navrhy.dc.html", "Profil.dc.html", "Nastaveni.dc.html", "Ucitel.dc.html", "Admin.dc.html"],
+  "notes": {},
+  "designSystems": []
+}

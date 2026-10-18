@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Prezentační schopnosti</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="ateliery" hint-size="100%,900px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+      <a href="Ateliery.dc.html" style="align-self: flex-start; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; text-decoration: none; min-height: 32px">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg>
+        Ateliéry
+      </a>
+
+      <section style="position: relative; overflow: hidden; border-radius: 22px; background: #3B6FE0; color: #FFFFFF; padding: 28px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px">
+        <div aria-hidden="true" style="position: absolute; width: 320px; height: 320px; border-radius: 50%; background: #4A7BE6; right: -80px; top: -140px"></div>
+        <div aria-hidden="true" style="position: absolute; width: 140px; height: 140px; border-radius: 50%; background: #5A88EC; right: 220px; bottom: -70px"></div>
+        <div style="position: relative; flex: 1 1 320px; min-width: 0">
+          <div style="font-size: 13px; font-weight: 700">Ateliér · Po 9:00–11:30 · učebna 204</div>
+          <h1 style="margin: 8px 0 0; font-size: 34px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em">Prezentační schopnosti</h1>
+          <div style="font-size: 15px; font-weight: 600; margin-top: 8px">Tereza Hanková · 14 studentů</div>
+        </div>
+        <div style="position: relative; display: flex; flex-wrap: wrap; gap: 8px">
+          <a href="Zpravy.dc.html" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; background: #2F5FCC; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"></path></svg>
+            Napsat lektorce
+          </a>
+          <a href="#" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; background: #FFFFFF; color: #1F4FB8; font-size: 14px; font-weight: 800; text-decoration: none">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"></rect><path d="m16 10 6-3v10l-6-3z"></path></svg>
+            Připojit se přes Meet
+          </a>
+        </div>
+      </section>
+
+      <div role="tablist" aria-label="Sekce třídy" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 5px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 14px; align-self: flex-start">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+          <button role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{isStream}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+          <div style="flex: 2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px">
+              <div style="flex: none; width: 40px; height: 40px; border-radius: 20px; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">ŠL</div>
+              <input type="text" aria-label="Napiš příspěvek třídě" placeholder="Napiš něco třídě…" style="flex: 1; min-width: 0; height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #E3E8F2; background: #F4F6FB; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+            </div>
+
+            <article style="padding: 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; display: flex; flex-direction: column; gap: 14px">
+              <div style="display: flex; align-items: center; gap: 12px">
+                <div style="flex: none; width: 40px; height: 40px; border-radius: 20px; background: #FBE7E7; color: #A82E2E; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">TH</div>
+                <div>
+                  <div style="font-size: 14px; font-weight: 700">Tereza Hanková</div>
+                  <div style="font-size: 12px; color: #5A6782">dnes 8:12 · oznámení</div>
+                </div>
+              </div>
+              <p style="margin: 0; font-size: 15px; line-height: 1.6">Dobré ráno! Dnes začínáme o 15 minut později, sejdeme se na Meetu v 9:15. Do příští hodiny si prosím projděte přiložený materiál ke struktuře prezentace.</p>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px">
+                <a href="#" style="flex: 1 1 240px; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; border: 1px solid #E3E8F2; text-decoration: none; color: #111A33">
+                  <div style="flex: none; width: 40px; height: 40px; border-radius: 10px; background: #FBE7E7; color: #A82E2E; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800">PDF</div>
+                  <div style="min-width: 0"><div style="font-size: 14px; font-weight: 700">Struktura prezentace</div><div style="font-size: 12px; color: #5A6782">PDF · 2,4 MB</div></div>
+                </a>
+                <a href="#" style="flex: 1 1 240px; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; border: 1px solid #E3E8F2; text-decoration: none; color: #111A33">
+                  <div style="flex: none; width: 40px; height: 40px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800">DOC</div>
+                  <div style="min-width: 0"><div style="font-size: 14px; font-weight: 700">Šablona osnovy</div><div style="font-size: 12px; color: #5A6782">Google Dokument · každý dostane kopii</div></div>
+                </a>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid #EEF1F7; font-size: 13px; color: #5A6782; font-weight: 600">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"></path></svg>
+                3 komentáře třídy
+              </div>
+            </article>
+
+            <a href="UkolDetail.dc.html" style="padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: #111A33">
+              <div style="flex: none; width: 44px; height: 44px; border-radius: 12px; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+                <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h4"></path></svg>
+              </div>
+              <div style="flex: 1; min-width: 0">
+                <div style="font-size: 14px; font-weight: 700">Tereza Hanková zadala nový týmový úkol: Příprava týmové prezentace</div>
+                <div style="font-size: 12px; color: #5A6782; margin-top: 2px">včera 16:40 · termín čt 22. 10.</div>
+              </div>
+              <svg aria-hidden="true" style="color: #5A6782" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+            </a>
+
+            <a href="#" style="padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: #111A33">
+              <div style="flex: none; width: 44px; height: 44px; border-radius: 12px; background: #E8EFFD; color: #1F4FB8; display: flex; align-items: center; justify-content: center">
+                <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"></rect><path d="m10 9 5 3-5 3z"></path></svg>
+              </div>
+              <div style="flex: 1; min-width: 0">
+                <div style="font-size: 14px; font-weight: 700">Nový materiál: Záznam z minulé hodiny</div>
+                <div style="font-size: 12px; color: #5A6782; margin-top: 2px">po 12. 10. · nahrávka z Meetu, 1 h 54 min</div>
+              </div>
+              <svg aria-hidden="true" style="color: #5A6782" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+            </a>
+          </div>
+
+          <div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+            <section aria-label="Nadcházející" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+              <h2 style="margin: 0; font-size: 16px; font-weight: 800">Nadcházející</h2>
+              <a href="#" style="display: block; text-decoration: none; color: #111A33">
+                <div style="font-size: 12px; font-weight: 700; color: #8A5300">Zítra 23:59</div>
+                <div style="font-size: 14px; font-weight: 700; margin-top: 2px">Reflexe prezentace z TEDx</div>
+              </a>
+              <a href="UkolDetail.dc.html" style="display: block; text-decoration: none; color: #111A33">
+                <div style="font-size: 12px; font-weight: 700; color: #5A6782">Čt 22. 10.</div>
+                <div style="font-size: 14px; font-weight: 700; margin-top: 2px">Příprava týmové prezentace</div>
+              </a>
+              <a href="Ukoly.dc.html" style="font-size: 13px; font-weight: 700; text-decoration: none">Všechny úkoly třídy</a>
+            </section>
+            <section aria-label="Příští hodina" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+              <h2 style="margin: 0; font-size: 16px; font-weight: 800">Příští hodina</h2>
+              <div style="font-size: 14px; font-weight: 600">Po 26. 10. · 9:00–11:30</div>
+              <div style="font-size: 13px; color: #5A6782">Učebna 204 nebo online. Odkaz na Meet je stejný pro celý blok.</div>
+              <a href="#" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 12px; background: #E8EFFD; color: #1F4FB8; font-size: 14px; font-weight: 700; text-decoration: none">meet.google.com/abc-defg-hij</a>
+            </section>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isWork}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <sc-for list="{{topics}}" as="tp" hint-placeholder-count="2">
+            <section style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; overflow: hidden">
+              <h2 style="margin: 0; padding: 16px 20px; font-size: 16px; font-weight: 800; border-bottom: 1px solid #EEF1F7">{{tp.name}}</h2>
+              <sc-for list="{{tp.items}}" as="it" hint-placeholder-count="3">
+                <a href="{{it.href}}" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 14px 20px; border-bottom: 1px solid #EEF1F7; text-decoration: none; color: #111A33">
+                  <div style="{{it.iconStyle}}">{{it.code}}</div>
+                  <div style="flex: 1 1 240px; min-width: 0">
+                    <div style="font-size: 14px; font-weight: 700">{{it.title}}</div>
+                    <div style="font-size: 12px; color: #5A6782; margin-top: 2px">{{it.meta}}</div>
+                  </div>
+                  <span style="{{it.chipStyle}}">{{it.status}}</span>
+                </a>
+              </sc-for>
+            </section>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isPeople}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+          <section aria-label="Lektorka" style="flex: 1 1 280px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 800">Vyučující</h2>
+            <div style="display: flex; align-items: center; gap: 12px">
+              <div style="width: 44px; height: 44px; border-radius: 22px; background: #FBE7E7; color: #A82E2E; display: flex; align-items: center; justify-content: center; font-weight: 700">TH</div>
+              <div style="flex: 1"><div style="font-size: 15px; font-weight: 700">Tereza Hanková</div><div style="font-size: 12px; color: #5A6782">Lektorka ateliéru</div></div>
+              <a href="Zpravy.dc.html" aria-label="Napsat Tereze Hankové" style="width: 40px; height: 40px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; display: flex; align-items: center; justify-content: center">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"></path></svg>
+              </a>
+            </div>
+            <h2 style="margin: 8px 0 0; font-size: 16px; font-weight: 800">Týmy</h2>
+            <sc-for list="{{teams}}" as="tm" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #F4F6FB">
+                <div style="font-size: 14px; font-weight: 700; flex: 1">{{tm.name}}</div>
+                <div style="font-size: 12px; color: #5A6782; font-weight: 600">{{tm.members}}</div>
+              </div>
+            </sc-for>
+          </section>
+          <section aria-label="Studenti" style="flex: 2 1 420px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 20px">
+            <h2 style="margin: 0 0 14px; font-size: 16px; font-weight: 800">Studenti · 14</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px">
+              <sc-for list="{{students}}" as="s" hint-placeholder-count="14">
+                <div style="display: flex; align-items: center; gap: 10px; min-height: 44px">
+                  <div style="flex: none; width: 36px; height: 36px; border-radius: 18px; background: #DCE7FF; color: #1F4FB8; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px">{{s.ini}}</div>
+                  <div style="font-size: 14px; font-weight: 600">{{s.name}}</div>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isChat}}" hint-placeholder-val="{{false}}">
+        <section aria-label="Chat třídy" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; display: flex; flex-direction: column">
+          <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px">
+            <sc-for list="{{chat}}" as="m" hint-placeholder-count="4">
+              <div style="display: flex; gap: 12px; align-items: flex-start">
+                <div style="{{m.avatarStyle}}">{{m.ini}}</div>
+                <div style="min-width: 0">
+                  <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 14px; font-weight: 700">{{m.name}}</span><span style="font-size: 12px; color: #5A6782">{{m.time}}</span></div>
+                  <div style="font-size: 14px; line-height: 1.55; margin-top: 2px">{{m.text}}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 8px; padding: 14px 16px; border-top: 1px solid #EEF1F7">
+            <input type="text" aria-label="Zpráva pro celou třídu" placeholder="Zpráva pro celou třídu…" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onKey}}" style="flex: 1; min-width: 0; height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #E3E8F2; background: #F4F6FB; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+            <button onClick="{{send}}" style="min-height: 44px; padding: 0 18px; border-radius: 12px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Odeslat</button>
+          </div>
+        </section>
+      </sc-if>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'stream', draft: '', sent: [] };
+  }
+  renderVals() {
+    const defs = [['stream', 'Nástěnka'], ['work', 'Úkoly a materiály'], ['people', 'Lidé'], ['chat', 'Chat třídy']];
+    const tab = this.state.tab;
+    const tabs = defs.map((d) => ({
+      label: d[1], selected: tab === d[0] ? 'true' : 'false',
+      pick: () => this.setState({ tab: d[0] }),
+      style: 'min-height:40px;padding:0 16px;border-radius:10px;border:0;font:inherit;font-size:14px;font-weight:700;cursor:pointer;' + (tab === d[0] ? 'background:#3B6FE0;color:#FFFFFF;' : 'background:transparent;color:#3A4560;')
+    }));
+    const icon = 'flex:none;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;';
+    const kinds = {
+      ukol: icon + 'background:#3B6FE0;color:#FFFFFF;',
+      tym: icon + 'background:#5B4BC4;color:#FFFFFF;',
+      pdf: icon + 'background:#FBE7E7;color:#A82E2E;',
+      video: icon + 'background:#E8EFFD;color:#1F4FB8;',
+      kviz: icon + 'background:#E0F2EF;color:#0F6B5F;'
+    };
+    const chip = 'flex:none;font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;';
+    const chips = {
+      ceka: chip + 'background:#FDF1DC;color:#8A5300;',
+      hotovo: chip + 'background:#E3F4EC;color:#17704A;',
+      info: chip + 'background:#EEF1F7;color:#3A4560;'
+    };
+    const mk = (x) => Object.assign({}, x, { iconStyle: kinds[x.kind], chipStyle: chips[x.st], href: x.href || '#' });
+    const topics = [
+      { name: 'Téma 2 · Hlas, tělo a tréma', items: [
+        { kind: 'tym', code: 'TÝM', title: 'Příprava týmové prezentace', meta: 'Týmový úkol · termín čt 22. 10.', status: 'Čeká', st: 'ceka', href: 'UkolDetail.dc.html' },
+        { kind: 'ukol', code: 'ÚKOL', title: 'Reflexe prezentace z TEDx', meta: 'Individuální · termín zítra 23:59', status: 'Čeká', st: 'ceka' },
+        { kind: 'video', code: 'VIDEO', title: 'Záznam z hodiny 12. 10.', meta: 'Nahrávka z Meetu · 1 h 54 min', status: 'Materiál', st: 'info' }
+      ].map(mk) },
+      { name: 'Téma 1 · Struktura a příběh', items: [
+        { kind: 'pdf', code: 'PDF', title: 'Struktura prezentace', meta: 'Materiál · 2,4 MB', status: 'Materiál', st: 'info' },
+        { kind: 'kviz', code: 'KVÍZ', title: 'Rétorické figury', meta: 'Kvíz · 10 otázek', status: '8/10 bodů', st: 'hotovo' },
+        { kind: 'ukol', code: 'ÚKOL', title: 'Osnova vlastní prezentace', meta: 'Individuální · odevzdáno 5. 10.', status: 'Hodnoceno', st: 'hotovo' }
+      ].map(mk) }
+    ];
+    const teams = [
+      { name: 'Tým A · Klima', members: 'Šimon, Eliot, Tereza K., Jáchym' },
+      { name: 'Tým B · Technologie', members: 'Standa, Petra, Vavřinec, Ondra' },
+      { name: 'Tým C · Města', members: 'Klára, Adam, Lucie, Matěj, Ema, Filip' }
+    ];
+    const names = ['Šimon Samuel Liška', 'Eliot Komárek', 'Tereza Kolářová', 'Jáchym Černý', 'Standa Jaukner', 'Petra Novotná', 'Vavřinec Kubíček', 'Ondřej Malý', 'Klára Svobodová', 'Adam Beneš', 'Lucie Dvořáková', 'Matěj Král', 'Ema Horáková', 'Filip Veselý'];
+    const students = names.map((n) => ({ name: n, ini: n.split(' ').map((p) => p[0]).slice(0, 2).join('') }));
+    const av = (bg, fg) => 'flex:none;width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;background:' + bg + ';color:' + fg + ';';
+    const chat = [
+      { ini: 'TH', name: 'Tereza Hanková', time: '8:14', text: 'Kdo se dnes připojuje online, napište sem, ať vím, s kým počítat.', avatarStyle: av('#FBE7E7', '#A82E2E') },
+      { ini: 'EK', name: 'Eliot Komárek', time: '8:20', text: 'Já budu na Meetu, jsem ještě ve vlaku.', avatarStyle: av('#E9E4FF', '#4B3BB5') },
+      { ini: 'SJ', name: 'Standa Jaukner', time: '8:31', text: 'Můžeme si v pátek půjčit projektor do 204?', avatarStyle: av('#E0F2EF', '#0F6B5F') }
+    ].concat(this.state.sent.map((t) => ({ ini: 'ŠL', name: 'Šimon Samuel Liška', time: 'teď', text: t, avatarStyle: av('#3B6FE0', '#FFFFFF') })));
+    const send = () => {
+      const t = (this.state.draft || '').trim();
+      if (!t) return;
+      this.setState({ sent: this.state.sent.concat([t]), draft: '' });
+    };
+    return {
+      tabs: tabs, isStream: tab === 'stream', isWork: tab === 'work', isPeople: tab === 'people', isChat: tab === 'chat',
+      topics: topics, teams: teams, students: students, chat: chat, draft: this.state.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onKey: (e) => { if (e.key === 'Enter') { send(); } },
+      send: send
+    };
+  }
+}
+</script>
+</body>
+</html>

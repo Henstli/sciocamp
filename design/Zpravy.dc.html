@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Zprávy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="zpravy" hint-size="100%,880px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 32px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div style="flex: 1 1 260px; min-width: 0">
+          <h1 style="margin: 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">Zprávy</h1>
+          <div style="font-size: 14px; color: #5A6782; font-weight: 500; margin-top: 6px">3 nepřečtené</div>
+        </div>
+        <div aria-label="Šimon Samuel Liška" style="width: 44px; height: 44px; border-radius: 22px; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">ŠL</div>
+      </header>
+
+      <div style="display: flex; flex-wrap: wrap; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; overflow: hidden; min-height: 640px">
+        <section aria-label="Konverzace" style="flex: 1 1 280px; min-width: 0; border-right: 1px solid #EEF1F7; display: flex; flex-direction: column">
+          <div style="padding: 16px">
+            <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; background: #F4F6FB; border-radius: 12px; color: #5A6782; box-sizing: border-box">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              <input type="search" aria-label="Hledat konverzaci" placeholder="Hledat lidi…" style="border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: #111A33; flex: 1; min-width: 0">
+            </label>
+          </div>
+          <sc-for list="{{contacts}}" as="c" hint-placeholder-count="7">
+            <button onClick="{{c.pick}}" style="{{c.rowStyle}}">
+              <div style="position: relative; flex: none">
+                <div style="{{c.avatarStyle}}">{{c.initials}}</div>
+                <sc-if value="{{c.online}}" hint-placeholder-val="{{false}}">
+                  <span style="position: absolute; right: 0; bottom: 0; width: 10px; height: 10px; border-radius: 5px; background: #1F8A5B; border: 2px solid #FFFFFF"></span>
+                </sc-if>
+              </div>
+              <div style="flex: 1; min-width: 0; text-align: left">
+                <div style="display: flex; align-items: baseline; gap: 8px">
+                  <span style="font-size: 14px; font-weight: 700; color: #111A33">{{c.name}}</span>
+                  <span style="margin-left: auto; font-size: 12px; color: #5A6782">{{c.time}}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px">
+                  <span style="{{c.previewStyle}}">{{c.preview}}</span>
+                  <sc-if value="{{c.hasUnread}}" hint-placeholder-val="{{false}}">
+                    <span style="margin-left: auto; flex: none; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: #3B6FE0; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{c.unread}}</span>
+                  </sc-if>
+                </div>
+              </div>
+            </button>
+          </sc-for>
+        </section>
+
+        <section aria-label="Konverzace s Anežkou Jakubcovou" style="flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column; background: #FBFCFE">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #EEF1F7; background: #FFFFFF">
+            <div style="width: 42px; height: 42px; border-radius: 21px; background: #E9E4FF; color: #4B3BB5; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">AJ</div>
+            <div style="min-width: 0">
+              <div style="font-size: 15px; font-weight: 800">Anežka Jakubcová</div>
+              <div style="font-size: 12px; color: #5A6782">Lektorka · Literatura ve filmu</div>
+            </div>
+          </div>
+
+          <div style="flex: 1; padding: 24px 20px; display: flex; flex-direction: column; gap: 14px">
+            <div style="align-self: center; font-size: 12px; font-weight: 700; color: #5A6782; background: #EEF1F7; padding: 4px 12px; border-radius: 999px">Dnes</div>
+            <sc-for list="{{messages}}" as="m" hint-placeholder-count="4">
+              <sc-if value="{{m.mine}}" hint-placeholder-val="{{false}}">
+                <div style="align-self: flex-end; max-width: 72%; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+                  <sc-if value="{{m.isFile}}" hint-placeholder-val="{{false}}">
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #FFFFFF; border: 1px solid #C9D8FA">
+                      <div style="width: 40px; height: 40px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; display: flex; align-items: center; justify-content: center">
+                        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>
+                      </div>
+                      <div>
+                        <div style="font-size: 14px; font-weight: 700">{{m.file}}</div>
+                        <div style="font-size: 12px; color: #5A6782">{{m.size}}</div>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{m.hasText}}" hint-placeholder-val="{{true}}">
+                    <div style="padding: 10px 14px; border-radius: 16px 16px 4px 16px; background: #3B6FE0; color: #FFFFFF; font-size: 14px; line-height: 1.5">{{m.text}}</div>
+                  </sc-if>
+                  <div style="font-size: 11px; color: #5A6782">{{m.time}}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{m.theirs}}" hint-placeholder-val="{{true}}">
+                <div style="align-self: flex-start; max-width: 72%; display: flex; flex-direction: column; gap: 4px">
+                  <div style="padding: 10px 14px; border-radius: 16px 16px 16px 4px; background: #FFFFFF; border: 1px solid #E3E8F2; font-size: 14px; line-height: 1.5">{{m.text}}</div>
+                  <div style="font-size: 11px; color: #5A6782">{{m.time}}</div>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px; padding: 14px 16px; border-top: 1px solid #EEF1F7; background: #FFFFFF">
+            <button aria-label="Přiložit soubor" style="flex: none; width: 44px; height: 44px; border-radius: 12px; border: 1px solid #E3E8F2; background: #FFFFFF; color: #3A4560; display: flex; align-items: center; justify-content: center; cursor: pointer">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"></path></svg>
+            </button>
+            <input type="text" aria-label="Napiš zprávu" placeholder="Napiš zprávu…" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onKey}}" style="flex: 1; min-width: 0; height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #E3E8F2; background: #F4F6FB; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+            <button aria-label="Odeslat" onClick="{{send}}" style="flex: none; width: 44px; height: 44px; border-radius: 12px; border: 0; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="M22 2 15 22l-4-9-9-4z"></path></svg>
+            </button>
+          </div>
+        </section>
+      </div>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      active: 'aj',
+      draft: '',
+      sent: []
+    };
+  }
+  renderVals() {
+    const contacts = [
+      { id: 'pl', name: 'Petr Lukeš', initials: 'PL', bg: '#DCE7FF', fg: '#1F4FB8', time: '10:12', preview: 'Ve čtvrtek začínáme o půl hodiny dřív.', unread: 0, online: true },
+      { id: 'sj', name: 'Standa Jaukner', initials: 'SJ', bg: '#E0F2EF', fg: '#0F6B5F', time: '9:40', preview: 'Nevíš, jestli zítra platí sraz u vchodu?', unread: 1, online: true },
+      { id: 'jc', name: 'Jáchym Černý', initials: 'JČ', bg: '#FDF1DC', fg: '#8A5300', time: 'po', preview: 'Díky, mám to.', unread: 0, online: false },
+      { id: 'aj', name: 'Anežka Jakubcová', initials: 'AJ', bg: '#E9E4FF', fg: '#4B3BB5', time: '14:06', preview: 'Děkuju za odevzdaný seznam…', unread: 0, online: true },
+      { id: 'th', name: 'Tereza Hanková', initials: 'TH', bg: '#FBE7E7', fg: '#A82E2E', time: 'ne', preview: 'Prezentace pošli do pátku, prosím.', unread: 0, online: false },
+      { id: 'ek', name: 'Eliot Komárek', initials: 'EK', bg: '#E9E4FF', fg: '#4B3BB5', time: 'ne', preview: 'Půjdeš se mnou odevzdat ten projekt?', unread: 2, online: false },
+      { id: 'vk', name: 'Vavřinec Kubíček', initials: 'VK', bg: '#DCE7FF', fg: '#1F4FB8', time: 'so', preview: 'Rozpis na expedici je venku.', unread: 0, online: false }
+    ].map((c) => {
+      const sel = c.id === this.state.active;
+      return Object.assign({}, c, {
+        hasUnread: c.unread > 0,
+        pick: () => this.setState({ active: c.id }),
+        rowStyle: 'display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border:0;font:inherit;cursor:pointer;text-align:left;' + (sel ? 'background:#E8EFFD;' : 'background:transparent;'),
+        avatarStyle: 'width:42px;height:42px;border-radius:21px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:' + c.bg + ';color:' + c.fg + ';',
+        previewStyle: 'font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' + (c.unread > 0 ? 'color:#111A33;font-weight:700;' : 'color:#5A6782;font-weight:500;')
+      });
+    });
+    const base = [
+      { mine: false, text: 'Ahoj Šimone, nezapomeň prosím na seznam povinné literatury, potřebuju ho do zítřka.', time: '13:20' },
+      { mine: true, file: 'Seznam_literatury.pdf', size: 'PDF · 1,2 MB', text: 'Tady je, snad je kompletní.', time: '13:58' },
+      { mine: false, text: 'Děkuju za odevzdaný seznam povinné literatury. Vypadá to v pořádku :)', time: '14:06' }
+    ];
+    const messages = base.concat(this.state.sent).map((m) => Object.assign({}, m, {
+      theirs: !m.mine, isFile: !!m.file, hasText: !!m.text
+    }));
+    const send = () => {
+      const t = (this.state.draft || '').trim();
+      if (!t) return;
+      const d = new Date();
+      const time = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+      this.setState({ sent: this.state.sent.concat([{ mine: true, text: t, time: time }]), draft: '' });
+    };
+    return {
+      contacts: contacts,
+      messages: messages,
+      draft: this.state.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onKey: (e) => { if (e.key === 'Enter') { send(); } },
+      send: send
+    };
+  }
+}
+</script>
+</body>
+</html>

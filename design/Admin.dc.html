@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Správa (admin)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="sprava" role="admin" hint-size="100%,1000px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div style="flex: 1 1 260px; min-width: 0">
+          <div style="font-size: 13px; color: #5A6782; font-weight: 600">Správa školy</div>
+          <h1 style="margin: 4px 0 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">Uživatelé a škola</h1>
+        </div>
+        <button style="min-height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #C9D8FA; background: #FFFFFF; color: #1F4FB8; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Import z Google Workspace</button>
+        <button style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          Přidat uživatele
+        </button>
+      </header>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+        <div style="padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px">
+          <div style="font-size: 13px; color: #5A6782; font-weight: 600">Studenti</div>
+          <div style="font-size: 30px; font-weight: 800; margin-top: 4px">148</div>
+        </div>
+        <div style="padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px">
+          <div style="font-size: 13px; color: #5A6782; font-weight: 600">Učitelé a admini</div>
+          <div style="font-size: 30px; font-weight: 800; margin-top: 4px">10</div>
+        </div>
+        <div style="padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px">
+          <div style="font-size: 13px; color: #5A6782; font-weight: 600">Kurzy, ateliéry, expedice</div>
+          <div style="font-size: 30px; font-weight: 800; margin-top: 4px">13</div>
+        </div>
+        <div style="padding: 18px 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 13px; color: #5A6782; font-weight: 600">Zápis na blok 2</div>
+          <div style="font-size: 30px; font-weight: 800">63 %</div>
+          <div style="height: 6px; border-radius: 3px; background: #EEF1F7"><div style="width: 63%; height: 6px; border-radius: 3px; background: #3B6FE0"></div></div>
+        </div>
+      </div>
+
+      <div role="tablist" aria-label="Sekce správy" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 5px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 14px; align-self: flex-start">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+          <button role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{isUsers}}" hint-placeholder-val="{{true}}">
+        <section aria-label="Uživatelé" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; overflow: hidden">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #EEF1F7">
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <sc-for list="{{roleFilters}}" as="f" hint-placeholder-count="4">
+                <button aria-pressed="{{f.pressed}}" onClick="{{f.pick}}" style="{{f.style}}">{{f.label}}</button>
+              </sc-for>
+            </div>
+            <label style="margin-left: auto; flex: 0 1 280px; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; background: #F4F6FB; border-radius: 12px; color: #5A6782; box-sizing: border-box">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              <input type="search" aria-label="Hledat uživatele" placeholder="Hledat jméno nebo e-mail…" style="border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: #111A33; flex: 1; min-width: 0">
+            </label>
+          </div>
+          <div style="overflow-x: auto">
+            <div style="min-width: 760px">
+              <div style="display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) 48px; gap: 12px; padding: 10px 20px; font-size: 12px; font-weight: 700; color: #5A6782; background: #FBFCFE">
+                <span>Jméno</span><span>Role</span><span>Ročník / úvazek</span><span>Stav</span><span></span>
+              </div>
+              <sc-for list="{{users}}" as="u" hint-placeholder-count="8">
+                <div style="display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) 48px; gap: 12px; align-items: center; padding: 12px 20px; border-top: 1px solid #EEF1F7">
+                  <div style="display: flex; align-items: center; gap: 10px; min-width: 0">
+                    <div style="{{u.avatarStyle}}">{{u.ini}}</div>
+                    <div style="min-width: 0">
+                      <div style="font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{u.name}}</div>
+                      <div style="font-size: 12px; color: #5A6782; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{u.email}}</div>
+                    </div>
+                  </div>
+                  <select aria-label="{{u.aria}}" value="{{u.role}}" onChange="{{u.onRole}}" style="height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid #D5DCEA; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; color: #111A33">
+                    <option value="student">Student</option>
+                    <option value="ucitel">Učitel</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <div style="font-size: 13px; color: #3A4560; font-weight: 600">{{u.group}}</div>
+                  <span style="{{u.chipStyle}}">{{u.status}}</span>
+                  <button aria-label="{{u.moreAria}}" style="width: 40px; height: 40px; border-radius: 10px; border: 0; background: transparent; color: #3A4560; display: flex; align-items: center; justify-content: center; cursor: pointer">
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+                  </button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="padding: 14px 20px; font-size: 13px; color: #5A6782; border-top: 1px solid #EEF1F7">Zobrazeno {{shown}} z 158 uživatelů</div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{isCourses}}" hint-placeholder-val="{{false}}">
+        <section aria-label="Kurzy a ateliéry" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; overflow: hidden">
+          <div style="display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #EEF1F7">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 800">Nabídka bloku 2</h2>
+            <button style="margin-left: auto; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer">Nová aktivita</button>
+          </div>
+          <sc-for list="{{courses}}" as="c" hint-placeholder-count="6">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 20px; border-top: 1px solid #EEF1F7">
+              <span style="{{c.kindStyle}}">{{c.kind}}</span>
+              <div style="flex: 1 1 220px; min-width: 0">
+                <div style="font-size: 14px; font-weight: 700">{{c.title}}</div>
+                <div style="font-size: 12px; color: #5A6782; margin-top: 2px">{{c.lector}} · {{c.when}}</div>
+              </div>
+              <div style="flex: 0 0 160px; display: flex; flex-direction: column; gap: 4px">
+                <div style="font-size: 12px; font-weight: 700; color: #3A4560">{{c.taken}} / {{c.cap}} míst</div>
+                <div style="height: 6px; border-radius: 3px; background: #EEF1F7"><div style="{{c.barStyle}}"></div></div>
+              </div>
+              <span style="font-size: 12px; font-weight: 700; color: #17704A; background: #E3F4EC; padding: 4px 10px; border-radius: 999px">Meet vytvořen</span>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{isPeriods}}" hint-placeholder-val="{{false}}">
+        <section aria-label="Období a zápisy" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 800">Období a zápisy</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px">
+            <div style="padding: 16px; border-radius: 14px; border: 1px solid #E3E8F2; display: flex; flex-direction: column; gap: 6px">
+              <span style="align-self: flex-start; font-size: 12px; font-weight: 700; color: #17704A; background: #E3F4EC; padding: 4px 10px; border-radius: 999px">Probíhá</span>
+              <div style="font-size: 15px; font-weight: 800">Blok 1</div>
+              <div style="font-size: 13px; color: #5A6782">1. 9. – 30. 10.</div>
+            </div>
+            <div style="padding: 16px; border-radius: 14px; border: 2px solid #3B6FE0; display: flex; flex-direction: column; gap: 6px">
+              <span style="align-self: flex-start; font-size: 12px; font-weight: 700; color: #8A5300; background: #FDF1DC; padding: 4px 10px; border-radius: 999px">Zápis otevřen</span>
+              <div style="font-size: 15px; font-weight: 800">Blok 2</div>
+              <div style="font-size: 13px; color: #5A6782">2. 11. – 18. 12. · zápis do 23. 10. 20:00</div>
+            </div>
+            <div style="padding: 16px; border-radius: 14px; border: 1px solid #E3E8F2; display: flex; flex-direction: column; gap: 6px">
+              <span style="align-self: flex-start; font-size: 12px; font-weight: 700; color: #3A4560; background: #EEF1F7; padding: 4px 10px; border-radius: 999px">Připravuje se</span>
+              <div style="font-size: 15px; font-weight: 800">Blok 3</div>
+              <div style="font-size: 13px; color: #5A6782">4. 1. – 26. 2.</div>
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <button style="min-height: 44px; padding: 0 18px; border-radius: 12px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Upravit blok 2</button>
+            <button style="min-height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #D5DCEA; background: #FFFFFF; color: #3A4560; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Připomenout nezapsaným (55)</button>
+          </div>
+        </section>
+      </sc-if>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'users', filter: 'all', roles: {} };
+  }
+  renderVals() {
+    const tab = this.state.tab;
+    const tdefs = [['users', 'Uživatelé'], ['courses', 'Kurzy a ateliéry'], ['periods', 'Období a zápisy']];
+    const tabs = tdefs.map((d) => ({
+      label: d[1], selected: tab === d[0] ? 'true' : 'false', pick: () => this.setState({ tab: d[0] }),
+      style: 'min-height:40px;padding:0 16px;border-radius:10px;border:0;font:inherit;font-size:14px;font-weight:700;cursor:pointer;' + (tab === d[0] ? 'background:#3B6FE0;color:#FFFFFF;' : 'background:transparent;color:#3A4560;')
+    }));
+    const base = [
+      { id: 1, name: 'Miroslav Pavel', email: 'miroslav.pavel@scioskola.cz', role: 'admin', group: 'Třídní 3. ročníku', active: true },
+      { id: 2, name: 'Anežka Jakubcová', email: 'anezka.jakubcova@scioskola.cz', role: 'ucitel', group: 'Plný úvazek', active: true },
+      { id: 3, name: 'Tereza Hanková', email: 'tereza.hankova@scioskola.cz', role: 'ucitel', group: 'Externí lektorka', active: true },
+      { id: 4, name: 'Martin Pietraszek', email: 'martin.pietraszek@scioskola.cz', role: 'ucitel', group: 'Plný úvazek', active: true },
+      { id: 5, name: 'Šimon Samuel Liška', email: 'simon.liska@scioskola.cz', role: 'student', group: '3. ročník', active: true },
+      { id: 6, name: 'Eliot Komárek', email: 'eliot.komarek@scioskola.cz', role: 'student', group: '3. ročník', active: true },
+      { id: 7, name: 'Tereza Kolářová', email: 'tereza.kolarova@scioskola.cz', role: 'student', group: '2. ročník', active: true },
+      { id: 8, name: 'Ema Horáková', email: 'ema.horakova@scioskola.cz', role: 'student', group: '1. ročník', active: false }
+    ];
+    const roles = this.state.roles;
+    const f = this.state.filter;
+    const chip = 'justify-self:start;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;';
+    const avatars = { admin: ['#1F4FB8', '#FFFFFF'], ucitel: ['#E9E4FF', '#4B3BB5'], student: ['#DCE7FF', '#1F4FB8'] };
+    const all = base.map((u) => Object.assign({}, u, { role: roles[u.id] || u.role }));
+    const users = all.filter((u) => f === 'all' || u.role === f).map((u) => ({
+      name: u.name, email: u.email, role: u.role, group: u.group,
+      ini: u.name.split(' ').map((p) => p[0]).slice(0, 2).join(''),
+      avatarStyle: 'flex:none;width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;background:' + avatars[u.role][0] + ';color:' + avatars[u.role][1] + ';',
+      status: u.active ? 'Aktivní' : 'Pozvánka odeslána',
+      chipStyle: chip + (u.active ? 'background:#E3F4EC;color:#17704A;' : 'background:#FDF1DC;color:#8A5300;'),
+      aria: 'Role uživatele ' + u.name, moreAria: 'Další akce pro ' + u.name,
+      onRole: (e) => { const n = Object.assign({}, this.state.roles); n[u.id] = e.target.value; this.setState({ roles: n }); }
+    }));
+    const fdefs = [['all', 'Všichni'], ['student', 'Studenti'], ['ucitel', 'Učitelé'], ['admin', 'Admini']];
+    const roleFilters = fdefs.map((d) => ({
+      label: d[1], pressed: f === d[0] ? 'true' : 'false', pick: () => this.setState({ filter: d[0] }),
+      style: 'min-height:36px;padding:0 14px;border-radius:999px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;' + (f === d[0] ? 'background:#E8EFFD;color:#1F4FB8;border:1px solid #C9D8FA;' : 'background:#FFFFFF;color:#3A4560;border:1px solid #E3E8F2;')
+    }));
+    const kchip = 'flex:none;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;';
+    const kinds = { Kurz: kchip + 'background:#E8EFFD;color:#1F4FB8;', 'Ateliér': kchip + 'background:#EEEAFD;color:#3E2F9E;', Expedice: kchip + 'background:#E0F2EF;color:#0F6B5F;' };
+    const courses = [
+      { kind: 'Kurz', title: 'Cestománie', lector: 'Honza Kumstát', when: 'St 11:30', taken: 14, cap: 16 },
+      { kind: 'Kurz', title: 'Chemie léků a jedů', lector: 'Martin Pietraszek', when: 'Út 10:00', taken: 16, cap: 16 },
+      { kind: 'Kurz', title: 'Literatura ve filmu', lector: 'Anežka Jakubcová', when: 'Út 11:30', taken: 11, cap: 18 },
+      { kind: 'Ateliér', title: 'Prezentační schopnosti', lector: 'Tereza Hanková', when: 'Po 9:00', taken: 11, cap: 14 },
+      { kind: 'Ateliér', title: 'Šachy', lector: 'Petr Lukeš', when: 'Čt 9:00', taken: 8, cap: 12 },
+      { kind: 'Expedice', title: 'Za vlky do Javorníků', lector: 'Eliot Komárek', when: '9.–11. 11.', taken: 8, cap: 12 }
+    ].map((c) => Object.assign({}, c, {
+      kindStyle: kinds[c.kind],
+      barStyle: 'height:6px;border-radius:3px;background:' + (c.taken >= c.cap ? '#C93B3B' : '#3B6FE0') + ';width:' + Math.round(c.taken / c.cap * 100) + '%'
+    }));
+    return {
+      tabs: tabs, isUsers: tab === 'users', isCourses: tab === 'courses', isPeriods: tab === 'periods',
+      roleFilters: roleFilters, users: users, shown: users.length, courses: courses
+    };
+  }
+}
+</script>
+</body>
+</html>

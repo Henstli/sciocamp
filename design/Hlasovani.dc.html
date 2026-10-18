@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Hlasování</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="hlasovani" hint-size="100%,880px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div style="flex: 1 1 260px; min-width: 0">
+          <h1 style="margin: 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">Hlasování</h1>
+          <div style="font-size: 14px; color: #5A6782; font-weight: 500; margin-top: 6px">{{subtitle}}</div>
+        </div>
+        <button style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #C9D8FA; background: #FFFFFF; color: #1F4FB8; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          Podat návrh
+        </button>
+        <div aria-label="Šimon Samuel Liška" style="width: 44px; height: 44px; border-radius: 22px; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">ŠL</div>
+      </header>
+
+      <h2 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em">Probíhající</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px">
+        <sc-for list="{{active}}" as="v" hint-placeholder-count="3">
+          <article style="display: flex; flex-direction: column; gap: 16px; padding: 22px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-size: 12px; font-weight: 700; color: #1F4FB8; background: #E8EFFD; padding: 4px 10px; border-radius: 999px">{{v.kind}}</span>
+              <span style="{{v.endsStyle}}">{{v.ends}}</span>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em">{{v.title}}</h3>
+              <p style="margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: #3A4560">{{v.question}}</p>
+              <div style="font-size: 13px; color: #5A6782; margin-top: 8px">Navrhl(a) {{v.author}}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="display: flex; font-size: 12px; font-weight: 600; color: #3A4560"><span>Účast</span><span style="margin-left: auto">{{v.turnout}} %</span></div>
+              <div style="height: 6px; border-radius: 3px; background: #EEF1F7"><div style="{{v.turnoutStyle}}"></div></div>
+            </div>
+            <div role="radiogroup" aria-label="Tvůj hlas" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: auto">
+              <sc-for list="{{v.options}}" as="o" hint-placeholder-count="3">
+                <button role="radio" aria-checked="{{o.checked}}" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button>
+              </sc-for>
+            </div>
+            <div style="font-size: 13px; color: #5A6782; min-height: 18px">{{v.note}}</div>
+          </article>
+        </sc-for>
+      </div>
+
+      <h2 style="margin: 8px 0 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em">Ukončené</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px">
+        <sc-for list="{{ended}}" as="e" hint-placeholder-count="2">
+          <article style="display: flex; flex-direction: column; gap: 14px; padding: 22px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-size: 12px; font-weight: 700; color: #3A4560; background: #EEF1F7; padding: 4px 10px; border-radius: 999px">{{e.closed}}</span>
+              <span style="{{e.resultStyle}}">{{e.result}}</span>
+            </div>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em">{{e.title}}</h3>
+            <div style="display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px">
+              <div style="{{e.proStyle}}"></div>
+              <div style="{{e.zdrStyle}}"></div>
+              <div style="{{e.protiStyle}}"></div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; font-weight: 600; color: #3A4560">
+              <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #3B6FE0"></span>Pro {{e.pro}} %</span>
+              <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #C9D8FA"></span>Zdržel se {{e.zdr}} %</span>
+              <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #F0A63A"></span>Proti {{e.proti}} %</span>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { votes: { atel3: 'zdr' } };
+  }
+  renderVals() {
+    const list = [
+      { id: 'noze', kind: 'Expedice', title: 'Nože na expedici', question: 'Můžou si studenti na expedici Za vlky do Javorníků vzít vlastní nůž?', author: 'Standa Jaukner', ends: 'končí za 2 dny', urgent: true, turnout: 64 },
+      { id: 'patek', kind: 'Rozvrh', title: 'Páteční ateliéry od 10:00', question: 'Posunout začátek pátečních ateliérů z 9:00 na 10:00?', author: 'Jáchym Černý', ends: 'končí za 4 dny', urgent: false, turnout: 41 },
+      { id: 'atel3', kind: 'Ateliéry', title: 'Nový ateliér: Fotografie', question: 'Otevřít od dalšího bloku ateliér fotografie pro 12 studentů?', author: 'Tereza Hanková', ends: 'končí za 5 dní', urgent: false, turnout: 22 }
+    ];
+    const optDefs = [
+      { k: 'pro', label: 'Pro', on: 'background:#3B6FE0;color:#FFFFFF;border:1px solid #3B6FE0;' },
+      { k: 'zdr', label: 'Zdržet se', on: 'background:#3A4560;color:#FFFFFF;border:1px solid #3A4560;' },
+      { k: 'proti', label: 'Proti', on: 'background:#B76E00;color:#FFFFFF;border:1px solid #B76E00;' }
+    ];
+    const names = { pro: 'pro', zdr: 'zdržet se', proti: 'proti' };
+    const btn = 'min-height:44px;border-radius:12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;';
+    const off = 'background:#FFFFFF;color:#3A4560;border:1px solid #D5DCEA;';
+    const votes = this.state.votes;
+    const active = list.map((v) => {
+      const mine = votes[v.id];
+      const turnout = mine ? v.turnout + 1 : v.turnout;
+      return Object.assign({}, v, {
+        turnout: turnout,
+        endsStyle: 'margin-left:auto;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;' + (v.urgent ? 'background:#FDF1DC;color:#8A5300;' : 'background:#EEF1F7;color:#3A4560;'),
+        turnoutStyle: 'height:6px;border-radius:3px;background:#3B6FE0;width:' + turnout + '%',
+        note: mine ? 'Hlasoval(a) jsi „' + names[mine] + '“. Do konce hlasování to můžeš změnit.' : 'Zatím jsi nehlasoval(a).',
+        options: optDefs.map((o) => ({
+          label: o.label,
+          checked: mine === o.k ? 'true' : 'false',
+          style: btn + (mine === o.k ? o.on : off),
+          pick: () => { const n = Object.assign({}, this.state.votes); n[v.id] = o.k; this.setState({ votes: n }); }
+        }))
+      });
+    });
+    const bar = (pct, color) => 'width:' + pct + '%;background:' + color + ';';
+    const ended = [
+      { title: 'Nový ateliér: Debatní klub', closed: 'skončilo 12. 10.', pro: 78, zdr: 9, proti: 13 },
+      { title: 'Zrušení středečních ateliérů', closed: 'skončilo 5. 10.', pro: 31, zdr: 11, proti: 58 }
+    ].map((e) => {
+      const passed = e.pro > 50;
+      return Object.assign({}, e, {
+        result: passed ? 'Prošlo' : 'Neprošlo',
+        resultStyle: 'margin-left:auto;font-size:12px;font-weight:800;padding:4px 12px;border-radius:999px;' + (passed ? 'background:#E3F4EC;color:#17704A;' : 'background:#FBE7E7;color:#A82E2E;'),
+        proStyle: bar(e.pro, '#3B6FE0'), zdrStyle: bar(e.zdr, '#C9D8FA'), protiStyle: bar(e.proti, '#F0A63A')
+      });
+    });
+    const waiting = list.filter((v) => !votes[v.id]).length;
+    return {
+      active: active, ended: ended,
+      subtitle: waiting === 0 ? 'Ve všech probíhajících hlasováních už máš hlas.' : waiting + ' hlasování čeká na tvůj hlas'
+    };
+  }
+}
+</script>
+</body>
+</html>

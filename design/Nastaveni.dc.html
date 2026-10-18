@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Nastavení</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="nastaveni" hint-size="100%,900px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px">
+    <div style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <header>
+        <h1 style="margin: 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">Nastavení</h1>
+      </header>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+        <nav aria-label="Sekce nastavení" style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 4px; padding: 8px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 16px">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+            <button aria-current="{{t.current}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+          </sc-for>
+        </nav>
+
+        <div style="flex: 999 1 480px; min-width: 0">
+          <sc-if value="{{isUcet}}" hint-placeholder-val="{{true}}">
+            <section aria-label="Účet" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+              <div>
+                <h2 style="margin: 0; font-size: 18px; font-weight: 800">Osobní údaje</h2>
+                <div style="font-size: 13px; color: #5A6782; margin-top: 4px">Jméno a e-mail spravuje škola. Ostatní si můžeš upravit sám.</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 16px">
+                <div style="width: 72px; height: 72px; border-radius: 36px; background: #1F4FB8; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800">ŠL</div>
+                <button style="min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid #D5DCEA; background: #FFFFFF; color: #3A4560; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Nahrát fotku</button>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <label for="s-name" style="font-size: 14px; font-weight: 700">Jméno a příjmení</label>
+                  <input id="s-name" type="text" value="Šimon Samuel Liška" disabled style="height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid #E3E8F2; background: #F4F6FB; font: inherit; font-size: 14px; color: #3A4560; box-sizing: border-box">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <label for="s-mail" style="font-size: 14px; font-weight: 700">Školní e-mail</label>
+                  <input id="s-mail" type="email" value="simon.liska@scioskola.cz" disabled style="height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid #E3E8F2; background: #F4F6FB; font: inherit; font-size: 14px; color: #3A4560; box-sizing: border-box">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <label for="s-nick" style="font-size: 14px; font-weight: 700">Přezdívka</label>
+                  <input id="s-nick" type="text" placeholder="Jak ti mají říkat" style="height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid #D5DCEA; background: #FFFFFF; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <label for="s-phone" style="font-size: 14px; font-weight: 700">Telefon</label>
+                  <input id="s-phone" type="tel" placeholder="+420" style="height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid #D5DCEA; background: #FFFFFF; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <label for="s-bio" style="font-size: 14px; font-weight: 700">O mně</label>
+                <textarea id="s-bio" rows="3" style="padding: 12px 14px; border-radius: 12px; border: 1px solid #D5DCEA; font: inherit; font-size: 14px; line-height: 1.5; color: #111A33; resize: vertical">Baví mě film, šachy a cestování. Letos chci zvládnout první vlastní TEDx talk.</textarea>
+              </div>
+              <button style="align-self: flex-start; min-height: 46px; padding: 0 22px; border-radius: 12px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer">Uložit změny</button>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{isNotif}}" hint-placeholder-val="{{false}}">
+            <section aria-label="Notifikace" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; overflow: hidden">
+              <div style="padding: 24px 24px 12px">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 800">Notifikace</h2>
+                <div style="font-size: 13px; color: #5A6782; margin-top: 4px">Vyber si, o čem a kudy ti dáme vědět.</div>
+              </div>
+              <div style="display: grid; grid-template-columns: minmax(0, 1fr) 72px 72px 72px; align-items: center; padding: 8px 24px; font-size: 12px; font-weight: 700; color: #5A6782; text-align: center">
+                <span style="text-align: left">Událost</span><span>Aplikace</span><span>E-mail</span><span>Mobil</span>
+              </div>
+              <sc-for list="{{notifs}}" as="n" hint-placeholder-count="5">
+                <div style="display: grid; grid-template-columns: minmax(0, 1fr) 72px 72px 72px; align-items: center; padding: 12px 24px; border-top: 1px solid #EEF1F7">
+                  <div style="min-width: 0">
+                    <div style="font-size: 14px; font-weight: 700">{{n.label}}</div>
+                    <div style="font-size: 12px; color: #5A6782; margin-top: 2px">{{n.hint}}</div>
+                  </div>
+                  <sc-for list="{{n.channels}}" as="c" hint-placeholder-count="3">
+                    <div style="display: flex; justify-content: center">
+                      <button role="switch" aria-checked="{{c.on}}" aria-label="{{c.aria}}" onClick="{{c.toggle}}" style="{{c.track}}"><span style="{{c.knob}}"></span></button>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{isVzhled}}" hint-placeholder-val="{{false}}">
+            <section aria-label="Vzhled" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 800">Vzhled</h2>
+              <div role="radiogroup" aria-label="Motiv" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px">
+                <sc-for list="{{themes}}" as="th" hint-placeholder-count="3">
+                  <button role="radio" aria-checked="{{th.on}}" onClick="{{th.pick}}" style="{{th.style}}">
+                    <div style="{{th.preview}}"><div style="{{th.bar}}"></div><div style="{{th.card}}"></div></div>
+                    <span style="font-size: 14px; font-weight: 700">{{th.label}}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{isPropojeni}}" hint-placeholder-val="{{false}}">
+            <section aria-label="Propojení" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 800">Propojení s Googlem</h2>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; border: 1px solid #E3E8F2">
+                <div style="flex: 1 1 220px">
+                  <div style="font-size: 14px; font-weight: 700">Školní Google účet</div>
+                  <div style="font-size: 13px; color: #5A6782; margin-top: 2px">Přihlášení a Google Meet · simon.liska@scioskola.cz</div>
+                </div>
+                <span style="font-size: 12px; font-weight: 700; color: #17704A; background: #E3F4EC; padding: 5px 10px; border-radius: 999px">Připojeno</span>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; border: 1px solid #E3E8F2">
+                <div style="flex: 1 1 220px">
+                  <div style="font-size: 14px; font-weight: 700">Rozvrh do Google Kalendáře</div>
+                  <div style="font-size: 13px; color: #5A6782; margin-top: 2px">Hodiny a termíny úkolů se ti propíšou i do osobního kalendáře.</div>
+                </div>
+                <button role="switch" aria-checked="{{cal.on}}" aria-label="Synchronizace s Google Kalendářem" onClick="{{cal.toggle}}" style="{{cal.track}}"><span style="{{cal.knob}}"></span></button>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; border: 1px solid #E3E8F2">
+                <div style="flex: 1 1 220px">
+                  <div style="font-size: 14px; font-weight: 700">Odevzdávání z Google Disku</div>
+                  <div style="font-size: 13px; color: #5A6782; margin-top: 2px">K úkolům můžeš přikládat soubory přímo z Disku.</div>
+                </div>
+                <span style="font-size: 12px; font-weight: 700; color: #17704A; background: #E3F4EC; padding: 5px 10px; border-radius: 999px">Povoleno</span>
+              </div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{isSoukromi}}" hint-placeholder-val="{{false}}">
+            <section aria-label="Soukromí" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 800">Soukromí</h2>
+              <sc-for list="{{privacy}}" as="p" hint-placeholder-count="3">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; border: 1px solid #E3E8F2">
+                  <div style="flex: 1 1 220px">
+                    <div style="font-size: 14px; font-weight: 700">{{p.label}}</div>
+                    <div style="font-size: 13px; color: #5A6782; margin-top: 2px">{{p.hint}}</div>
+                  </div>
+                  <button role="switch" aria-checked="{{p.on}}" aria-label="{{p.label}}" onClick="{{p.toggle}}" style="{{p.track}}"><span style="{{p.knob}}"></span></button>
+                </div>
+              </sc-for>
+              <a href="#" style="align-self: flex-start; font-size: 14px; font-weight: 700; text-decoration: none; min-height: 32px; display: flex; align-items: center">Stáhnout moje data</a>
+            </section>
+          </sc-if>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tab: 'notif',
+      sw: {
+        'ukol-app': true, 'ukol-mail': true, 'ukol-push': true,
+        'termin-app': true, 'termin-mail': false, 'termin-push': true,
+        'zpravy-app': true, 'zpravy-mail': false, 'zpravy-push': true,
+        'hlas-app': true, 'hlas-mail': false, 'hlas-push': false,
+        'trida-app': true, 'trida-mail': false, 'trida-push': false,
+        cal: true, online: true, tel: false, profil: true
+      },
+      theme: 'light'
+    };
+  }
+  renderVals() {
+    const sw = this.state.sw;
+    const flip = (k) => () => { const n = Object.assign({}, this.state.sw); n[k] = !n[k]; this.setState({ sw: n }); };
+    const sws = (k) => {
+      const on = !!sw[k];
+      return {
+        on: on ? 'true' : 'false', toggle: flip(k),
+        track: 'width:48px;height:28px;border-radius:14px;border:0;padding:3px;cursor:pointer;display:flex;box-sizing:border-box;' + (on ? 'background:#3B6FE0;justify-content:flex-end;' : 'background:#C7CFDF;justify-content:flex-start;'),
+        knob: 'width:22px;height:22px;border-radius:11px;background:#FFFFFF;display:block;'
+      };
+    };
+    const defs = [['ucet', 'Účet'], ['notif', 'Notifikace'], ['soukromi', 'Soukromí'], ['vzhled', 'Vzhled'], ['propojeni', 'Propojení s Googlem']];
+    const tab = this.state.tab;
+    const tabs = defs.map((d) => ({
+      label: d[1], current: tab === d[0] ? 'page' : 'false',
+      pick: () => this.setState({ tab: d[0] }),
+      style: 'min-height:44px;padding:0 14px;border-radius:10px;border:0;font:inherit;font-size:14px;font-weight:700;text-align:left;cursor:pointer;' + (tab === d[0] ? 'background:#E8EFFD;color:#1F4FB8;' : 'background:transparent;color:#3A4560;')
+    }));
+    const chanNames = { app: 'v aplikaci', mail: 'e-mailem', push: 'na mobil' };
+    const notifs = [
+      ['ukol', 'Nový úkol nebo materiál', 'Když vyučující něco zadá nebo přidá'],
+      ['termin', 'Blížící se termín', '24 hodin před odevzdáním'],
+      ['zpravy', 'Zprávy', 'Soukromé a týmové zprávy'],
+      ['hlas', 'Hlasování a návrhy', 'Nové hlasování a výsledky'],
+      ['trida', 'Oznámení ve třídě', 'Příspěvky na nástěnce kurzů a ateliérů']
+    ].map((n) => ({
+      label: n[1], hint: n[2],
+      channels: ['app', 'mail', 'push'].map((c) => Object.assign(sws(n[0] + '-' + c), { aria: n[1] + ' ' + chanNames[c] }))
+    }));
+    const themeDefs = [
+      { k: 'light', label: 'Světlý', bg: '#F4F6FB', bar: '#3B6FE0', card: '#FFFFFF' },
+      { k: 'dark', label: 'Tmavý', bg: '#121A2E', bar: '#5A88EC', card: '#1E2945' },
+      { k: 'system', label: 'Podle systému', bg: '#C9D8FA', bar: '#3B6FE0', card: '#121A2E' }
+    ];
+    const themes = themeDefs.map((t) => {
+      const on = this.state.theme === t.k;
+      return {
+        label: t.label, on: on ? 'true' : 'false', pick: () => this.setState({ theme: t.k }),
+        style: 'display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;font:inherit;color:#111A33;background:#FFFFFF;cursor:pointer;text-align:left;' + (on ? 'border:2px solid #3B6FE0;' : 'border:2px solid #E3E8F2;'),
+        preview: 'height:72px;border-radius:10px;padding:10px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;background:' + t.bg,
+        bar: 'height:10px;width:40%;border-radius:5px;background:' + t.bar,
+        card: 'flex:1;border-radius:6px;background:' + t.card
+      };
+    });
+    const privacy = [
+      ['online', 'Ukazovat, že jsem online', 'Zelená tečka u fotky ve zprávách'],
+      ['tel', 'Telefon vidí i spolužáci', 'Jinak ho vidí jen vyučující'],
+      ['profil', 'Profil viditelný celé škole', 'Jinak jen lidem ze stejných kurzů']
+    ].map((p) => Object.assign(sws(p[0]), { label: p[1], hint: p[2] }));
+    return {
+      tabs: tabs,
+      isUcet: tab === 'ucet', isNotif: tab === 'notif', isSoukromi: tab === 'soukromi', isVzhled: tab === 'vzhled', isPropojeni: tab === 'propojeni',
+      notifs: notifs, themes: themes, privacy: privacy, cal: sws('cal')
+    };
+  }
+}
+</script>
+</body>
+</html>

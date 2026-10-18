@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Kurzy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="kurzy" hint-size="100%,900px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div style="flex: 1 1 260px; min-width: 0">
+          <h1 style="margin: 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">Kurzy</h1>
+          <div style="font-size: 14px; color: #5A6782; font-weight: 500; margin-top: 6px">Blok 1 · 6 kurzů, do kterých chodíš</div>
+        </div>
+        <a href="Zapisy.dc.html" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #C9D8FA; background: #FFFFFF; color: #1F4FB8; font-size: 14px; font-weight: 700; text-decoration: none">Celá nabídka a zápis</a>
+        <div aria-label="Šimon Samuel Liška" style="width: 44px; height: 44px; border-radius: 22px; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">ŠL</div>
+      </header>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px">
+        <sc-for list="{{courses}}" as="c" hint-placeholder-count="6">
+          <article style="display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; overflow: hidden">
+            <a href="Trida.dc.html" style="{{c.headStyle}}">
+              <div style="font-size: 12px; font-weight: 700; opacity: 0.9">{{c.when}}</div>
+              <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin-top: 6px">{{c.title}}</div>
+              <div style="font-size: 13px; font-weight: 600; margin-top: 4px">{{c.lector}}</div>
+            </a>
+            <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1">
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #3A4560; font-weight: 600">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"></path></svg>
+                {{c.posts}}
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #3A4560; font-weight: 600">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg>
+                {{c.tasks}}
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; padding: 0 20px 20px">
+              <a href="Trida.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 12px; border: 1px solid #E3E8F2; color: #3A4560; font-size: 14px; font-weight: 700; text-decoration: none">Otevřít</a>
+              <a href="#" aria-label="Připojit se přes Google Meet" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; background: #E8EFFD; color: #1F4FB8; font-size: 14px; font-weight: 700; text-decoration: none">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"></rect><path d="m16 10 6-3v10l-6-3z"></path></svg>
+                Meet
+              </a>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tones = [
+      'background:#3B6FE0;color:#FFFFFF;',
+      'background:#2F5FCC;color:#FFFFFF;',
+      'background:#5B4BC4;color:#FFFFFF;',
+      'background:#0F6B5F;color:#FFFFFF;'
+    ];
+    const list = [
+      { title: 'Psychoterapeutické minimum', lector: 'Martin Pietraszek', when: 'Út 9:00–10:00', posts: '2 nové příspěvky', tasks: '1 úkol po termínu', t: 0 },
+      { title: 'Chemie léků a jedů', lector: 'Martin Pietraszek', when: 'Út 10:00–11:00', posts: 'Žádné novinky', tasks: 'Vše odevzdáno', t: 3 },
+      { title: 'Literatura ve filmu', lector: 'Anežka Jakubcová', when: 'Út 11:30–12:30', posts: '1 nový materiál', tasks: '1 úkol po termínu', t: 2 },
+      { title: 'Komplexní čísla a fraktály', lector: 'Miroslav Pavel', when: 'St 10:00–11:00', posts: '3 nové příspěvky', tasks: '1 úkol čeká', t: 1 },
+      { title: 'Cestománie', lector: 'Honza Kumstát', when: 'St 11:30–12:30', posts: 'Žádné novinky', tasks: 'Vše odevzdáno', t: 0 },
+      { title: 'Jak číst film', lector: 'Kateřina Kubešová', when: 'Po a Čt 12:00–13:00', posts: '1 nový příspěvek', tasks: '1 úkol po termínu', t: 2 }
+    ];
+    return {
+      courses: list.map((c) => Object.assign({}, c, {
+        headStyle: 'display:block;padding:20px;text-decoration:none;' + tones[c.t]
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Domov</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="domov" hint-size="100%,880px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div style="flex: 1 1 260px; min-width: 0">
+          <div style="font-size: 13px; color: #5A6782; font-weight: 600">Úterý 20. října</div>
+          <h1 style="margin: 4px 0 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">Ahoj, Šimone</h1>
+        </div>
+        <label style="flex: 0 1 320px; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 12px; color: #5A6782; box-sizing: border-box">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input type="search" aria-label="Hledat" placeholder="Hledat kurzy, úkoly, lidi…" style="border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: #111A33; flex: 1; min-width: 0">
+        </label>
+        <button aria-label="Oznámení" style="position: relative; width: 44px; height: 44px; border-radius: 12px; border: 1px solid #E3E8F2; background: #FFFFFF; color: #3A4560; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+          <span style="position: absolute; top: 10px; right: 11px; width: 8px; height: 8px; border-radius: 4px; background: #E5484D; border: 2px solid #FFFFFF"></span>
+        </button>
+        <div aria-label="Šimon Samuel Liška" style="width: 44px; height: 44px; border-radius: 22px; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">ŠL</div>
+      </header>
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 14px 16px 14px 18px; border-radius: 16px; background: #FFFFFF; border: 1px solid #C9D8FA">
+        <div style="flex: none; width: 44px; height: 44px; border-radius: 12px; background: #3B6FE0; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"></rect><path d="m16 10 6-3v10l-6-3z"></path></svg>
+        </div>
+        <div style="flex: 1 1 240px; min-width: 0">
+          <div style="font-size: 15px; font-weight: 800">Právě probíhá: Psychoterapeutické minimum</div>
+          <div style="font-size: 13px; color: #5A6782; margin-top: 2px">9:00–10:00 · Martin Pietraszek · připojeno 11 lidí</div>
+        </div>
+        <a href="Trida.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid #E3E8F2; color: #3A4560; font-size: 14px; font-weight: 700; text-decoration: none">Otevřít třídu</a>
+        <a href="#" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; background: #3B6FE0; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"></rect><path d="m16 10 6-3v10l-6-3z"></path></svg>
+          Připojit se přes Meet
+        </a>
+      </div>
+
+      <section aria-label="Přehled" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px">
+        <a href="Ukoly.dc.html" style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; text-decoration: none; color: #111A33">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; display: flex; align-items: center; justify-content: center">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg>
+            </div>
+            <div style="font-weight: 700; font-size: 15px">Úkoly</div>
+            <svg aria-hidden="true" style="margin-left: auto; color: #5A6782" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 34px; font-weight: 800; letter-spacing: -0.02em">6</span><span style="font-size: 14px; color: #5A6782; font-weight: 500">otevřených úkolů</span></div>
+          <div style="display: flex; gap: 4px; height: 8px">
+            <div style="flex: 4; background: #1F8A5B; border-radius: 4px"></div>
+            <div style="flex: 3; background: #F0A63A; border-radius: 4px"></div>
+            <div style="flex: 3; background: #C93B3B; border-radius: 4px"></div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: #3A4560; font-weight: 500">
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #1F8A5B"></span>4 hotovo</span>
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #F0A63A"></span>3 čeká</span>
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #C93B3B"></span>3 po termínu</span>
+          </div>
+        </a>
+
+        <a href="Hlasovani.dc.html" style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; text-decoration: none; color: #111A33">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; display: flex; align-items: center; justify-content: center">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"></path><rect x="6" y="4" width="12" height="12" rx="2"></rect><path d="m9 10 2 2 4-4"></path></svg>
+            </div>
+            <div style="font-weight: 700; font-size: 15px">Hlasování</div>
+            <svg aria-hidden="true" style="margin-left: auto; color: #5A6782" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 34px; font-weight: 800; letter-spacing: -0.02em">2</span><span style="font-size: 14px; color: #5A6782; font-weight: 500">čekají na tvůj hlas</span></div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #3A4560; font-weight: 500">
+            <span style="padding: 4px 10px; border-radius: 999px; background: #FDF1DC; color: #8A5300; font-weight: 700">3 probíhající</span>
+            <span style="padding: 4px 10px; border-radius: 999px; background: #EEF1F7; color: #3A4560; font-weight: 700">2 ukončená</span>
+          </div>
+          <div style="font-size: 13px; color: #5A6782">Nejbližší konec: Nože na expedici, za 2 dny</div>
+        </a>
+
+        <a href="Zpravy.dc.html" style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; text-decoration: none; color: #111A33">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; display: flex; align-items: center; justify-content: center">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"></path></svg>
+            </div>
+            <div style="font-weight: 700; font-size: 15px">Zprávy</div>
+            <svg aria-hidden="true" style="margin-left: auto; color: #5A6782" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 34px; font-weight: 800; letter-spacing: -0.02em">3</span><span style="font-size: 14px; color: #5A6782; font-weight: 500">nepřečtené zprávy</span></div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <div style="display: flex">
+              <div style="width: 30px; height: 30px; border-radius: 15px; background: #DCE7FF; color: #1F4FB8; border: 2px solid #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700">SJ</div>
+              <div style="width: 30px; height: 30px; border-radius: 15px; background: #E9E4FF; color: #4B3BB5; border: 2px solid #FFFFFF; margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700">EK</div>
+            </div>
+            <div style="font-size: 13px; color: #5A6782">Standa Jaukner, Eliot Komárek</div>
+          </div>
+        </a>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+        <section aria-label="Rozvrh týdne" style="flex: 2 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em">Rozvrh týdne</h2>
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #17704A; background: #E3F4EC; padding: 4px 10px; border-radius: 999px">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"></path></svg>
+              Google Kalendář
+            </span>
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 4px">
+              <button aria-label="Předchozí týden" style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #E3E8F2; background: #FFFFFF; color: #3A4560; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button>
+              <div style="font-size: 14px; font-weight: 700; padding: 0 8px">19.–23. října</div>
+              <button aria-label="Další týden" style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #E3E8F2; background: #FFFFFF; color: #3A4560; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></button>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto">
+            <div style="min-width: 600px; display: grid; grid-template-columns: 52px repeat(5, minmax(100px, 1fr)); grid-template-rows: 44px repeat(12, 30px)">
+              <div style="grid-column: 3; grid-row: 1 / 14; background: #F5F8FF; border-radius: 12px"></div>
+              <div style="grid-column: 2; grid-row: 2 / 14; background-image: linear-gradient(#EEF1F7 1px, transparent 1px); background-size: 100% 60px"></div>
+              <div style="grid-column: 3; grid-row: 2 / 14; background-image: linear-gradient(#E3E9F7 1px, transparent 1px); background-size: 100% 60px"></div>
+              <div style="grid-column: 4; grid-row: 2 / 14; background-image: linear-gradient(#EEF1F7 1px, transparent 1px); background-size: 100% 60px"></div>
+              <div style="grid-column: 5; grid-row: 2 / 14; background-image: linear-gradient(#EEF1F7 1px, transparent 1px); background-size: 100% 60px"></div>
+              <div style="grid-column: 6; grid-row: 2 / 14; background-image: linear-gradient(#EEF1F7 1px, transparent 1px); background-size: 100% 60px"></div>
+
+              <div style="grid-column: 2; grid-row: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #5A6782; font-weight: 600">Po<span style="font-size: 15px; color: #111A33; font-weight: 700">19</span></div>
+              <div style="grid-column: 3; grid-row: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #1F4FB8; font-weight: 700">Út<span style="font-size: 15px; font-weight: 800">20</span></div>
+              <div style="grid-column: 4; grid-row: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #5A6782; font-weight: 600">St<span style="font-size: 15px; color: #111A33; font-weight: 700">21</span></div>
+              <div style="grid-column: 5; grid-row: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #5A6782; font-weight: 600">Čt<span style="font-size: 15px; color: #111A33; font-weight: 700">22</span></div>
+              <div style="grid-column: 6; grid-row: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #5A6782; font-weight: 600">Pá<span style="font-size: 15px; color: #111A33; font-weight: 700">23</span></div>
+
+              <div style="grid-column: 1; grid-row: 2 / 4; font-size: 11px; color: #5A6782; font-weight: 600; transform: translateY(-7px)">8:00</div>
+              <div style="grid-column: 1; grid-row: 4 / 6; font-size: 11px; color: #5A6782; font-weight: 600; transform: translateY(-7px)">9:00</div>
+              <div style="grid-column: 1; grid-row: 6 / 8; font-size: 11px; color: #5A6782; font-weight: 600; transform: translateY(-7px)">10:00</div>
+              <div style="grid-column: 1; grid-row: 8 / 10; font-size: 11px; color: #5A6782; font-weight: 600; transform: translateY(-7px)">11:00</div>
+              <div style="grid-column: 1; grid-row: 10 / 12; font-size: 11px; color: #5A6782; font-weight: 600; transform: translateY(-7px)">12:00</div>
+              <div style="grid-column: 1; grid-row: 12 / 14; font-size: 11px; color: #5A6782; font-weight: 600; transform: translateY(-7px)">13:00</div>
+
+              <div style="grid-column: 2; grid-row: 4 / 9; margin: 2px 4px; padding: 8px 10px; border-radius: 10px; background: #EEEAFD; color: #3E2F9E; font-size: 12px; font-weight: 700; overflow: hidden">Ateliér: Prezentační schopnosti<div style="font-weight: 500; margin-top: 2px">9:00–11:30</div></div>
+              <div style="grid-column: 2; grid-row: 10 / 12; margin: 2px 4px; padding: 8px 10px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; font-size: 12px; font-weight: 700; overflow: hidden">Jak číst film<div style="font-weight: 500; margin-top: 2px">12:00–13:00</div></div>
+
+              <div style="grid-column: 3; grid-row: 4 / 6; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #3B6FE0; color: #FFFFFF; font-size: 12px; font-weight: 700; overflow: hidden">Psychoterapeutické minimum<div style="font-weight: 500">9:00–10:00</div></div>
+              <div style="grid-column: 3; grid-row: 6 / 8; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; font-size: 12px; font-weight: 700; overflow: hidden">Chemie léků a jedů<div style="font-weight: 500">10:00–11:00</div></div>
+              <div style="grid-column: 3; grid-row: 9 / 11; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; font-size: 12px; font-weight: 700; overflow: hidden">Literatura ve filmu<div style="font-weight: 500">11:30–12:30</div></div>
+              <div style="grid-column: 3; grid-row: 12 / 14; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #E0F2EF; color: #0F6B5F; font-size: 12px; font-weight: 700; overflow: hidden">Mezioborový seminář<div style="font-weight: 500">13:00–14:00</div></div>
+
+              <div style="grid-column: 4; grid-row: 4 / 6; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; font-size: 12px; font-weight: 700; overflow: hidden">Umím se učit<div style="font-weight: 500">9:00–10:00</div></div>
+              <div style="grid-column: 4; grid-row: 6 / 8; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; font-size: 12px; font-weight: 700; overflow: hidden">Komplexní čísla a fraktály<div style="font-weight: 500">10:00–11:00</div></div>
+              <div style="grid-column: 4; grid-row: 9 / 11; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; font-size: 12px; font-weight: 700; overflow: hidden">Cestománie<div style="font-weight: 500">11:30–12:30</div></div>
+
+              <div style="grid-column: 5; grid-row: 4 / 9; margin: 2px 4px; padding: 8px 10px; border-radius: 10px; background: #EEEAFD; color: #3E2F9E; font-size: 12px; font-weight: 700; overflow: hidden">Ateliér: Šachy<div style="font-weight: 500; margin-top: 2px">9:00–11:30</div></div>
+              <div style="grid-column: 5; grid-row: 10 / 12; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #E8EFFD; color: #1F4FB8; font-size: 12px; font-weight: 700; overflow: hidden">Jak číst film<div style="font-weight: 500">12:00–13:00</div></div>
+
+              <div style="grid-column: 6; grid-row: 4 / 6; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #E0F2EF; color: #0F6B5F; font-size: 12px; font-weight: 700; overflow: hidden">Třídnická hodina<div style="font-weight: 500">9:00–10:00</div></div>
+              <div style="grid-column: 6; grid-row: 7 / 10; margin: 2px 4px; padding: 6px 10px; border-radius: 10px; background: #E0F2EF; color: #0F6B5F; font-size: 12px; font-weight: 700; overflow: hidden">Příprava expedice<div style="font-weight: 500">10:30–12:00</div></div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: #3A4560; font-weight: 600">
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #C9D8FA"></span>Kurz</span>
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #D7CFFA"></span>Ateliér</span>
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #BFE5DE"></span>Ostatní</span>
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #3B6FE0"></span>Právě probíhá</span>
+          </div>
+        </section>
+
+        <div style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <section aria-label="Nejbližší termíny" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; align-items: center">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em">Nejbližší termíny</h2>
+              <a href="Ukoly.dc.html" style="margin-left: auto; font-size: 13px; font-weight: 700; text-decoration: none">Vše</a>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: flex-start">
+              <div style="flex: none; width: 40px; height: 40px; border-radius: 12px; background: #FDF1DC; color: #8A5300; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; line-height: 1.1">ST<span style="font-size: 14px; font-weight: 800">21</span></div>
+              <div style="min-width: 0">
+                <div style="font-size: 14px; font-weight: 700">Reflexe prezentace z TEDx</div>
+                <div style="font-size: 12px; color: #5A6782; margin-top: 2px">Ateliér Prezentační schopnosti · zítra 23:59</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: flex-start">
+              <div style="flex: none; width: 40px; height: 40px; border-radius: 12px; background: #EEF1F7; color: #3A4560; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; line-height: 1.1">ČT<span style="font-size: 14px; font-weight: 800">22</span></div>
+              <div style="min-width: 0">
+                <div style="font-size: 14px; font-weight: 700">Příprava týmové prezentace</div>
+                <div style="font-size: 12px; color: #5A6782; margin-top: 2px">Ateliér Prezentační schopnosti</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: flex-start">
+              <div style="flex: none; width: 40px; height: 40px; border-radius: 12px; background: #EEF1F7; color: #3A4560; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; line-height: 1.1">PO<span style="font-size: 14px; font-weight: 800">26</span></div>
+              <div style="min-width: 0">
+                <div style="font-size: 14px; font-weight: 700">Esej: fraktály v přírodě</div>
+                <div style="font-size: 12px; color: #5A6782; margin-top: 2px">Komplexní čísla a fraktály</div>
+              </div>
+            </div>
+          </section>
+
+          <section aria-label="Probíhající hlasování" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; align-items: center">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em">Hlasování</h2>
+              <a href="Hlasovani.dc.html" style="margin-left: auto; font-size: 13px; font-weight: 700; text-decoration: none">Vše</a>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <div style="font-size: 14px; font-weight: 700">Nože na expedici</div>
+                <span style="margin-left: auto; font-size: 11px; font-weight: 700; color: #8A5300; background: #FDF1DC; padding: 3px 8px; border-radius: 999px">za 2 dny</span>
+              </div>
+              <div style="height: 6px; background: #EEF1F7; border-radius: 3px"><div style="width: 64%; height: 6px; background: #3B6FE0; border-radius: 3px"></div></div>
+              <div style="font-size: 12px; color: #5A6782">Hlasovalo 64 % · ty zatím ne</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <div style="font-size: 14px; font-weight: 700">Páteční ateliéry od 10:00</div>
+                <span style="margin-left: auto; font-size: 11px; font-weight: 700; color: #3A4560; background: #EEF1F7; padding: 3px 8px; border-radius: 999px">za 4 dny</span>
+              </div>
+              <div style="height: 6px; background: #EEF1F7; border-radius: 3px"><div style="width: 41%; height: 6px; background: #3B6FE0; border-radius: 3px"></div></div>
+              <div style="font-size: 12px; color: #5A6782">Hlasovalo 41 % · ty zatím ne</div>
+            </div>
+            <a href="Hlasovani.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 12px; background: #3B6FE0; color: #FFFFFF; font-weight: 700; font-size: 14px; text-decoration: none">Jít hlasovat</a>
+          </section>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

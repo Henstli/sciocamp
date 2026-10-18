@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>ScioCamp – Moje třídy (učitel)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6FB}
+a{color:#1F4FB8}a:hover{color:#163C8F}
+</style>
+</helmet>
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #111A33; background: #F4F6FB; min-height: 100vh; display: flex; flex-wrap: wrap">
+  <div style="flex: 1 1 248px; background: #FFFFFF; border-right: 1px solid #E3E8F2">
+    <dc-import name="Sidebar" active="vyuka" role="ucitel" hint-size="100%,960px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div style="flex: 1 1 260px; min-width: 0">
+          <div style="font-size: 13px; color: #5A6782; font-weight: 600">Úterý 20. října · pohled učitele</div>
+          <h1 style="margin: 4px 0 0; font-size: 30px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em">Moje třídy</h1>
+        </div>
+        <button onClick="{{openForm}}" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          Nový úkol
+        </button>
+        <button style="min-height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #C9D8FA; background: #FFFFFF; color: #1F4FB8; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Oznámení třídě</button>
+      </header>
+
+      <sc-if value="{{showForm}}" hint-placeholder-val="{{false}}">
+        <section aria-label="Nový úkol" style="background: #FFFFFF; border: 2px solid #3B6FE0; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; align-items: center">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 800">Nový úkol</h2>
+            <button aria-label="Zavřít" onClick="{{closeForm}}" style="margin-left: auto; width: 40px; height: 40px; border-radius: 10px; border: 0; background: #F4F6FB; color: #3A4560; display: flex; align-items: center; justify-content: center; cursor: pointer">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+            </button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1">
+              <label for="u-title" style="font-size: 14px; font-weight: 700">Název</label>
+              <input id="u-title" type="text" placeholder="Např. Rozbor úvodní scény" style="height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid #D5DCEA; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <label for="u-class" style="font-size: 14px; font-weight: 700">Třída</label>
+              <select id="u-class" style="height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #D5DCEA; background: #FFFFFF; font: inherit; font-size: 14px; color: #111A33">
+                <option>Literatura ve filmu</option>
+                <option>Sedm hříchů paměti</option>
+                <option>Umím se učit</option>
+              </select>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <label for="u-type" style="font-size: 14px; font-weight: 700">Typ</label>
+              <select id="u-type" style="height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #D5DCEA; background: #FFFFFF; font: inherit; font-size: 14px; color: #111A33">
+                <option>Individuální</option>
+                <option>Týmový (s týmovým chatem)</option>
+                <option>Kvíz</option>
+                <option>Jen materiál</option>
+              </select>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <label for="u-due" style="font-size: 14px; font-weight: 700">Termín</label>
+              <input id="u-due" type="datetime-local" style="height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid #D5DCEA; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <label for="u-pts" style="font-size: 14px; font-weight: 700">Body</label>
+              <input id="u-pts" type="number" placeholder="100" style="height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid #D5DCEA; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; grid-column: 1 / -1">
+              <label for="u-desc" style="font-size: 14px; font-weight: 700">Zadání</label>
+              <textarea id="u-desc" rows="4" placeholder="Co mají studenti udělat a jak se to bude hodnotit" style="padding: 12px 14px; border-radius: 12px; border: 1px solid #D5DCEA; font: inherit; font-size: 14px; line-height: 1.5; color: #111A33; resize: vertical"></textarea>
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <button style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px dashed #A9BEEB; background: #F5F8FF; color: #1F4FB8; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer">Nahrát soubor</button>
+            <button style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px dashed #A9BEEB; background: #F5F8FF; color: #1F4FB8; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer">Z Google Disku</button>
+            <button style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px dashed #A9BEEB; background: #F5F8FF; color: #1F4FB8; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer">Odkaz nebo video</button>
+            <button style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px dashed #A9BEEB; background: #F5F8FF; color: #1F4FB8; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer">Rubrika hodnocení</button>
+          </div>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #3A4560; font-weight: 600; min-height: 44px">
+            <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #3B6FE0; margin: 0">
+            Přidat termín studentům do Google Kalendáře
+          </label>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <button onClick="{{closeForm}}" style="min-height: 46px; padding: 0 22px; border-radius: 12px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer">Zadat úkol</button>
+            <button onClick="{{closeForm}}" style="min-height: 46px; padding: 0 18px; border-radius: 12px; border: 1px solid #D5DCEA; background: #FFFFFF; color: #3A4560; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Uložit jako koncept</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px">
+        <sc-for list="{{classes}}" as="c" hint-placeholder-count="3">
+          <article style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px">
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: #5A6782">{{c.kind}} · {{c.when}}</div>
+              <h2 style="margin: 4px 0 0; font-size: 18px; font-weight: 800">{{c.title}}</h2>
+            </div>
+            <div style="display: flex; gap: 16px; font-size: 13px; font-weight: 600; color: #3A4560">
+              <span>{{c.students}} studentů</span>
+              <span style="{{c.gradeStyle}}">{{c.toGrade}} k opravení</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: auto">
+              <a href="Trida.dc.html" style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 12px; border: 1px solid #E3E8F2; color: #3A4560; font-size: 14px; font-weight: 700; text-decoration: none">Otevřít</a>
+              <a href="#" style="{{c.meetStyle}}">{{c.meetLabel}}</a>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+
+      <section aria-label="K opravení" style="background: #FFFFFF; border: 1px solid #E3E8F2; border-radius: 18px; overflow: hidden">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #EEF1F7">
+          <div style="flex: 1 1 260px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 800">K opravení: Recenze filmové adaptace</h2>
+            <div style="font-size: 13px; color: #5A6782; margin-top: 4px">Literatura ve filmu · termín byl 16. 10. · max. 20 bodů</div>
+          </div>
+          <div style="display: flex; gap: 8px; font-size: 12px; font-weight: 700">
+            <span style="padding: 5px 10px; border-radius: 999px; background: #E3F4EC; color: #17704A">{{stats.graded}} hodnoceno</span>
+            <span style="padding: 5px 10px; border-radius: 999px; background: #E8EFFD; color: #1F4FB8">{{stats.waiting}} čeká</span>
+            <span style="padding: 5px 10px; border-radius: 999px; background: #FBE7E7; color: #A82E2E">{{stats.missing}} chybí</span>
+          </div>
+        </div>
+        <sc-for list="{{subs}}" as="s" hint-placeholder-count="6">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 20px; border-bottom: 1px solid #EEF1F7">
+            <div style="flex: none; width: 36px; height: 36px; border-radius: 18px; background: #DCE7FF; color: #1F4FB8; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px">{{s.ini}}</div>
+            <div style="flex: 1 1 200px; min-width: 0">
+              <div style="font-size: 14px; font-weight: 700">{{s.name}}</div>
+              <div style="font-size: 12px; color: #5A6782; margin-top: 2px">{{s.meta}}</div>
+            </div>
+            <span style="{{s.chipStyle}}">{{s.status}}</span>
+            <sc-if value="{{s.canGrade}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <input type="number" aria-label="{{s.aria}}" placeholder="–" value="{{s.points}}" onChange="{{s.onPoints}}" style="width: 72px; height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid #D5DCEA; font: inherit; font-size: 14px; color: #111A33; box-sizing: border-box">
+                <span style="font-size: 13px; color: #5A6782">/ 20</span>
+                <button onClick="{{s.ret}}" style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: #3B6FE0; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer">Vrátit</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{s.isGraded}}" hint-placeholder-val="{{false}}">
+              <div style="font-size: 14px; font-weight: 800; min-width: 120px; text-align: right">{{s.points}} / 20</div>
+            </sc-if>
+            <sc-if value="{{s.isMissing}}" hint-placeholder-val="{{false}}">
+              <button style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #D5DCEA; background: #FFFFFF; color: #3A4560; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer">Připomenout</button>
+            </sc-if>
+          </div>
+        </sc-for>
+      </section>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { showForm: false, points: { tk: '17' }, returned: { ek: true } };
+  }
+  renderVals() {
+    const classes = [
+      { title: 'Literatura ve filmu', kind: 'Kurz', when: 'Út 11:30–12:30', students: 11, toGrade: 4, live: true },
+      { title: 'Sedm hříchů paměti', kind: 'Ateliér', when: 'Po 9:00–11:30', students: 7, toGrade: 2, live: false },
+      { title: 'Umím se učit', kind: 'Kurz', when: 'St 9:00–10:00', students: 14, toGrade: 0, live: false }
+    ].map((c) => Object.assign({}, c, {
+      gradeStyle: c.toGrade > 0 ? 'color:#8A5300;' : 'color:#17704A;',
+      meetLabel: c.live ? 'Zahájit Meet' : 'Meet',
+      meetStyle: 'display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;' + (c.live ? 'background:#3B6FE0;color:#FFFFFF;' : 'background:#E8EFFD;color:#1F4FB8;')
+    }));
+    const raw = [
+      { id: 'sl', name: 'Šimon Samuel Liška', meta: 'Neodevzdáno', st: 'missing' },
+      { id: 'ek', name: 'Eliot Komárek', meta: 'Odevzdáno 15. 10. · Google Dokument', st: 'sub', pts: '18' },
+      { id: 'tk', name: 'Tereza Kolářová', meta: 'Odevzdáno 16. 10. · PDF', st: 'sub' },
+      { id: 'jc', name: 'Jáchym Černý', meta: 'Odevzdáno 16. 10. · Google Dokument', st: 'sub' },
+      { id: 'sj', name: 'Standa Jaukner', meta: 'Odevzdáno pozdě 17. 10. · PDF', st: 'late' },
+      { id: 'pn', name: 'Petra Novotná', meta: 'Odevzdáno 14. 10. · Google Dokument', st: 'sub' }
+    ];
+    const chip = 'flex:none;font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;';
+    const pts = this.state.points;
+    const ret = this.state.returned;
+    let graded = 0, waiting = 0, missing = 0;
+    const subs = raw.map((s) => {
+      const isMissing = s.st === 'missing';
+      const isGraded = !isMissing && !!ret[s.id];
+      const canGrade = !isMissing && !isGraded;
+      if (isMissing) missing++; else if (isGraded) graded++; else waiting++;
+      let status = 'Odevzdáno', cs = chip + 'background:#E8EFFD;color:#1F4FB8;';
+      if (isMissing) { status = 'Chybí'; cs = chip + 'background:#FBE7E7;color:#A82E2E;'; }
+      else if (isGraded) { status = 'Vráceno'; cs = chip + 'background:#E3F4EC;color:#17704A;'; }
+      else if (s.st === 'late') { status = 'Pozdě'; cs = chip + 'background:#FDF1DC;color:#8A5300;'; }
+      return {
+        name: s.name, meta: s.meta, ini: s.name.split(' ').map((p) => p[0]).slice(0, 2).join(''),
+        status: status, chipStyle: cs, canGrade: canGrade, isGraded: isGraded, isMissing: isMissing,
+        points: pts[s.id] !== undefined ? pts[s.id] : (s.pts || ''),
+        aria: 'Body pro ' + s.name,
+        onPoints: (e) => { const n = Object.assign({}, this.state.points); n[s.id] = e.target.value; this.setState({ points: n }); },
+        ret: () => { const n = Object.assign({}, this.state.returned); n[s.id] = true; this.setState({ returned: n }); }
+      };
+    });
+    return {
+      showForm: this.state.showForm,
+      openForm: () => this.setState({ showForm: true }),
+      closeForm: () => this.setState({ showForm: false }),
+      classes: classes, subs: subs,
+      stats: { graded: graded, waiting: waiting, missing: missing }
+    };
+  }
+}
+</script>
+</body>
+</html>
