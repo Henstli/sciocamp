@@ -21,7 +21,8 @@
 ## Rozhodnutí
 
 - Role: student, učitel, admin. Úkoly a kurzy zadává učitel i admin. Účty zakládá admin (žádná veřejná registrace).
-- Přihlášení přes školní Google účet (škola používá Google Workspace).
+- Přihlášení primárně přes Google, ale jen účty s doménou `@scioskola.cz` (školní Google Workspace); jiné domény odmítnout (ověřovat na serveru, ne jen parametrem `hd`).
+- Záloha: přihlášení stejným školním e-mailem a vlastním heslem do aplikace (Supabase e-mail + heslo). Heslo si uživatel nastaví sám přes odkaz z pozvánky a přes „Zapomenuté heslo?“ si ho obnoví e-mailem.
 - Každý předmět, ateliér a událost v rozvrhu má odkaz na Google Meet (vytvářený přes Google Calendar API, přístup pro školní doménu). Vlastní kalendář aplikace, Google Kalendář jen jako volitelná synchronizace.
 - Kurzy a ateliéry mají funkce jako Google Classroom: nástěnka, úkoly a materiály podle témat, odevzdávání souborů a Google dokumentů, soukromé komentáře s vyučujícím, týmové úkoly s týmovým chatem, chat třídy, hodnocení s body, kvízy.
 - Stack: Next.js (App Router) + TypeScript, Supabase (Postgres, auth, realtime, storage), hosting Vercel.

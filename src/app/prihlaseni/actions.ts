@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { endSession, startSession } from "@/lib/auth";
 import { getUserByEmail, getUserById, listDemoAccounts } from "@/lib/data";
 
+/** Přihlásit se smí jen školní účty (Google i e-mail + heslo). */
+const SCHOOL_DOMAIN = "scioskola.cz";
+
 export type LoginState = { error?: string; email?: string };
 
 /** Ukázkový režim: přihlášení jedním z ukázkových účtů (náhrada za Google, dokud není OAuth). */
@@ -24,6 +27,9 @@ export async function loginWithEmail(_prev: LoginState, formData: FormData): Pro
   const email = String(formData.get("email") ?? "").trim();
   const remember = formData.get("remember") === "on";
   if (!email) return { error: "Vyplň školní e-mail." };
+  if (!email.toLowerCase().endsWith(`@${SCHOOL_DOMAIN}`)) {
+    return { error: `Přihlásit se dá jen školním e-mailem @${SCHOOL_DOMAIN}.`, email };
+  }
   const user = await getUserByEmail(email);
   if (!user) return { error: "Tenhle e-mail ve škole nemáme. Účty zakládá správce školy.", email };
   if (!user.active) return { error: "Účet ještě není aktivní. Přijmi pozvánku z e-mailu.", email };

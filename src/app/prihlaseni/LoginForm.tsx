@@ -79,7 +79,7 @@ export function LoginForm({ demoAccounts }: { demoAccounts: DemoAccount[] }) {
           </div>
           <input id="heslo" name="password" type="password" autoComplete="current-password" placeholder="••••••••" className="input" />
           {showReset && (
-            <p className={styles.hint}>Heslo ke školnímu účtu spravuje Google Workspace. Obnovit ti ho může správce školy.</p>
+            <p className={styles.hint}>Odkaz na nastavení nového hesla ti pošleme na školní e-mail. V ukázkovém režimu zatím nefunguje.</p>
           )}
         </div>
         <label className={styles.remember}>
