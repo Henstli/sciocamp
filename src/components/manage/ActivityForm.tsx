@@ -89,7 +89,8 @@ export function ActivityForm({
   const [pickedTerm, setTermId] = useState(initial.termId);
   // Po přepnutí ateliér ↔ expedice neplatí termín druhého druhu.
   const termId = kindTerms.some((t) => t.id === pickedTerm) ? pickedTerm : "";
-  const allowCustomDates = canPickTeacher || (!initial.termId && !!initial.startsOn);
+  // Ateliér / expedice se vybírá jen z termínů; vlastní data zůstanou jen u starších záznamů.
+  const allowCustomDates = !initial.termId && !!initial.startsOn;
 
   const setSlot = (i: number, patch: Partial<(typeof slots)[number]>) =>
     setSlots((all) => all.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -172,7 +173,7 @@ export function ActivityForm({
             >
               <select name="termId" value={termId} onChange={(e) => setTermId(e.target.value)} className={styles.input}>
                 <option value="">
-                  {allowCustomDates ? "Jiný termín (zadat data)" : "Vyber termín…"}
+                  {allowCustomDates ? "Původní vlastní data" : "Vyber termín…"}
                 </option>
                 {kindTerms.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -212,20 +213,23 @@ export function ActivityForm({
               <Field label={kind === "ostatni" ? "Do (nepovinné)" : "Do"} error={fe.endsOn}>
                 <DateInput key={`do${dates.version}`} name="endsOn" defaultValue={dates.to} ariaLabel="Konec" />
               </Field>
-              {kind === "ostatni" && (
-                <div className={styles.wholeYear}>
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={() => setDates((d) => ({ ...schoolYear, version: d.version + 1 }))}
-                  >
-                    Celý školní rok ({formatDateRangeWithYear(schoolYear.from, schoolYear.to)})
-                  </button>
-                </div>
-              )}
             </>
           )}
         </div>
+        {kind === "ostatni" && (
+          <div className={styles.quickRow}>
+            <span className={styles.quickLabel}>Rychle:</span>
+            <button
+              type="button"
+              className={styles.quickChip}
+              title={`Nastaví ${formatDateRangeWithYear(schoolYear.from, schoolYear.to)}`}
+              onClick={() => setDates((d) => ({ ...schoolYear, version: d.version + 1 }))}
+            >
+              <Icon name="calendar" size={14} />
+              Celý školní rok
+            </button>
+          </div>
+        )}
         <span className={styles.hint}>
           {(kind === "atelier" || kind === "expedice") && kindTerms.length === 0
             ? "Admin zatím nezadal termíny (Správa → Kurzová období → Termíny ateliérů a expedic), proto vyplň data ručně. "
