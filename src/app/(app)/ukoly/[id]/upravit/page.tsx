@@ -9,8 +9,6 @@ import { requireTeacher } from "@/lib/auth";
 import { getActivity, teachesActivity } from "@/lib/data";
 import { assignmentFiles, assignmentsForActivity, getAssignment } from "@/lib/data-assignments";
 import { isSupabase } from "@/lib/config";
-import { teamOptions } from "@/lib/team-options";
-import { teamsForAssignment } from "@/lib/data-teams";
 import { isoToPragueLocal } from "@/lib/time";
 import styles from "../../ukol.module.css";
 
@@ -23,8 +21,6 @@ export default async function EditAssignmentPage({ params }: PageProps<"/ukoly/[
   const activity = a ? await getActivity(a.activityId) : null;
   if (!a || !activity || !teachesActivity(user, activity)) notFound();
   const topics = [...new Set((await assignmentsForActivity(activity)).map((x) => x.topic).filter((t): t is string => !!t))];
-  const { classStudents, presets } = await teamOptions([activity], a.id);
-  const teams = a.teamWork ? await teamsForAssignment(a.id) : [];
 
   return (
     <>
@@ -36,8 +32,6 @@ export default async function EditAssignmentPage({ params }: PageProps<"/ukoly/[
       <AssignmentForm
         live={isSupabase}
         files={await assignmentFiles(a.id)}
-        classStudents={classStudents}
-        teamPresets={presets}
         classes={[{ id: activity.id, title: activity.title }]}
         topics={{ [activity.id]: topics }}
         initial={{
@@ -50,9 +44,6 @@ export default async function EditAssignmentPage({ params }: PageProps<"/ukoly/[
           due: a.dueAt ? isoToPragueLocal(a.dueAt) : "",
           maxPoints: a.maxPoints ? String(a.maxPoints) : "",
           teamWork: !!a.teamWork,
-          teamMode: a.teamMode ?? "teacher",
-          teamMaxSize: a.teamMaxSize ? String(a.teamMaxSize) : "",
-          teams: teams.map((t) => ({ id: isSupabase ? t.id : undefined, name: t.name, memberIds: t.memberIds })),
           links: a.links.map((l) => `${l.title} | ${l.url}`).join("\n"),
         }}
       />

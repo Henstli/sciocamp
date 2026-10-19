@@ -49,10 +49,7 @@ export function ClassChat({
   canModerate,
   kind = "class",
   label = "Chat třídy",
-  title,
 }: {
-  /** Viditelný nadpis nad zprávami (např. u týmového chatu v úkolu) */
-  title?: string;
   initial: ChatLine[];
   me: Person;
   people: Record<string, Person>;
@@ -166,7 +163,6 @@ export function ClassChat({
 
   return (
     <section aria-label={label} className={`card ${styles.chat}`}>
-      {title && <h2 className={styles.chatTitle}>{title}</h2>}
       <div className={styles.chatList} ref={list} aria-live="polite">
         {messages.length === 0 && <div className={styles.meta}>Zatím tu nikdo nic nenapsal. Začni ty!</div>}
         {messages.map((m) => {

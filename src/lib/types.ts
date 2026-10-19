@@ -124,10 +124,6 @@ export type Assignment = {
   createdAt: string;
   /** Týmový úkol: tým odevzdává společnou práci, hodnocení dostane celý tým. */
   teamWork?: boolean;
-  /** Kdo rozděluje týmy: vyučující, nebo studenti sami */
-  teamMode?: "teacher" | "students";
-  /** Max. velikost týmu, když se studenti rozdělují sami */
-  teamMaxSize?: number | null;
 };
 
 export type SubmissionFile = { path: string; name: string; size: number | null; url?: string };
@@ -146,8 +142,6 @@ export type Review = {
   feedback: string | null;
   request: string | null;
   reviewedAt: string;
-  /** U týmového úkolu: hodnocení jen tohoto člena (ne celého týmu) */
-  individual?: boolean;
 };
 
 export type Work = { submission: Submission | null; review: Review | null };

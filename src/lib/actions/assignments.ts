@@ -25,60 +25,6 @@ export type FormState = {
 // Vyučující: zadání úkolů a materiálů
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Týmy úkolu (rozděluje vyučující)
-// ---------------------------------------------------------------------------
-
-type TeamDraft = { id?: string; name: string; memberIds: string[] };
-
-/** Zkontroluje týmy z formuláře: názvy, jen zapsaní studenti, každý nejvýš v jednom týmu. */
-function cleanTeams(drafts: TeamDraft[], enrolled: string[]): { list: TeamDraft[] } | { error: string } {
-  const list = drafts
-    .slice(0, 40)
-    .map((t) => ({
-      id: typeof t.id === "string" && /^[0-9a-f-]{36}$/i.test(t.id) ? t.id : undefined,
-      name: String(t.name ?? "").trim().slice(0, 80),
-      memberIds: [...new Set((t.memberIds ?? []).map(String))],
-    }))
-    .filter((t) => t.name || t.memberIds.length);
-  if (list.some((t) => !t.name)) return { error: "Každý tým potřebuje název." };
-  const seen = new Set<string>();
-  for (const t of list) {
-    for (const id of t.memberIds) {
-      if (!enrolled.includes(id)) return { error: "V týmu je někdo, kdo není ve třídě zapsaný." };
-      if (seen.has(id)) return { error: "Student může být jen v jednom týmu." };
-      seen.add(id);
-    }
-  }
-  return { list };
-}
-
-/** Uloží týmy úkolu tak, jak je vyučující poskládal (smazané zmizí, nové přibudou). */
-async function syncTeams(assignmentId: string, teams: TeamDraft[]): Promise<string | null> {
-  const sb = await createClient();
-  const { data: existing } = await sb.from("teams").select("id").eq("assignment_id", assignmentId);
-  const keep = new Set(teams.map((t) => t.id).filter(Boolean));
-  const remove = (existing ?? []).map((t) => t.id).filter((id) => !keep.has(id));
-  if (remove.length && (await sb.from("teams").delete().in("id", remove)).error) return "Týmy se nepodařilo uložit.";
-  // Členství nejdřív smazat, aby šlo studenty přesouvat mezi týmy.
-  if ((await sb.from("team_members").delete().eq("assignment_id", assignmentId)).error) return "Týmy se nepodařilo uložit.";
-  for (const t of teams) {
-    let id = t.id && (existing ?? []).some((e) => e.id === t.id) ? t.id : undefined;
-    if (id) {
-      if ((await sb.from("teams").update({ name: t.name }).eq("id", id)).error) return "Týmy se nepodařilo uložit.";
-    } else {
-      const { data, error } = await sb.from("teams").insert({ assignment_id: assignmentId, name: t.name }).select("id").single();
-      if (error || !data) return "Týmy se nepodařilo uložit.";
-      id = data.id;
-    }
-    if (t.memberIds.length) {
-      const { error } = await sb.from("team_members").insert(t.memberIds.map((sid) => ({ team_id: id, student_id: sid })));
-      if (error) return "Členy týmu se nepodařilo uložit.";
-    }
-  }
-  return null;
-}
-
 export async function saveAssignment(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireTeacher();
   const editingId = String(formData.get("id") ?? "") || null;
@@ -106,36 +52,6 @@ export async function saveAssignment(_prev: FormState, formData: FormData): Prom
       if (!Number.isInteger(maxPoints) || maxPoints < 1 || maxPoints > 1000) fieldErrors.maxPoints = "Body musí být celé číslo 1–1000.";
     }
   }
-  const teamWork = kind === "ukol" && formData.get("teamWork") === "1";
-  const teamMode = formData.get("teamMode") === "students" ? "students" : "teacher";
-  const sizeRaw = String(formData.get("teamMaxSize") ?? "").trim();
-  let teamMaxSize: number | null = null;
-  if (teamWork && teamMode === "students" && sizeRaw) {
-    teamMaxSize = Number(sizeRaw);
-    if (!Number.isInteger(teamMaxSize) || teamMaxSize < 2 || teamMaxSize > 20) fieldErrors.teamMaxSize = "Velikost týmu 2–20.";
-  }
-  let teamDrafts: TeamDraft[] | null = null;
-  if (teamWork && teamMode === "teacher") {
-    try {
-      teamDrafts = JSON.parse(String(formData.get("teams") ?? "[]")) as TeamDraft[];
-      if (!Array.isArray(teamDrafts)) throw new Error();
-    } catch {
-      fieldErrors.teams = "Týmy se nepodařilo přečíst.";
-    }
-  }
-  const values = {
-    kind,
-    title,
-    instructions,
-    topic,
-    due_at: dueAt,
-    max_points: maxPoints,
-    links,
-    team_work: teamWork,
-    team_mode: teamMode,
-    team_max_size: teamMaxSize,
-  };
-
   if (Object.keys(fieldErrors).length) return { error: "Zkontroluj zvýrazněná pole.", fieldErrors };
 
   // Oprávnění: vyučující dané třídy nebo admin.
@@ -144,29 +60,20 @@ export async function saveAssignment(_prev: FormState, formData: FormData): Prom
   const activity = await getActivity(slug);
   if ((editingId && !existing) || !activity || !teachesActivity(user, activity)) return { error: "Do téhle třídy úkoly zadávat nemůžeš." };
 
-  const teams = teamDrafts ? cleanTeams(teamDrafts, activity.studentIds) : null;
-  if (teams && "error" in teams) return { error: teams.error, fieldErrors: { teams: teams.error } };
-
   if (!isSupabase) return { info: DEMO };
 
   const sb = await createClient();
+  const teamWork = kind === "ukol" && formData.get("teamWork") === "1";
+  const values = { kind, title, instructions, topic, due_at: dueAt, max_points: maxPoints, links, team_work: teamWork };
   if (editingId) {
     const { error } = await sb.from("assignments").update(values).eq("id", editingId);
     if (error) return { error: `Úkol se nepodařilo uložit: ${error.message}` };
-    if (teams) {
-      const problem = await syncTeams(editingId, teams.list);
-      if (problem) return { error: problem };
-    }
     redirect(`/ukoly/${editingId}?ulozeno=1`);
   }
   const { data: row } = await sb.from("activities").select("id").eq("slug", slug).single();
   if (!row) return { error: "Třída nenalezena." };
   const { data, error } = await sb.from("assignments").insert({ ...values, activity_id: row.id }).select("id").single();
   if (error || !data) return { error: `Úkol se nepodařilo zadat: ${error?.message ?? ""}` };
-  if (teams) {
-    const problem = await syncTeams(data.id, teams.list);
-    if (problem) return { error: `Úkol je zadaný, ale ${problem.charAt(0).toLowerCase()}${problem.slice(1)}` };
-  }
   if (formData.get("withFiles") === "1") return { createdId: data.id };
   redirect(`/ukoly/${data.id}?nove=1`);
 }
@@ -195,8 +102,6 @@ export async function reviewWork(_prev: FormState, formData: FormData): Promise<
   const pointsRaw = String(formData.get("points") ?? "").trim();
   const feedback = String(formData.get("feedback") ?? "").trim() || null;
   const request = String(formData.get("request") ?? "").trim() || null;
-  // Týmový úkol: hodnotit celý tým, nebo jen tohoto studenta.
-  const individual = formData.get("scope") === "individual";
 
   const a = await getAssignment(assignmentId);
   const activity = a ? await getActivity(a.activityId) : null;
@@ -224,8 +129,6 @@ export async function reviewWork(_prev: FormState, formData: FormData): Promise<
     feedback,
     request: result === "vraceno" ? request : null,
     reviewed_by: user.id,
-    reviewed_at: new Date().toISOString(),
-    individual: !!a.teamWork && individual,
   });
   if (error) return { error: `Hodnocení se nepodařilo uložit: ${error.message}` };
   refresh();

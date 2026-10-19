@@ -1,23 +1,15 @@
-// Týmy u týmových úkolů a týmový chat. Naostro z databáze (RLS), jinak ukázková data.
+// Týmy ve třídách a týmový chat. Naostro z databáze (RLS), jinak ukázková data.
 
 import "server-only";
 import { cache } from "react";
 import { isSupabase } from "./config";
-import { assignmentsForActivity } from "./data-assignments";
+import { getClassroom } from "./data";
 import { createClient } from "./supabase/server";
 import type { Activity, ClassMessage, Team } from "./types";
 
 export const TEAM_BUCKET = "tymy";
 
-/** Ukázkové týmy úkolu „Příprava týmové prezentace“. */
-const DEMO_TEAMS: Record<string, Team[]> = {
-  "a-tymova": [
-    { id: "tym-a", name: "Tým A · Klima", memberIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny"] },
-    { id: "tym-b", name: "Tým B · Technologie", memberIds: ["u-jaukner", "u-novotna", "u-kubicek", "u-maly"] },
-    { id: "tym-c", name: "Tým C · Města", memberIds: ["u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-horakova", "u-vesely"] },
-  ],
-};
-
+/** Ukázkový týmový chat (tým A v ateliéru Prezentační schopnosti). */
 const DEMO_TEAM_CHAT: Record<string, ClassMessage[]> = {
   "tym-a": [
     { id: "t1", authorId: "u-komarek", body: "Rozdělíme si to? Já vezmu úvod a data o klimatu.", createdAt: "2026-10-19T15:02:00Z", file: null },
@@ -26,13 +18,13 @@ const DEMO_TEAM_CHAT: Record<string, ClassMessage[]> = {
   ],
 };
 
-async function teamsForAssignmentUncached(assignmentId: string): Promise<Team[]> {
-  if (!isSupabase) return DEMO_TEAMS[assignmentId] ?? [];
+async function teamsForUncached(activity: Activity): Promise<Team[]> {
+  if (!isSupabase || !activity.dbId) return (await getClassroom(activity)).teams;
   const sb = await createClient();
   const { data, error } = await sb
     .from("teams")
     .select("id, name, created_at, team_members(student_id)")
-    .eq("assignment_id", assignmentId)
+    .eq("activity_id", activity.dbId)
     .order("created_at");
   if (error || !data) return [];
   return data.map((t) => ({
@@ -42,21 +34,12 @@ async function teamsForAssignmentUncached(assignmentId: string): Promise<Team[]>
   }));
 }
 
-/** Týmy úkolu (se členy). */
-export const teamsForAssignment = cache(teamsForAssignmentUncached);
+/** Týmy třídy (se členy). */
+export const teamsFor = cache(teamsForUncached);
 
-/**
- * Týmy z dřívějších týmových úkolů třídy — vyučující je může převzít
- * do nového úkolu („stejné týmy jako minule“).
- */
-export async function teamPresets(activity: Activity, exceptAssignmentId?: string) {
-  const tasks = (await assignmentsForActivity(activity)).filter((a) => a.teamWork && a.id !== exceptAssignmentId);
-  const out: { assignmentId: string; title: string; teams: Team[] }[] = [];
-  for (const t of tasks) {
-    const teams = await teamsForAssignment(t.id);
-    if (teams.length) out.push({ assignmentId: t.id, title: t.title, teams });
-  }
-  return out;
+/** Tým studenta ve třídě, nebo null. */
+export async function teamOf(activity: Activity, studentId: string): Promise<Team | null> {
+  return (await teamsFor(activity)).find((t) => t.memberIds.includes(studentId)) ?? null;
 }
 
 /** Zprávy týmového chatu (nejstarší nahoře). */

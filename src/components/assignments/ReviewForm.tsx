@@ -35,31 +35,14 @@ export function ReviewForm({
   const [clearError, setClearError] = useState<string>();
   const fe = state.fieldErrors ?? {};
 
-  const [scope, setScope] = useState<"team" | "individual">(current?.individual ? "individual" : "team");
-
   return (
     <form onSubmit={keepForm(action)} className={styles.reviewForm} noValidate>
       <input type="hidden" name="assignmentId" value={assignmentId} />
       <input type="hidden" name="studentId" value={studentId} />
       {team && (
-        <fieldset className={styles.fieldset}>
-          <legend className={styles.h3}>Koho hodnotíš</legend>
-          <div className={styles.scope}>
-            <label>
-              <input type="radio" name="scope" value="team" checked={scope === "team"} onChange={() => setScope("team")} />
-              Celý {team.name}
-            </label>
-            <label>
-              <input type="radio" name="scope" value="individual" checked={scope === "individual"} onChange={() => setScope("individual")} />
-              Jen {studentName.split(" ")[0]}
-            </label>
-          </div>
-          <span className={styles.small}>
-            {scope === "team"
-              ? `Hodnocení dostanou všichni: ${team.members.join(", ")}. Kdo má individuální hodnocení, tomu zůstane.`
-              : `Jen ${studentName.split(" ")[0]} (např. když v týmu nepracoval). Pozdější hodnocení týmu mu ho nepřepíše.`}
-          </span>
-        </fieldset>
+        <p className={styles.teamNote}>
+          Týmový úkol: hodnocení dostane celý <strong>{team.name}</strong> ({team.members.join(", ")}).
+        </p>
       )}
 
       <fieldset className={styles.fieldset}>
@@ -132,10 +115,10 @@ export function ReviewForm({
           {pending
             ? "Ukládám…"
             : result === "vraceno"
-              ? team && scope === "team"
+              ? team
                 ? `Vrátit týmu ${team.name}`
                 : `Vrátit: ${studentName.split(" ")[0]}`
-              : team && scope === "team"
+              : team
                 ? "Uložit hodnocení týmu"
                 : "Uložit hodnocení"}
         </button>

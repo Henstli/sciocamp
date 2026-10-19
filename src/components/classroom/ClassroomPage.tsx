@@ -6,6 +6,7 @@ import { ClassTabs, type ClassView } from "./ClassTabs";
 import { requireUser } from "@/lib/auth";
 import { canOpenActivity, getActivity, getClassroom, getUsersByIds, listActivities, listStaff, teachesActivity } from "@/lib/data";
 import { classChat, classPosts } from "@/lib/data-communication";
+import { teamChat, teamsFor } from "@/lib/data-teams";
 import { isSupabase } from "@/lib/config";
 import type { Person } from "./people";
 import { plural } from "@/lib/format";
@@ -26,7 +27,10 @@ export async function ClassroomPage({
   kinds,
   back,
   tab,
+  team: teamParam,
 }: {
+  /** Vybraný tým v záložce Tým (pro vyučující) */
+  team?: string;
   id: string;
   kinds: ActivityKind[];
   back: { href: string; label: string };
@@ -41,7 +45,13 @@ export async function ClassroomPage({
 
   const now = pragueNow();
   const stamp = new Date();
-  const [content, posts, chat, staff] = await Promise.all([getClassroom(activity), classPosts(activity), classChat(activity), listStaff()]);
+  const [content, posts, chat, staff, teams] = await Promise.all([
+    getClassroom(activity),
+    classPosts(activity),
+    classChat(activity),
+    listStaff(),
+    teamsFor(activity),
+  ]);
   const [teacher] = await getUsersByIds([activity.teacherId]);
   const students = await getUsersByIds(activity.studentIds);
   const person = (u: User | undefined): Person =>
@@ -85,6 +95,22 @@ export async function ClassroomPage({
     .sort((x, y) => y.at.localeCompare(x.at))
     .map((x) => x.item);
 
+  // Záložka Tým: student vidí chat svého týmu, vyučující si tým vybere.
+  async function teamTab(): Promise<ClassView["teamTab"]> {
+    const mine = teams.find((t) => t.memberIds.includes(user.id));
+    const chosen = isTeacher ? (teams.find((t) => t.id === teamParam) ?? teams[0]) : mine;
+    if (!chosen) return null;
+    const lines = await teamChat(chosen.id);
+    return {
+      id: chosen.id,
+      name: chosen.name,
+      members: chosen.memberIds.map((m) => byId(m)),
+      chat: lines.map((m) => ({ ...m, when: formatStamp(m.createdAt, stamp) })),
+      choices: isTeacher ? teams.map((t) => ({ id: t.id, name: t.name })) : [],
+      dbId: isSupabase ? chosen.id : undefined,
+    };
+  }
+
   const view: ClassView = {
     me: person(user),
     teacher: person(teacher),
@@ -92,7 +118,12 @@ export async function ClassroomPage({
     stream,
     canManage: isTeacher,
     work: { topics: work.topics, newHref: isTeacher ? `/ukoly/novy?trida=${activity.id}` : null },
-
+    teams: teams.map((t) => ({
+      id: t.id,
+      name: t.name,
+      members: t.memberIds.map((m) => byId(m).name.split(" ")[0]).join(", "),
+    })),
+    teamTab: await teamTab(),
     students: students.map(person),
     chat: chat.map((m) => ({ ...m, when: formatStamp(m.createdAt, stamp) })),
     people,

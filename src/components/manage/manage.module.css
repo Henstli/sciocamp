@@ -344,22 +344,3 @@ label.row:hover,
   flex: 1;
   min-width: 0;
 }
-.teamsField {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.modes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
-  gap: 10px;
-}
-.teamPanel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid var(--atelier-bg);
-  background: #faf9ff;
-}
