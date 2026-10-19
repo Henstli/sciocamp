@@ -61,11 +61,21 @@
   flex: 1 1 260px;
   min-width: 0;
   padding-bottom: 4px;
+  /* Jméno začíná pod modrým pruhem (překrývá ho jen avatar), aby háčky a čárky
+     velkých písmen (Š, Č, Ž) nezasahovaly do pruhu. */
+  align-self: flex-start;
+  padding-top: 58px;
+}
+@media (max-width: 560px) {
+  .idText {
+    padding-top: 0;
+  }
 }
 .name {
   font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 .sub {
   font-size: 14px;
