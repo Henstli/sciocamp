@@ -42,7 +42,7 @@ export function ClassCard({
                 {activity.location}
               </div>
             )}
-            {activity.period && (
+            {activity.period && (activity.kind === "kurz" || activity.kind === "atelier") && (
               <div className={styles.line}>
                 <Icon name="clock" size={16} />
                 {activity.period.name}

@@ -176,7 +176,10 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
   // Období vybírá jen kurz. Ateliér, expedice a událost ho mají podle data
   // (u termínu ho doplní databáze); bez dat si ponechají dosavadní.
   const allPeriods = await listPeriods();
-  if (values.kind !== "kurz" && !values.term_id) {
+  // Události a expedice do kurzového období nepatří vůbec.
+  if (values.kind === "ostatni" || values.kind === "expedice") {
+    values.block_id = null;
+  } else if (values.kind === "atelier" && !values.term_id) {
     const day = values.starts_on;
     values.block_id = day ? (allPeriods.find((p) => p.startsOn <= day && day <= p.endsOn)?.id ?? null) : values.block_id;
   }

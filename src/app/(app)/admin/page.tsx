@@ -150,7 +150,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             kindKey: a.kind,
             title: a.title,
             lector: nameOf(a.teacherId),
-            when: [a.period?.name, describeWhen(a)].filter(Boolean).join(" · "),
+            when: [a.kind === "kurz" || a.kind === "atelier" ? a.period?.name : null, describeWhen(a)].filter(Boolean).join(" · "),
             taken: a.studentIds.length,
             cap: a.capacity ?? null,
             meetUrl: a.meetUrl,
