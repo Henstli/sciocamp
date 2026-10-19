@@ -43,6 +43,7 @@ export default async function EditAssignmentPage({ params }: PageProps<"/ukoly/[
           topic: a.topic ?? "",
           due: a.dueAt ? isoToPragueLocal(a.dueAt) : "",
           maxPoints: a.maxPoints ? String(a.maxPoints) : "",
+          teamWork: !!a.teamWork,
           links: a.links.map((l) => `${l.title} | ${l.url}`).join("\n"),
         }}
       />

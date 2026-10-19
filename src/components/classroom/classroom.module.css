@@ -672,3 +672,41 @@ a.attachment:hover {
   border-color: var(--primary-line);
   color: var(--primary-text);
 }
+
+/* Týmy */
+.teamSwitch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.teamPill {
+  padding: 8px 14px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-decoration: none;
+}
+.teamPill[aria-current="true"] {
+  background: var(--atelier);
+  border-color: var(--atelier);
+  color: #fff;
+}
+.teamHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+}
+.teamFaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

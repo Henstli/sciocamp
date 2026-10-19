@@ -22,7 +22,7 @@ export const DEMO_ASSIGNMENTS: DemoAssignment[] = [
     topic: "Téma 2 · Hlas, tělo a tréma", dueAt: "2026-10-21T21:59:00Z", maxPoints: 10, links: [], createdAt: "2026-10-12T08:00:00Z",
   },
   {
-    id: "a-tymova", activityId: "prezentacni-schopnosti", kind: "ukol", title: "Příprava týmové prezentace",
+    id: "a-tymova", activityId: "prezentacni-schopnosti", kind: "ukol", teamWork: true, title: "Příprava týmové prezentace",
     instructions:
       "Připravte v týmu desetiminutovou prezentaci na téma, které jste si vybrali minulou hodinu. Každý člen týmu mluví alespoň dvě minuty.\n\nOdevzdejte prezentaci (Google Prezentace nebo PDF), osnovu s rozdělením rolí a seznam zdrojů.",
     topic: "Téma 2 · Hlas, tělo a tréma", dueAt: "2026-10-22T21:59:00Z", maxPoints: 100,

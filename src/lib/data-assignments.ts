@@ -4,7 +4,7 @@
 import "server-only";
 import { cache } from "react";
 import { isSupabase } from "./config";
-import { getActivity, listActivities } from "./data";
+import { getActivity, isTeacherOf, listActivities } from "./data";
 import { DEMO_ASSIGNMENTS, DEMO_COMMENTS, DEMO_WORK } from "./demo-assignments";
 import { isHandedIn, needsReview, workState } from "./assignments";
 import { canTeach } from "./roles";
@@ -24,11 +24,12 @@ type AssignmentRow = {
   max_points: number | null;
   links: LinkItem[];
   created_at: string;
+  team_work: boolean;
   activities: { slug: string; title: string; kind: Activity["kind"]; teacher_id: string };
 };
 
 const ASSIGNMENT_COLUMNS =
-  "id, kind, title, instructions, topic, due_at, max_points, links, created_at, activities!inner(slug, title, kind, teacher_id)";
+  "id, kind, title, instructions, topic, due_at, max_points, links, created_at, team_work, activity_id, activities!inner(slug, title, kind, teacher_id)";
 
 function toAssignment(r: AssignmentRow): Assignment {
   return {
@@ -44,6 +45,7 @@ function toAssignment(r: AssignmentRow): Assignment {
     maxPoints: r.max_points,
     links: Array.isArray(r.links) ? r.links : [],
     createdAt: r.created_at,
+    teamWork: r.team_work,
   };
 }
 
@@ -85,13 +87,18 @@ async function assignmentsForUserUncached(user: User): Promise<Assignment[]> {
   if (!isSupabase) {
     const activities = await listActivities();
     const mine = new Set(
-      activities.filter((a) => (teaching ? a.teacherId === user.id : a.studentIds.includes(user.id))).map((a) => a.id),
+      activities.filter((a) => (teaching ? isTeacherOf(a, user.id) : a.studentIds.includes(user.id))).map((a) => a.id),
     );
     return (await demoAssignments()).filter((a) => mine.has(a.activityId)).sort(byDue);
   }
   const sb = await createClient();
   let q = sb.from("assignments").select(ASSIGNMENT_COLUMNS);
-  if (teaching) q = q.eq("activities.teacher_id", user.id);
+  if (teaching) {
+    // Hlavní vyučující i spoluvyučující (expedice, sdílené kurzy).
+    const taught = (await listActivities()).filter((a) => isTeacherOf(a, user.id) && a.dbId).map((a) => a.dbId!);
+    if (taught.length === 0) return [];
+    q = q.in("activity_id", taught);
+  }
   const { data, error } = await q;
   if (error) throw new Error(`Nepodařilo se načíst úkoly: ${error.message}`);
   let rows = (data as unknown as AssignmentRow[]).map(toAssignment);
@@ -191,10 +198,16 @@ export async function workMap(assignmentIds: string[], studentIds?: string[]): P
 }
 
 /** Práce jednoho studenta včetně souborů s dočasnými odkazy ke stažení. */
-export async function getWork(assignmentId: string, studentId: string): Promise<Work> {
+/**
+ * Práce studenta včetně souborů. U týmového úkolu (`teamId`) jsou soubory
+ * ve společné složce týmu (plus případně starší ve vlastní složce studenta).
+ */
+export async function getWork(assignmentId: string, studentId: string, teamId?: string | null): Promise<Work> {
   const base = (await workMap([assignmentId], [studentId])).get(`${assignmentId}:${studentId}`) ?? { submission: null, review: null };
   if (!isSupabase) return base;
-  const files = await listFiles(assignmentId, studentId);
+  const files = teamId
+    ? [...(await listFiles(assignmentId, teamId)), ...(await listFiles(assignmentId, studentId))]
+    : await listFiles(assignmentId, studentId);
   if (!base.submission && files.length === 0) return base;
   return {
     review: base.review,
@@ -205,8 +218,8 @@ export async function getWork(assignmentId: string, studentId: string): Promise<
   };
 }
 
-async function listFiles(assignmentId: string, studentId: string): Promise<SubmissionFile[]> {
-  return signedList(SUBMISSION_BUCKET, `${assignmentId}/${studentId}`);
+async function listFiles(assignmentId: string, folder: string): Promise<SubmissionFile[]> {
+  return signedList(SUBMISSION_BUCKET, `${assignmentId}/${folder}`);
 }
 
 /** Soubory, které k úkolu nebo materiálu přiložil vyučující. */

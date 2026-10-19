@@ -63,7 +63,8 @@ export async function saveAssignment(_prev: FormState, formData: FormData): Prom
   if (!isSupabase) return { info: DEMO };
 
   const sb = await createClient();
-  const values = { kind, title, instructions, topic, due_at: dueAt, max_points: maxPoints, links };
+  const teamWork = kind === "ukol" && formData.get("teamWork") === "1";
+  const values = { kind, title, instructions, topic, due_at: dueAt, max_points: maxPoints, links, team_work: teamWork };
   if (editingId) {
     const { error } = await sb.from("assignments").update(values).eq("id", editingId);
     if (error) return { error: `Úkol se nepodařilo uložit: ${error.message}` };

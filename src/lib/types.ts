@@ -91,7 +91,7 @@ export type WorkTopic = {
   }[];
 };
 
-export type Team = { name: string; memberIds: string[] };
+export type Team = { id: string; name: string; memberIds: string[] };
 
 export type ClassroomContent = {
   topics: WorkTopic[];
@@ -122,6 +122,8 @@ export type Assignment = {
   maxPoints: number | null;
   links: LinkItem[];
   createdAt: string;
+  /** Týmový úkol: tým odevzdává společnou práci, hodnocení dostane celý tým. */
+  teamWork?: boolean;
 };
 
 export type SubmissionFile = { path: string; name: string; size: number | null; url?: string };

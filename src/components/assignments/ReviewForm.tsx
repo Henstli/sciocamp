@@ -19,7 +19,10 @@ export function ReviewForm({
   studentName,
   maxPoints,
   current,
+  team = null,
 }: {
+  /** Týmový úkol: hodnocení dostane celý tým */
+  team?: { name: string; members: string[] } | null;
   assignmentId: string;
   studentId: string;
   studentName: string;
@@ -36,6 +39,11 @@ export function ReviewForm({
     <form onSubmit={keepForm(action)} className={styles.reviewForm} noValidate>
       <input type="hidden" name="assignmentId" value={assignmentId} />
       <input type="hidden" name="studentId" value={studentId} />
+      {team && (
+        <p className={styles.teamNote}>
+          Týmový úkol: hodnocení dostane celý <strong>{team.name}</strong> ({team.members.join(", ")}).
+        </p>
+      )}
 
       <fieldset className={styles.fieldset}>
         <legend className={styles.h3}>Hodnocení</legend>
@@ -104,7 +112,15 @@ export function ReviewForm({
 
       <div className={styles.actionsRow}>
         <button type="submit" className="btn btn-primary" disabled={pending}>
-          {pending ? "Ukládám…" : result === "vraceno" ? `Vrátit: ${studentName.split(" ")[0]}` : "Uložit hodnocení"}
+          {pending
+            ? "Ukládám…"
+            : result === "vraceno"
+              ? team
+                ? `Vrátit týmu ${team.name}`
+                : `Vrátit: ${studentName.split(" ")[0]}`
+              : team
+                ? "Uložit hodnocení týmu"
+                : "Uložit hodnocení"}
         </button>
         {current && (
           <button

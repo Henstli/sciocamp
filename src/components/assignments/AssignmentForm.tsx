@@ -25,6 +25,7 @@ export type AssignmentFormValues = {
   maxPoints: string;
   /** Jeden odkaz na řádek, volitelně „Název | https://…“ */
   links: string;
+  teamWork?: boolean;
 };
 
 const KIND_OPTIONS: { value: AssignmentKind; label: string; hint: string }[] = [
@@ -176,6 +177,16 @@ export function AssignmentForm({
             <Field label="Maximum bodů (nepovinné)" error={fe.maxPoints} hint="Bez bodů hodnotíš jen splněno / nesplněno a slovně.">
               <input name="maxPoints" type="number" min={1} max={1000} step={1} defaultValue={initial.maxPoints} className={styles.input} placeholder="Např. 20" />
             </Field>
+            <div className={styles.field} data-wide="true">
+              <label className={styles.check}>
+                <input type="checkbox" name="teamWork" value="1" defaultChecked={initial.teamWork} />
+                Týmový úkol
+              </label>
+              <span className={styles.hint}>
+                Odevzdává celý tým společně a hodnocení dostanou všichni členové. Týmy nastavíš v Moje třídy → třída → Týmy. Kdo
+                v týmu není, odevzdává sám.
+              </span>
+            </div>
           </>
         )}
 

@@ -17,7 +17,11 @@ export function StaffPicker({
   selected,
   onChange,
   exclude,
+  addLabel = "Přidat vyučujícího",
+  dialogLabel = "Vybrat vyučujícího",
 }: {
+  addLabel?: string;
+  dialogLabel?: string;
   name: string;
   staff: Person[];
   selected: string[];
@@ -67,14 +71,14 @@ export function StaffPicker({
           }}
         >
           <Icon name="plus" size={16} />
-          Přidat vyučujícího
+          {addLabel}
         </button>
       </div>
       {open && (
         <div
           className={styles.popover}
           role="dialog"
-          aria-label="Vybrat vyučujícího"
+          aria-label={dialogLabel}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               e.stopPropagation();
@@ -84,7 +88,7 @@ export function StaffPicker({
         >
           <label className={styles.search}>
             <Icon name="search" size={16} />
-            <span className="sr-only">Hledat vyučujícího</span>
+            <span className="sr-only">Hledat jméno</span>
             <input
               autoFocus
               value={query}

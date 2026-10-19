@@ -9,6 +9,6 @@ export async function generateMetadata({ params }: PageProps<"/udalosti/[id]">):
 
 export default async function EventPage({ params, searchParams }: PageProps<"/udalosti/[id]">) {
   const { id } = await params;
-  const { tab } = await searchParams;
-  return <ClassroomPage id={id} kinds={["ostatni"]} back={{ href: "/udalosti", label: "Události" }} tab={typeof tab === "string" ? tab : undefined} />;
+  const { tab, tym } = await searchParams;
+  return <ClassroomPage id={id} kinds={["ostatni"]} back={{ href: "/udalosti", label: "Události" }} tab={typeof tab === "string" ? tab : undefined} team={typeof tym === "string" ? tym : undefined} />;
 }

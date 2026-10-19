@@ -15,7 +15,6 @@ export type ChatLine = { id: string; authorId: string; body: string; createdAt: 
 
 type Row = {
   id: string;
-  activity_id: string;
   author_id: string;
   body: string;
   file_path: string | null;
@@ -24,8 +23,12 @@ type Row = {
   created_at: string;
 };
 
-const BUCKET = "chat";
-const COLUMNS = "id, activity_id, author_id, body, file_path, file_name, file_size, created_at";
+/** Chat třídy, nebo chat jednoho týmu. */
+const KINDS = {
+  class: { table: "class_messages", column: "activity_id", bucket: "chat", placeholder: "Zpráva pro celou třídu…" },
+  team: { table: "team_messages", column: "team_id", bucket: "tymy", placeholder: "Zpráva pro tým…" },
+} as const;
+const COLUMNS = "id, author_id, body, file_path, file_name, file_size, created_at";
 
 const toLine = (r: Row): ChatLine => ({
   id: r.id,
@@ -36,7 +39,7 @@ const toLine = (r: Row): ChatLine => ({
   file: r.file_path ? { path: r.file_path, name: r.file_name ?? "soubor", size: r.file_size } : null,
 });
 
-/** Chat třídy. Naostro se nové zprávy objevují samy (Supabase Realtime). */
+/** Chat třídy nebo týmu. Naostro se nové zprávy objevují samy (Supabase Realtime). */
 export function ClassChat({
   initial,
   me,
@@ -44,12 +47,17 @@ export function ClassChat({
   activityDbId,
   live,
   canModerate,
+  kind = "class",
+  label = "Chat třídy",
 }: {
   initial: ChatLine[];
   me: Person;
   people: Record<string, Person>;
+  /** Id třídy (u chatu třídy) nebo týmu (u týmového chatu) */
   activityDbId?: string;
   live: boolean;
+  kind?: keyof typeof KINDS;
+  label?: string;
   /** Vyučující třídy a admin smí mazat cizí zprávy */
   canModerate: boolean;
 }) {
@@ -61,19 +69,21 @@ export function ClassChat({
   const list = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const realtime = live && !!activityDbId;
+  const cfg = KINDS[kind];
+  const BUCKET = cfg.bucket;
 
   // Nové zprávy naživo.
   useEffect(() => {
     if (!realtime) return;
     const sb = createClient();
     let cancelled = false;
-    const channel = sb.channel(`chat-${activityDbId}`);
+    const channel = sb.channel(`${cfg.table}-${activityDbId}`);
     channel
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "class_messages", filter: `activity_id=eq.${activityDbId}` }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: cfg.table, filter: `${cfg.column}=eq.${activityDbId}` }, (payload) => {
         const line = toLine(payload.new as Row);
         setMessages((m) => (m.some((x) => x.id === line.id) ? m : [...m, line]));
       })
-      .on("postgres_changes", { event: "DELETE", schema: "public", table: "class_messages" }, (payload) => {
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: cfg.table }, (payload) => {
         const id = (payload.old as { id?: string }).id;
         if (id) setMessages((m) => m.filter((x) => x.id !== id));
       });
@@ -86,7 +96,7 @@ export function ClassChat({
       cancelled = true;
       void sb.removeChannel(channel);
     };
-  }, [realtime, activityDbId]);
+  }, [realtime, activityDbId, cfg.table, cfg.column]);
 
   // Držet seznam dole u nejnovější zprávy.
   useEffect(() => {
@@ -126,9 +136,9 @@ export function ClassChat({
       attached = uploaded[0];
     }
     const { data, error: err } = await createClient()
-      .from("class_messages")
+      .from(cfg.table)
       .insert({
-        activity_id: activityDbId,
+        [cfg.column]: activityDbId,
         body,
         file_path: attached?.path ?? null,
         file_name: attached?.name ?? null,
@@ -146,13 +156,13 @@ export function ClassChat({
 
   async function remove(id: string) {
     if (!realtime) return setMessages((m) => m.filter((x) => x.id !== id));
-    const { error: err } = await createClient().from("class_messages").delete().eq("id", id);
+    const { error: err } = await createClient().from(cfg.table).delete().eq("id", id);
     if (err) return setError("Zprávu se nepodařilo smazat.");
     setMessages((m) => m.filter((x) => x.id !== id));
   }
 
   return (
-    <section aria-label="Chat třídy" className={`card ${styles.chat}`}>
+    <section aria-label={label} className={`card ${styles.chat}`}>
       <div className={styles.chatList} ref={list} aria-live="polite">
         {messages.length === 0 && <div className={styles.meta}>Zatím tu nikdo nic nenapsal. Začni ty!</div>}
         {messages.map((m) => {
@@ -200,21 +210,21 @@ export function ClassChat({
         <input
           ref={fileInput}
           type="file"
-          id={`chat-priloha-${activityDbId ?? "demo"}`}
+          id={`chat-priloha-${kind}-${activityDbId ?? "demo"}`}
           className="sr-only"
           onChange={(e) => {
             setFile(e.target.files?.[0] ?? null);
             if (fileInput.current) fileInput.current.value = "";
           }}
         />
-        <label htmlFor={`chat-priloha-${activityDbId ?? "demo"}`} className={styles.chatAttach} aria-label="Přiložit soubor nebo obrázek">
+        <label htmlFor={`chat-priloha-${kind}-${activityDbId ?? "demo"}`} className={styles.chatAttach} aria-label="Přiložit soubor nebo obrázek">
           <Icon name="paperclip" size={20} />
         </label>
         <label className={styles.grow}>
-          <span className="sr-only">Zpráva pro celou třídu</span>
+          <span className="sr-only">{cfg.placeholder}</span>
           <input
             type="text"
-            placeholder="Zpráva pro celou třídu…"
+            placeholder={cfg.placeholder}
             value={draft}
             maxLength={2000}
             onChange={(e) => setDraft(e.target.value)}

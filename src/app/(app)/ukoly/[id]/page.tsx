@@ -11,6 +11,7 @@ import { STATE_CHIP, STATE_LABEL, formatLate, isHandedIn, lateBy, linkTitle, wor
 import { requireUser } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
 import { canOpenActivity, getActivity, getUsersByIds, teachesActivity } from "@/lib/data";
+import { teamsFor } from "@/lib/data-teams";
 import { assignmentFiles, commentCounts, getAssignment, getComments, getWork, workMap } from "@/lib/data-assignments";
 import { plural } from "@/lib/format";
 import { KIND_LABEL, activityHref } from "@/lib/links";
@@ -36,6 +37,9 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
   const [teacher] = await getUsersByIds([activity.teacherId]);
   const isTask = a.kind === "ukol";
   const files = await assignmentFiles(a.id);
+  // Týmový úkol: týmy třídy (kdo v týmu není, odevzdává sám).
+  const teams = a.teamWork ? await teamsFor(activity) : [];
+  const teamOfStudent = (sid: string) => teams.find((t) => t.memberIds.includes(sid)) ?? null;
 
   const people = new Map<string, User>();
   const remember = (list: User[]) => list.forEach((u) => people.set(u.id, u));
@@ -62,6 +66,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
           {isTask ? "Úkol" : "Materiál"}
           {a.topic ? ` · ${a.topic}` : ""}
         </span>
+        {a.teamWork && <span className="chip chip-info">Týmový úkol</span>}
         {a.dueAt && <span className="chip chip-wait">Termín {formatDue(a.dueAt)}</span>}
         {a.maxPoints !== null && (
           <span className="chip chip-info">
@@ -153,14 +158,21 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       return { s, work, state: workState(a, work), late: lateBy(a, work) };
     });
     const order = { odevzdano: 0, vraceno: 1, pozde: 2, ceka: 3, splneno: 4, nesplneno: 5, material: 6 } as const;
-    rows.sort((x, y) => order[x.state] - order[y.state] || x.s.name.localeCompare(y.s.name, "cs"));
+    // Týmový úkol: členové týmu pohromadě (bez týmu na konci).
+    const teamKey = (sid: string) => teamOfStudent(sid)?.name ?? "\uffff";
+    rows.sort((x, y) =>
+      a.teamWork
+        ? teamKey(x.s.id).localeCompare(teamKey(y.s.id), "cs") || x.s.name.localeCompare(y.s.name, "cs")
+        : order[x.state] - order[y.state] || x.s.name.localeCompare(y.s.name, "cs"),
+    );
     const toReview = rows.filter((r) => r.state === "odevzdano").length;
     const submitted = rows.filter((r) => isHandedIn(r.state)).length;
     const lateCount = rows.filter((r) => r.late !== null).length;
 
     const selectedId = typeof student === "string" && activity.studentIds.includes(student) ? student : null;
     const selected = selectedId ? people.get(selectedId)! : null;
-    const selectedWork = selectedId ? await getWork(a.id, selectedId) : null;
+    const selectedTeam = selectedId ? teamOfStudent(selectedId) : null;
+    const selectedWork = selectedId ? await getWork(a.id, selectedId, selectedTeam?.id) : null;
     const selectedState = selectedId ? workState(a, selectedWork) : null;
     const selectedLate = selectedWork ? lateBy(a, selectedWork) : null;
     const thread = selectedId ? toView(await getComments(a.id, selectedId)) : [];
@@ -198,6 +210,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                     <span className={styles.studentMain}>
                       <span className={styles.studentName}>{s.name}</span>
                       <span className={styles.studentMeta}>
+                        {a.teamWork && <strong>{teamOfStudent(s.id)?.name ?? "bez týmu"} · </strong>}
                         {work?.submission?.submittedAt && (isHandedIn(state) || state === "vraceno")
                           ? `odevzdáno ${formatStamp(work.submission.submittedAt)}`
                           : "nic neodevzdal(a)"}
@@ -250,6 +263,14 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                     studentName={selected.name}
                     maxPoints={a.maxPoints}
                     current={selectedWork.review}
+                    team={
+                      selectedTeam
+                        ? {
+                            name: selectedTeam.name,
+                            members: selectedTeam.memberIds.map((m) => people.get(m)?.name.split(" ")[0] ?? "?"),
+                          }
+                        : null
+                    }
                   />
                 </section>
                 <PrivateComments
@@ -277,7 +298,9 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
   }
 
   // --- Pohled studenta ---
-  const work = await getWork(a.id, user.id);
+  const myTeam = teamOfStudent(user.id);
+  if (myTeam) remember(await getUsersByIds(myTeam.memberIds));
+  const work = await getWork(a.id, user.id, myTeam?.id);
   const state = workState(a, work);
   const thread = toView(await getComments(a.id, user.id));
 
@@ -291,6 +314,15 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
           <StudentWork
             assignmentId={a.id}
             userId={user.id}
+            team={
+              myTeam
+                ? {
+                    id: myTeam.id,
+                    name: myTeam.name,
+                    members: myTeam.memberIds.filter((m) => m !== user.id).map((m) => people.get(m)?.name ?? "?"),
+                  }
+                : null
+            }
             live={isSupabase}
             state={state}
             submission={work.submission}

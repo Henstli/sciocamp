@@ -21,7 +21,10 @@ export function StudentWork({
   review,
   maxPoints,
   late = null,
+  team = null,
 }: {
+  /** Týmový úkol: společná práce týmu (soubory ve složce týmu) */
+  team?: { id: string; name: string; members: string[] } | null;
   assignmentId: string;
   userId: string;
   /** false = ukázkový režim, nic se neukládá */
@@ -60,7 +63,7 @@ export function StudentWork({
       return;
     }
     setMessage({});
-    const problem = await uploadFiles(BUCKET, `${assignmentId}/${userId}`, Array.from(list), setUploading);
+    const problem = await uploadFiles(BUCKET, `${assignmentId}/${team?.id ?? userId}`, Array.from(list), setUploading);
     if (problem) setMessage({ error: problem });
     if (fileInput.current) fileInput.current.value = "";
     start(() => filesChanged());
@@ -75,9 +78,9 @@ export function StudentWork({
   const submitLabel = state === "vraceno" ? "Odevzdat znovu" : state === "pozde" ? "Odevzdat pozdě" : "Odevzdat";
 
   return (
-    <section aria-label="Tvoje práce" className={`card ${styles.panel}`}>
+    <section aria-label={team ? "Práce týmu" : "Tvoje práce"} className={`card ${styles.panel}`}>
       <div className={styles.panelHead}>
-        <h2 className={styles.h2}>Tvoje práce</h2>
+        <h2 className={styles.h2}>{team ? "Práce týmu" : "Tvoje práce"}</h2>
         <span className={`chip ${STATE_CHIP[state]}`}>{STATE_LABEL[state]}</span>
       </div>
 
@@ -86,6 +89,13 @@ export function StudentWork({
         <p className={styles.lateNote}>Termín už uplynul, ale pořád můžeš odevzdat. Vyučující uvidí, že je práce pozdě.</p>
       )}
 
+      {team && (
+        <p className={styles.teamNote}>
+          <strong>{team.name}</strong>
+          {team.members.length ? ` s ${team.members.join(", ")}` : ""}. Odevzdáváte jednu společnou práci, kdokoli z týmu ji může
+          doplnit nebo odevzdat a hodnocení dostanete všichni.
+        </p>
+      )}
       {review && <ReviewSummary review={review} maxPoints={maxPoints} forStudent />}
 
       <WorkFiles
