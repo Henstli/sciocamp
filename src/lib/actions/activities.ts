@@ -120,6 +120,11 @@ function parseForm(formData: FormData) {
   } else if (kind === "ostatni") {
     enrollment.published = true;
   }
+  // Událost pro všechny: zapisuje a doplňuje databáze (i nově založené lidi).
+  const forAll = {
+    for_all_students: kind === "ostatni" && formData.get("forAllStudents") === "1",
+    for_all_staff: kind === "ostatni" && formData.get("forAllStaff") === "1",
+  };
 
   if (milestonesTotal < 0 || milestonesTotal > 20 || milestonesDone < 0 || milestonesDone > milestonesTotal) {
     fieldErrors.milestones = "Hotových milníků nemůže být víc než všech (max. 20).";
@@ -144,6 +149,7 @@ function parseForm(formData: FormData) {
       milestones_total: kind === "atelier" && projectName ? milestonesTotal : 0,
       milestones_done: kind === "atelier" && projectName ? milestonesDone : 0,
       ...enrollment,
+      ...forAll,
     },
     teacherId,
     coTeacherIds,
@@ -259,7 +265,12 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
     if (ins.error) return { error: "Rozvrh se nepodařilo uložit." };
   }
 
-  // Další vyučující: nahradíme celé.
+  // Další vyučující: nahradíme celé (u události „všichni vyučující“ je spravuje databáze).
+  if (values.for_all_staff) {
+    if (!editingSlug) redirect(`/ucitel/${slug}?nova=1`);
+    refresh();
+    return { info: "Uloženo." };
+  }
   const delT = await sb.from("activity_teachers").delete().eq("activity_id", activityId);
   if (delT.error) return { error: "Další vyučující se nepodařilo uložit." };
   if (coTeachers.length) {

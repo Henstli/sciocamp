@@ -119,6 +119,8 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
           coTeacherIds: activity.coTeacherIds ?? [],
           announceReady: activity.announceReady ?? false,
           termId: activity.termId ?? "",
+          forAllStudents: activity.forAllStudents ?? false,
+          forAllStaff: activity.forAllStaff ?? false,
           round:
             activity.round && Date.parse(activity.round.closesAt) > nowMs()
               ? { opensAt: activity.round.opensAt, closesAt: activity.round.closesAt, started: Date.parse(activity.round.opensAt) <= nowMs() }

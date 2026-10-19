@@ -6,7 +6,7 @@ import { DateInput, TimeInput } from "@/components/fields/DateTime";
 import { Icon } from "@/components/Icon";
 import { StaffPicker } from "./StaffPicker";
 import { saveActivity, type ActivityFormState } from "@/lib/actions/activities";
-import { formatDateRange, formatDateRangeWithYear } from "@/lib/periods";
+import { formatDateRange, formatDateRangeWithYear, currentSchoolYear } from "@/lib/periods";
 import { formatDue } from "@/lib/time";
 import { leaveRound } from "@/lib/actions/rounds";
 import type { ActivityKind } from "@/lib/types";
@@ -34,6 +34,9 @@ export type ActivityFormValues = {
   coTeacherIds: string[];
   /** Ateliér a expedice: připraveno k vyhlášení, nebo už zařazeno do zápisového kola */
   announceReady: boolean;
+  /** Událost pro všechny studenty / všechny vyučující (doplňují se i noví) */
+  forAllStudents: boolean;
+  forAllStaff: boolean;
   /** Termín od admina (ateliér, expedice), jinak "" */
   termId: string;
   round: { opensAt: string; closesAt: string; started: boolean } | null;
@@ -74,6 +77,10 @@ export function ActivityForm({
   const [hasProject, setHasProject] = useState(!!initial.projectName);
   const [leadId, setLeadId] = useState(initial.teacherId);
   const [coTeachers, setCoTeachers] = useState<string[]>(initial.coTeacherIds);
+  const [forAllStaff, setForAllStaff] = useState(initial.forAllStaff);
+  // Data události; „Celý školní rok“ je přepíše na 1. 9. – 30. 6.
+  const [dates, setDates] = useState({ from: initial.startsOn, to: initial.endsOn, version: 0 });
+  const schoolYear = currentSchoolYear();
   const fe = state.fieldErrors ?? {};
   const editing = !!initial.slug;
   // Ateliér a expedice: termín ze seznamu od admina (vlastní data jen admin nebo u starších záznamů).
@@ -200,11 +207,22 @@ export function ActivityForm({
           {kind !== "kurz" && !(usesTerms && (termId || !allowCustomDates)) && (
             <>
               <Field label={kind === "ostatni" ? "Od (nepovinné)" : "Od"} error={fe.startsOn}>
-                <DateInput name="startsOn" defaultValue={initial.startsOn} ariaLabel="Začátek" />
+                <DateInput key={`od${dates.version}`} name="startsOn" defaultValue={dates.from} ariaLabel="Začátek" />
               </Field>
               <Field label={kind === "ostatni" ? "Do (nepovinné)" : "Do"} error={fe.endsOn}>
-                <DateInput name="endsOn" defaultValue={initial.endsOn} ariaLabel="Konec" />
+                <DateInput key={`do${dates.version}`} name="endsOn" defaultValue={dates.to} ariaLabel="Konec" />
               </Field>
+              {kind === "ostatni" && (
+                <div className={styles.wholeYear}>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => setDates((d) => ({ ...schoolYear, version: d.version + 1 }))}
+                  >
+                    Celý školní rok ({formatDateRangeWithYear(schoolYear.from, schoolYear.to)})
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -219,7 +237,7 @@ export function ActivityForm({
             : kind === "atelier"
             ? "Vyplň, od kdy do kdy ateliér běží. Student může být v jednu dobu jen v jednom ateliéru."
             : kind === "ostatni"
-              ? "Pravidelná událost (např. každý pátek): nech data prázdná a vyplň rozvrh. Jednorázová: stejné datum Od i Do."
+              ? "Pravidelná událost (např. každý pátek): vyplň rozvrh a klikni na „Celý školní rok“. Jednorázová: stejné datum Od i Do."
               : kind === "expedice"
                 ? "Expedice běží celé dny (obvykle po–pá). V těch dnech se ostatní výuka v rozvrhu nezobrazuje. Student může být jen na jedné expedici naráz."
                 : null}
@@ -255,6 +273,26 @@ export function ActivityForm({
         </p>
       )}
 
+      {kind === "ostatni" && (
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.legend}>Kdo se účastní</legend>
+          <label className={styles.check}>
+            <input type="checkbox" name="forAllStudents" value="1" defaultChecked={initial.forAllStudents} />
+            <span>
+              <strong>Všichni studenti</strong> — zapíšou se sami, i ti, které admin přidá později (s ohledem na ročníky níže).
+            </span>
+          </label>
+          <label className={styles.check}>
+            <input type="checkbox" name="forAllStaff" value="1" checked={forAllStaff} onChange={(e) => setForAllStaff(e.target.checked)} />
+            <span>
+              <strong>Všichni učitelé a admini</strong> — uvidí událost v rozvrhu jako vyučující, i nově přidaní.
+            </span>
+          </label>
+          <span className={styles.hint}>Jednotlivé studenty můžeš zapsat i ručně po uložení v části Studenti.</span>
+        </fieldset>
+      )}
+
+      {!(kind === "ostatni" && forAllStaff) && (
       <fieldset className={styles.fieldset}>
         <legend className={styles.legend}>{kind === "expedice" ? "Další vyučující (aspoň jeden)" : "Další vyučující (nepovinné)"}</legend>
         {fe.coTeachers && (
@@ -269,6 +307,7 @@ export function ActivityForm({
             : "Spoluvyučující spravuje třídu stejně jako ty: Meet, studenty, nástěnku i úkoly."}
         </span>
       </fieldset>
+      )}
 
       <fieldset className={styles.fieldset}>
         <legend className={styles.legend}>Pro které ročníky</legend>

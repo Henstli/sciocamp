@@ -57,6 +57,8 @@ export default async function NewActivityPage({ searchParams }: PageProps<"/ucit
           coTeacherIds: [],
           announceReady: false,
           termId: "",
+          forAllStudents: false,
+          forAllStaff: false,
           round: null,
         }}
       />

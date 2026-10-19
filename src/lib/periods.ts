@@ -113,3 +113,13 @@ export function formatDateRangeWithYear(from: string, to: string): string {
   const text = formatDateRange(from, to);
   return /\d{4}/.test(text) ? text : `${text} ${to.slice(0, 4)}`;
 }
+
+/**
+ * Školní rok, který právě běží (od července už ten nadcházející):
+ * 1. 9. – 30. 6. následujícího roku.
+ */
+export function currentSchoolYear(today = new Date()): { from: string; to: string } {
+  const y = today.getFullYear();
+  const start = today.getMonth() >= 6 ? y : y - 1;
+  return { from: `${start}-09-01`, to: `${start + 1}-06-30` };
+}

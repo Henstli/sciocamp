@@ -54,6 +54,8 @@ type ActivityRow = {
   published: boolean;
   announce_ready: boolean;
   term_id: string | null;
+  for_all_students: boolean;
+  for_all_staff: boolean;
   enroll_rounds: RoundRow | null;
   meet_url: string | null;
   capacity: number | null;
@@ -78,7 +80,7 @@ export function toRound(r: RoundRow): EnrollRound {
 const PERIOD_COLUMNS = "id, name, starts_on, ends_on, enroll_opens_at, enroll_closes_at, published_at";
 
 const ACTIVITY_COLUMNS =
-  `id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(${PERIOD_COLUMNS}), published, announce_ready, term_id, enroll_rounds(${ROUND_COLUMNS}), meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id), activity_teachers(teacher_id)`;
+  `id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(${PERIOD_COLUMNS}), published, announce_ready, term_id, for_all_students, for_all_staff, enroll_rounds(${ROUND_COLUMNS}), meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id), activity_teachers(teacher_id)`;
 
 function toActivity(r: ActivityRow): Activity {
   return {
@@ -104,6 +106,8 @@ function toActivity(r: ActivityRow): Activity {
     published: r.published,
     announceReady: r.announce_ready,
     termId: r.term_id,
+    forAllStudents: r.for_all_students,
+    forAllStaff: r.for_all_staff,
     round: r.enroll_rounds ? toRound(r.enroll_rounds) : null,
     tone: r.tone,
     project:

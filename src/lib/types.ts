@@ -99,6 +99,9 @@ export type Activity = {
   published?: boolean;
   /** Zápisové kolo ateliéru / expedice (společný termín zápisu); kurzy berou termín z období. */
   round?: EnrollRound | null;
+  /** Událost pro všechny studenty / všechny vyučující (doplňují se i noví). */
+  forAllStudents?: boolean;
+  forAllStaff?: boolean;
   /** Termín od admina (ateliér, expedice) — data se berou z něj. */
   termId?: string | null;
   /** Učitel ateliér / expedici označil „Připraveno k vyhlášení“. */

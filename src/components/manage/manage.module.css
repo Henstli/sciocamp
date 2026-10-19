@@ -378,3 +378,7 @@ label.row:hover,
 .roundStatus p {
   margin: 0;
 }
+.wholeYear {
+  display: flex;
+  align-items: flex-end;
+}

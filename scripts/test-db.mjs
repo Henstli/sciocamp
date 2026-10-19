@@ -823,4 +823,32 @@ await test("zveřejnění období může vyhlásit i připravené ateliéry a ex
   assert.equal(e.same, true);
 });
 
+await test("události pro všechny: zapíšou se všichni studenti i vyučující, i nově založení", async () => {
+  const [ev] = await as(
+    admin,
+    `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on, for_all_students, for_all_staff, published)
+     values ('tridnicky-den', 'ostatni', 'Třídnický den', $1, current_date, current_date + 200, true, true, true) returning id`,
+    [admin],
+  );
+  const students = (await db.query(`select count(*)::int n from public.profiles where role = 'student' and not blocked`)).rows[0].n;
+  const enrolled = (await db.query(`select count(*)::int n from public.enrollments where activity_id = $1`, [ev.id])).rows[0].n;
+  assert.equal(enrolled, students);
+  const staff = (await db.query(`select count(*)::int n from public.profiles where role in ('ucitel', 'admin') and not blocked and id <> $1`, [admin])).rows[0].n;
+  const co = (await db.query(`select count(*)::int n from public.activity_teachers where activity_id = $1`, [ev.id])).rows[0].n;
+  assert.equal(co, staff);
+  // Nově založený student i učitel se doplní sami.
+  const fresh = await createUser("novacek@scioskola.cz", { grade: "1" }, { full_name: "Nováček" });
+  const freshT = await createUser("nova.ucitelka@scioskola.cz", { role: "ucitel" }, { full_name: "Nová Učitelka" });
+  assert.equal((await db.query(`select 1 from public.enrollments where activity_id = $1 and student_id = $2`, [ev.id, fresh])).rows.length, 1);
+  assert.equal((await db.query(`select 1 from public.activity_teachers where activity_id = $1 and teacher_id = $2`, [ev.id, freshT])).rows.length, 1);
+  // Jen pro maturanty: první ročník se nedoplní.
+  const [m] = await as(
+    admin,
+    `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on, for_all_students, allowed_grades)
+     values ('maturitni-ples', 'ostatni', 'Ples', $1, current_date, current_date + 30, true, '{4}') returning id`,
+    [admin],
+  );
+  assert.equal((await db.query(`select 1 from public.enrollments where activity_id = $1 and student_id = $2`, [m.id, fresh])).rows.length, 0);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);
