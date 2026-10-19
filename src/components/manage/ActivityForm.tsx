@@ -1,13 +1,14 @@
 "use client";
 
 import { keepForm } from "@/lib/use-keep-form";
-import { useActionState, useState } from "react";
-import { DateInput, DueInput, TimeInput } from "@/components/fields/DateTime";
+import { useActionState, useState, useTransition } from "react";
+import { DateInput, TimeInput } from "@/components/fields/DateTime";
 import { Icon } from "@/components/Icon";
 import { StaffPicker } from "./StaffPicker";
 import { saveActivity, type ActivityFormState } from "@/lib/actions/activities";
 import { formatDateRange } from "@/lib/periods";
-import { formatDue, isoToPragueLocal } from "@/lib/time";
+import { formatDue } from "@/lib/time";
+import { leaveRound } from "@/lib/actions/rounds";
 import type { ActivityKind } from "@/lib/types";
 import styles from "./manage.module.css";
 
@@ -31,10 +32,9 @@ export type ActivityFormValues = {
   slots: { day: number; start: string; end: string }[];
   /** Další vyučující */
   coTeacherIds: string[];
-  /** Ateliér a expedice: zveřejněno v Zápisech a vlastní termín zápisu (pražský čas „rrrr-mm-ddThh:mm“) */
-  published: boolean;
-  enrollOpens: string;
-  enrollCloses: string;
+  /** Ateliér a expedice: připraveno k vyhlášení, nebo už zařazeno do zápisového kola */
+  announceReady: boolean;
+  round: { opensAt: string; closesAt: string; started: boolean } | null;
 };
 
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek"];
@@ -72,9 +72,6 @@ export function ActivityForm({
   const [coTeachers, setCoTeachers] = useState<string[]>(initial.coTeacherIds);
   const fe = state.fieldErrors ?? {};
   const editing = !!initial.slug;
-  // Termín zápisu ateliéru / expedice; „Stejně jako kurzy“ ho přepíše termínem období.
-  const [enroll, setEnroll] = useState({ opens: initial.enrollOpens, closes: initial.enrollCloses, version: 0 });
-  const [published, setPublished] = useState(initial.published);
 
   const setSlot = (i: number, patch: Partial<(typeof slots)[number]>) =>
     setSlots((all) => all.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -193,42 +190,23 @@ export function ActivityForm({
       {(kind === "atelier" || kind === "expedice") && (
         <fieldset className={styles.fieldset}>
           <legend className={styles.legend}>Zápis studentů</legend>
-          <label className={styles.check}>
-            <input type="checkbox" name="published" value="1" checked={published} onChange={(e) => setPublished(e.target.checked)} />
-            <span>
-              <strong>Vyhlásit zápis</strong> — {kind === "expedice" ? "expedici" : "ateliér"} uvidí všichni studenti v Zápisech a v termínu se
-              zapíšou sami (kapacitu, čekačku a kolize hlídá aplikace).
-            </span>
-          </label>
-          <div className={styles.grid}>
-            <Field label="Zápis se otevře" error={fe.enrollOpens}>
-              <DueInput key={`o${enroll.version}`} name="enrollOpens" defaultValue={enroll.opens} defaultTime="18:00" label="otevření zápisu" />
-            </Field>
-            <Field label="Zápis skončí" error={fe.enrollCloses}>
-              <DueInput key={`c${enroll.version}`} name="enrollCloses" defaultValue={enroll.closes} defaultTime="20:00" label="konce zápisu" />
-            </Field>
-          </div>
-          {period?.enrollOpensAt && period.enrollClosesAt && (
-            <div>
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() =>
-                  setEnroll((e) => ({
-                    opens: isoToPragueLocal(period.enrollOpensAt!),
-                    closes: isoToPragueLocal(period.enrollClosesAt!),
-                    version: e.version + 1,
-                  }))
-                }
-              >
-                Stejný termín jako kurzy ({formatDue(period.enrollOpensAt)} – {formatDue(period.enrollClosesAt)})
-              </button>
-            </div>
+          {initial.round ? (
+            <RoundStatus slug={initial.slug!} round={initial.round} />
+          ) : (
+            <>
+              <label className={styles.check}>
+                <input type="checkbox" name="announceReady" value="1" defaultChecked={initial.announceReady} />
+                <span>
+                  <strong>Připraveno k vyhlášení zápisu</strong> — {kind === "expedice" ? "expedici" : "ateliér"} pak kdokoli z učitelů
+                  vyhlásí v Zápisech hromadně spolu s ostatními připravenými, s jedním společným termínem.
+                </span>
+              </label>
+              <span className={styles.hint}>
+                Když už zápis {kind === "expedice" ? "na expedice" : "do ateliérů"} vyhlášený je, přidáš ho do něj v Zápisech. Bez
+                zápisu studenty zapisuješ sám v části Studenti.
+              </span>
+            </>
           )}
-          <span className={styles.hint}>
-            Termín může být stejný jako u kurzů, nebo úplně jiný. Souběžné {kind === "expedice" ? "expedice" : "ateliéry"} ve
-            stejných dnech si student nezapíše dvakrát. Bez vyhlášení zápisu studenty zapisuješ sám v části Studenti.
-          </span>
         </fieldset>
       )}
       {kind === "kurz" && (
@@ -390,5 +368,29 @@ function Field({
       {hint && !error && <span className={styles.hint}>{hint}</span>}
       {error && <span className={styles.fieldError}>{error}</span>}
     </label>
+  );
+}
+
+/** Ateliér / expedice už je v zápisu: termín a případné stažení (jen před otevřením). */
+function RoundStatus({ slug, round }: { slug: string; round: NonNullable<ActivityFormValues["round"]> }) {
+  const [pending, start] = useTransition();
+  const [msg, setMsg] = useState<{ error?: string; info?: string }>({});
+  return (
+    <div className={styles.roundStatus}>
+      <p>
+        <strong>Zařazeno do zápisu</strong> {formatDue(round.opensAt)} – {formatDue(round.closesAt)}.{" "}
+        {round.started ? "Zápis už běží, studenti se zapisují sami." : "Studenti ho uvidí v Zápisech a v termínu se zapíšou."}
+      </p>
+      {!round.started && (
+        <button type="button" className="btn btn-outline" disabled={pending} onClick={() => start(async () => setMsg(await leaveRound(slug)))}>
+          {pending ? "Stahuji…" : "Stáhnout ze zápisu"}
+        </button>
+      )}
+      {(msg.error || msg.info) && (
+        <span role="status" className={msg.error ? styles.fieldError : styles.hint}>
+          {msg.error ?? msg.info}
+        </span>
+      )}
+    </div>
   );
 }

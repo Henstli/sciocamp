@@ -1,7 +1,7 @@
 // Ukázková data pro etapu 1. Jména, kurzy a časy odpovídají schválenému návrhu
 // (design/*.dc.html). Až bude hotové Supabase, tento soubor zůstane jen jako seed.
 
-import type { Activity, ClassroomContent, Period, User } from "./types";
+import type { Activity, ClassroomContent, EnrollRound, Period, User } from "./types";
 
 export const DEMO_USERS: User[] = [
   // Vedení a vyučující
@@ -54,6 +54,12 @@ export const DEMO_PERIODS: Period[] = [
   },
 ];
 const P1 = DEMO_PERIODS[0];
+
+/** Zápisová kola ateliérů a expedic (vyhlašují je učitelé hromadně). */
+export const DEMO_ROUNDS: EnrollRound[] = [
+  { id: "kolo-ateliery", kind: "atelier", opensAt: "2026-10-19T14:00:00Z", closesAt: "2026-10-23T18:00:00Z", createdBy: "u-hankova" },
+  { id: "kolo-expedice", kind: "expedice", opensAt: "2026-10-19T14:00:00Z", closesAt: "2026-10-23T18:00:00Z", createdBy: "u-kubesova" },
+];
 const P2 = DEMO_PERIODS[1];
 
 export const DEMO_ACTIVITIES: Activity[] = [
@@ -88,7 +94,8 @@ export const DEMO_ACTIVITIES: Activity[] = [
 /** Kurzy, ateliéry a expedice dalšího období (zápis právě běží). */
 function nextPeriod(): Activity[] {
   const base = { location: null, meetUrl: null, allowedGrades: null, startsOn: null, endsOn: null, coTeacherIds: [] as string[] };
-  const OPEN = { enrollOpensAt: "2026-10-19T14:00:00Z", enrollClosesAt: "2026-10-23T18:00:00Z" };
+  const ATELIERY = { round: DEMO_ROUNDS[0], published: true };
+  const EXPEDICE = { round: DEMO_ROUNDS[1], published: true };
   const course = (id: string, title: string, teacherId: string, day: 1 | 2 | 3 | 4 | 5, start: string, end: string, capacity: number, studentIds: string[], extra: Partial<Activity> = {}): Activity => ({
     ...base, id, kind: "kurz", title, teacherId, period: P2, slots: [{ day, start, end }], capacity, studentIds, tone: "blue", ...extra,
   });
@@ -106,29 +113,29 @@ function nextPeriod(): Activity[] {
     course("nova-matematika-2", "Matematika v přírodě", "u-jakubcova", 5, "11:00", "12:00", 12, [], { published: false, description: "Rozpracovaný kurz — studenti ho zatím nevidí." }),
     {
       ...base, id: "fotografie", kind: "atelier", title: "Fotografie", teacherId: "u-hankova", period: P2, startsOn: "2026-11-02", endsOn: "2026-11-27",
-      slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 12, studentIds: S.slice(0, 7), tone: "violet", ...OPEN,
+      slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 12, studentIds: S.slice(0, 7), tone: "violet", ...ATELIERY,
       description: "Reportážní fotka: světlo, kompozice a vyprávění příběhu v sérii snímků.",
     },
     {
       ...base, id: "sachy-2", kind: "atelier", title: "Šachy pro pokročilé", teacherId: "u-lukes", period: P2, startsOn: "2026-11-02", endsOn: "2026-11-27",
-      slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 10, studentIds: ["u-liska", ...S.slice(8, 12)], tone: "violet", ...OPEN,
+      slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 10, studentIds: ["u-liska", ...S.slice(8, 12)], tone: "violet", ...ATELIERY,
       description: "Zahájení, taktika a rozbor vlastních partií.",
     },
     {
       ...base, id: "retorika", kind: "atelier", title: "Rétorika", teacherId: "u-kumstat", period: P2, startsOn: "2026-11-30", endsOn: "2026-12-18",
       slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 12, studentIds: [], tone: "violet",
-      enrollOpensAt: "2026-11-09T17:00:00Z", enrollClosesAt: "2026-11-13T18:00:00Z",
+      published: false, announceReady: true,
       description: "Hlas, pauza a argument. Zakončeno veřejnou debatou.",
     },
     {
       ...base, id: "zazij-evropu", kind: "expedice", title: "Zažij Evropu!", teacherId: "u-kubesova", coTeacherIds: ["u-kumstat"], period: null,
-      startsOn: "2027-04-12", endsOn: "2027-04-16", location: "Vlakem přes 4 země", slots: [], capacity: 12, studentIds: S.slice(0, 5), tone: "teal", ...OPEN,
+      startsOn: "2027-04-12", endsOn: "2027-04-16", location: "Vlakem přes 4 země", slots: [], capacity: 12, studentIds: S.slice(0, 5), tone: "teal", ...EXPEDICE,
       description: "Vlakem napříč čtyřmi zeměmi. Plán a rozpočet si připravíte sami.",
     },
     {
       ...base, id: "krkonose-na-snezu", kind: "expedice", title: "Krkonoše na sněžnicích", teacherId: "u-lukes", coTeacherIds: ["u-pietraszek"], period: null,
       startsOn: "2027-04-12", endsOn: "2027-04-16", location: "Pec pod Sněžkou", slots: [], capacity: 10, studentIds: S.slice(5, 9), tone: "teal",
-      enrollOpensAt: "2026-11-02T17:00:00Z", enrollClosesAt: "2026-11-06T18:00:00Z",
+      published: false, announceReady: false,
       description: "Horská chata, sněžnice a lavinová prevence s instruktorem.",
     },
   ];

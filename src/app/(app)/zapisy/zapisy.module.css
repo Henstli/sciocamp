@@ -246,3 +246,114 @@
   color: inherit;
   opacity: 0.85;
 }
+
+/* Vyhlášení zápisu (jen učitelé) */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid #d9d2f7;
+}
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--atelier-text);
+}
+.panelTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+.panelBadge {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--atelier-bg);
+  color: var(--atelier-text);
+}
+.panelForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pickList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.pickList > li + li {
+  border-top: 1px solid var(--border-soft);
+}
+.pickList label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.pickList input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+.pickText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  font-size: 14px;
+}
+.pickText > span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.joinRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 14px;
+  min-height: 52px;
+}
+.windowFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 12px 16px;
+}
+.windowField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.roundLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: 14px;
+}
+.drafts summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.drafts .pickList {
+  margin-top: 4px;
+}

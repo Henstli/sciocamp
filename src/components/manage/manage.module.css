@@ -363,3 +363,18 @@ label.row:hover,
   border: 1px solid var(--atelier-bg);
   background: #faf9ff;
 }
+.roundStatus {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--atelier-bg);
+  color: var(--atelier-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.roundStatus p {
+  margin: 0;
+}

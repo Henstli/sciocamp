@@ -41,7 +41,7 @@ export function PeriodManager({ periods }: { periods: PeriodRow[] }) {
   const [pending, start] = useTransition();
 
   return (
-    <section aria-label="Kurzová období" className={`card ${styles.table}`}>
+    <section aria-label="Kurzová období" className={`card ${styles.table} ${styles.periods}`}>
       <div className={styles.toolbar}>
         <div>
           <h2 className="section-title">Kurzová období</h2>

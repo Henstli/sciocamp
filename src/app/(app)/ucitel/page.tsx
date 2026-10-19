@@ -88,7 +88,12 @@ export default async function TeacherPage({ searchParams }: PageProps<"/ucitel">
                   {c.location && <span>{c.location}</span>}
                   {c.period && <span>{c.period.name}</span>}
                   {live && <span className="chip chip-primary">Právě probíhá</span>}
-                  {c.published === false && <span className="chip chip-wait">Studenti zatím nevidí</span>}
+                  {c.published === false &&
+                    (c.announceReady ? (
+                      <span className="chip chip-info">Připraveno k vyhlášení</span>
+                    ) : (
+                      <span className="chip chip-wait">Studenti zatím nevidí</span>
+                    ))}
                 </div>
                 <div className={styles.actions}>
                   <Link href={activityHref(c)} className="btn btn-outline">

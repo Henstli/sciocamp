@@ -7,7 +7,7 @@ import { isSupabase } from "./config";
 import { DEMO_ACTIVITIES, DEMO_CLASSROOMS, DEMO_HOME, DEMO_PERIODS, DEMO_USERS } from "./demo-data";
 import { canTeach, isAdmin } from "./roles";
 import { createClient } from "./supabase/server";
-import type { Activity, ActivityKind, ClassroomContent, Period, Role, Slot, User, Weekday } from "./types";
+import type { Activity, ActivityKind, ClassroomContent, EnrollRound, Period, Role, Slot, User, Weekday } from "./types";
 
 // ---------------------------------------------------------------------------
 // Převod řádků z databáze na typy aplikace
@@ -52,8 +52,8 @@ type ActivityRow = {
   ends_on: string | null;
   blocks: PeriodRow | null;
   published: boolean;
-  enroll_opens_at: string | null;
-  enroll_closes_at: string | null;
+  announce_ready: boolean;
+  enroll_rounds: RoundRow | null;
   meet_url: string | null;
   capacity: number | null;
   allowed_grades: number[] | null;
@@ -66,10 +66,18 @@ type ActivityRow = {
   activity_teachers: { teacher_id: string }[];
 };
 
+const ROUND_COLUMNS = "id, kind, opens_at, closes_at, created_by";
+
+type RoundRow = { id: string; kind: EnrollRound["kind"]; opens_at: string; closes_at: string; created_by: string | null };
+
+export function toRound(r: RoundRow): EnrollRound {
+  return { id: r.id, kind: r.kind, opensAt: r.opens_at, closesAt: r.closes_at, createdBy: r.created_by };
+}
+
 const PERIOD_COLUMNS = "id, name, starts_on, ends_on, enroll_opens_at, enroll_closes_at, published_at";
 
 const ACTIVITY_COLUMNS =
-  `id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(${PERIOD_COLUMNS}), published, enroll_opens_at, enroll_closes_at, meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id), activity_teachers(teacher_id)`;
+  `id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(${PERIOD_COLUMNS}), published, announce_ready, enroll_rounds(${ROUND_COLUMNS}), meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id), activity_teachers(teacher_id)`;
 
 function toActivity(r: ActivityRow): Activity {
   return {
@@ -93,8 +101,8 @@ function toActivity(r: ActivityRow): Activity {
     coTeacherIds: (r.activity_teachers ?? []).map((t) => t.teacher_id),
     capacity: r.capacity ?? undefined,
     published: r.published,
-    enrollOpensAt: r.enroll_opens_at,
-    enrollClosesAt: r.enroll_closes_at,
+    announceReady: r.announce_ready,
+    round: r.enroll_rounds ? toRound(r.enroll_rounds) : null,
     tone: r.tone,
     project:
       r.project_name && r.milestones_total > 0

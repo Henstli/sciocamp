@@ -50,6 +50,15 @@ export type Period = {
   publishedAt?: string | null;
 };
 
+/** Zápisové kolo: jeden termín zápisu pro víc ateliérů (nebo expedic) naráz. */
+export type EnrollRound = {
+  id: string;
+  kind: "atelier" | "expedice";
+  opensAt: string;
+  closesAt: string;
+  createdBy?: string | null;
+};
+
 /** Kurz, ateliér nebo jiná aktivita (třídnická hodina, příprava expedice …). */
 export type Activity = {
   /** Slug pro adresu (/kurzy/<id>). */
@@ -78,9 +87,10 @@ export type Activity = {
   capacity?: number;
   /** Zveřejněná v nabídce (rozpracovanou vidí jen učitelé a zapsaní). Chybí = ano. */
   published?: boolean;
-  /** Vlastní termín zápisu (ateliér, expedice); kurzy ho berou z období. */
-  enrollOpensAt?: string | null;
-  enrollClosesAt?: string | null;
+  /** Zápisové kolo ateliéru / expedice (společný termín zápisu); kurzy berou termín z období. */
+  round?: EnrollRound | null;
+  /** Učitel ateliér / expedici označil „Připraveno k vyhlášení“. */
+  announceReady?: boolean;
   /** Barva hlavičky karty (z návrhu). */
   tone: "blue" | "blueDark" | "violet" | "teal";
   project?: Project;

@@ -3,11 +3,13 @@ import { EnrollBoard, type EnrollItem } from "./EnrollBoard";
 import { PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
 import { getUsersByIds, listActivities } from "@/lib/data";
-import { enrollmentOverview } from "@/lib/data-enroll";
+import { enrollmentOverview, openRounds } from "@/lib/data-enroll";
+import type { AnnouncePanelData } from "./AnnouncePanel";
 import { ENROLL_KINDS, clashWith, enrollWindow } from "@/lib/enroll";
 import { activityHref } from "@/lib/links";
 import { activityRange, describeWhen, hasEnded, hasStarted } from "@/lib/periods";
-import { canTeach, initials } from "@/lib/roles";
+import { canTeach, initials, isAdmin } from "@/lib/roles";
+import { isTeacherOf } from "@/lib/data";
 import { nowMs, pragueNow, toIso } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Zápisy" };
@@ -60,6 +62,39 @@ export default async function EnrollPage({ searchParams }: PageProps<"/zapisy">)
     };
   });
 
+  // Učitelé: vyhlášení zápisu do ateliérů a na expedice (hromadně, jedním termínem).
+  let panels: Record<"atelier" | "expedice", AnnouncePanelData> | null = null;
+  if (canTeach(user.role)) {
+    const rounds = await openRounds();
+    const staff = await getUsersByIds([...new Set(all.map((a) => a.teacherId))]);
+    const nameOf = (id: string) => staff.find((u) => u.id === id)?.name ?? "";
+    const build = (kind: "atelier" | "expedice"): AnnouncePanelData => {
+      const round = rounds.find((r) => r.kind === kind) ?? null;
+      const pool = all.filter((a) => a.kind === kind && !hasEnded(a, today) && !(a.round && Date.parse(a.round.closesAt) > now));
+      const item = (a: (typeof all)[number]) => ({
+        slug: a.id,
+        title: a.title,
+        teacher: nameOf(a.teacherId),
+        when: describeWhen(a),
+        mine: isTeacherOf(a, user.id) || isAdmin(user.role),
+      });
+      return {
+        kind,
+        round: round
+          ? {
+              id: round.id,
+              opensAt: round.opensAt,
+              closesAt: round.closesAt,
+              editable: isAdmin(user.role) || round.createdBy === user.id,
+            }
+          : null,
+        ready: pool.filter((a) => a.announceReady).map(item),
+        drafts: pool.filter((a) => !a.announceReady && a.published === false).map(item),
+      };
+    };
+    panels = { atelier: build("atelier"), expedice: build("expedice") };
+  }
+
   return (
     <>
       <PageHeader
@@ -71,7 +106,13 @@ export default async function EnrollPage({ searchParams }: PageProps<"/zapisy">)
         }
         avatar={{ initials: initials(user.name), name: user.name }}
       />
-      <EnrollBoard items={items} student={student} serverNow={now} initialTab={typeof tab === "string" ? tab : undefined} />
+      <EnrollBoard
+        items={items}
+        student={student}
+        serverNow={now}
+        initialTab={typeof tab === "string" ? tab : undefined}
+        panels={panels}
+      />
     </>
   );
 }

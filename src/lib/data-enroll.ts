@@ -3,10 +3,11 @@
 import "server-only";
 import { cache } from "react";
 import { isSupabase } from "./config";
-import { listActivities } from "./data";
-import { DEMO_WAITLIST } from "./demo-data";
+import { listActivities, toRound } from "./data";
+import { DEMO_ROUNDS, DEMO_WAITLIST } from "./demo-data";
 import { createClient } from "./supabase/server";
-import type { User } from "./types";
+import { nowMs } from "./time";
+import type { EnrollRound, User } from "./types";
 
 export type EnrollInfo = { enrolled: number; waiting: number; myPosition: number | null };
 
@@ -57,3 +58,19 @@ export async function waitlistFor(slug: string, dbId?: string): Promise<string[]
   const { data } = await sb.from("waitlist").select("student_id").eq("activity_id", dbId).order("created_at");
   return (data ?? []).map((r) => r.student_id as string);
 }
+
+/** Zápisová kola ateliérů a expedic, která ještě neskončila. */
+async function openRoundsUncached(): Promise<EnrollRound[]> {
+  const now = nowMs();
+  if (!isSupabase) return DEMO_ROUNDS.filter((r) => Date.parse(r.closesAt) > now);
+  const sb = await createClient();
+  const { data, error } = await sb
+    .from("enroll_rounds")
+    .select("id, kind, opens_at, closes_at, created_by")
+    .gt("closes_at", new Date(now).toISOString())
+    .order("opens_at");
+  if (error) throw new Error(`Nepodařilo se načíst zápisová kola: ${error.message}`);
+  return (data ?? []).map(toRound);
+}
+
+export const openRounds = cache(openRoundsUncached);

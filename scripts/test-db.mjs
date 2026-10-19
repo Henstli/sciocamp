@@ -706,13 +706,13 @@ await test("zápisy: ročník, role a termín zápisu", async () => {
   await as(teacher, `delete from public.enrollments where activity_id = $1 and student_id = $2`, [film, student]);
 });
 
-await test("zápisy: ateliér a expedice s vlastním termínem, jen jeden ateliér naráz", async () => {
-  const mk = async (slug, from, to) => {
+await test("zápisová kola: ateliéry vyhlašují učitelé hromadně, jeden ateliér naráz", async () => {
+  const mk = async (slug, from, to, owner = teacher2) => {
     const [row] = await as(
-      teacher2,
+      owner,
       `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on, capacity)
        values ($1, 'atelier', $1, $2, current_date + $3::int, current_date + $4::int, 10) returning id`,
-      [slug, teacher2, from, to],
+      [slug, owner, from, to],
     );
     return row.id;
   };
@@ -720,21 +720,52 @@ await test("zápisy: ateliér a expedice s vlastním termínem, jen jeden ateli�
   const a1 = await mk("sachy-2", 40, 60);
   const a2 = await mk("pamet-2", 40, 60);
   const a3 = await mk("foto-2", 70, 80);
-  const before = (await db.query(`select count(*)::int n from public.notifications where user_id = $1 and title like 'Zápis do ateliéru%'`, [kid])).rows[0].n;
-  for (const id of [a1, a2, a3]) {
-    await as(teacher2, `update public.activities set published = true, enroll_opens_at = now() - interval '1 hour', enroll_closes_at = now() + interval '1 hour' where id = $1`, [id]);
-  }
-  const after = (await db.query(`select count(*)::int n from public.notifications where user_id = $1 and title like 'Zápis do ateliéru%'`, [kid])).rows[0].n;
-  assert.equal(after - before, 3);
+  const mine = await mk("debata-2", 70, 80, teacher);
+  // Rozpracovaný ateliér studenti nevidí.
+  assert.equal((await as(kid, `select id from public.activities where id = $1`, [a1])).length, 0);
+  // Cizí nepřipravený ateliér vyhlásit nejde, připravený ano.
+  await assert.rejects(() => as(teacher, `select public.announce_round('atelier', now() - interval '1 hour', now() + interval '1 day', $1)`, [[a1, mine]]), /vyhlásit nejde/);
+  await as(teacher2, `update public.activities set announce_ready = true where id = any($1)`, [[a1, a2]]);
+  const before = (await db.query(`select count(*)::int n from public.notifications where user_id = $1 and kind = 'zapis'`, [kid])).rows[0].n;
+  const [{ announce_round: round }] = await as(
+    teacher,
+    `select public.announce_round('atelier', now() - interval '1 hour', now() + interval '1 day', $1)`,
+    [[a1, a2, mine]],
+  );
+  const after = (await db.query(`select count(*)::int n from public.notifications where user_id = $1 and kind = 'zapis'`, [kid])).rows[0].n;
+  assert.equal(after - before, 1, "jedno oznámení za celé kolo");
+  // Další kolo ateliérů, dokud tohle neskončí, vyhlásit nejde.
+  await as(teacher2, `update public.activities set announce_ready = true where id = $1`, [a3]);
+  await assert.rejects(() => as(teacher2, `select public.announce_round('atelier', now(), now() + interval '2 days', $1)`, [[a3]]), /už je vyhlášený/);
+  await as(teacher2, `select public.join_round($1, $2)`, [round, a3]);
+  // Student: dva souběžné ateliéry ne, pozdější ano.
   await as(kid, `select public.enroll_self($1)`, [a1]);
   await assert.rejects(() => as(kid, `select public.enroll_self($1)`, [a2]), /Kříží se/);
-  // Na pozdější ateliér se zapsat dopředu jde.
   await as(kid, `select public.enroll_self($1)`, [a3]);
-  // Cizí učitel ateliér nezveřejní.
-  await assert.rejects(async () => {
-    const r = await as(teacher, `update public.activities set published = false where id = $1 returning id`, [a1]);
-    if (!r.length) throw new Error("nic");
-  });
+  // Běžící zápis nejde stáhnout; termín mění autor kola nebo admin.
+  await assert.rejects(() => as(teacher2, `select public.leave_round($1)`, [a1]), /běží/);
+  await assert.rejects(() => as(teacher2, `select public.update_round($1, now() - interval '1 hour', now() + interval '3 days')`, [round]), /vyhlásil/);
+  await assert.rejects(() => as(student, `select public.announce_round('atelier', now(), now() + interval '1 day', $1)`, [[a1]]), /učitelé/);
+});
+
+await test("zápisová kola: před otevřením jde nabídku stáhnout, prázdné kolo zmizí", async () => {
+  const [row] = await as(
+    teacher2,
+    `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on, announce_ready)
+     values ('vlci-2', 'expedice', 'Za vlky', $1, current_date + 100, current_date + 104, true) returning id`,
+    [teacher2],
+  );
+  const [{ announce_round: round }] = await as(
+    teacher2,
+    `select public.announce_round('expedice', now() + interval '1 day', now() + interval '2 days', $1)`,
+    [[row.id]],
+  );
+  await assert.rejects(() => as(student, `select public.enroll_self($1)`, [row.id]), /neprobíhá/);
+  await as(teacher2, `select public.update_round($1, now() + interval '2 days', now() + interval '3 days')`, [round]);
+  await as(teacher2, `select public.leave_round($1)`, [row.id]);
+  assert.equal((await db.query(`select 1 from public.enroll_rounds where id = $1`, [round])).rows.length, 0);
+  const [a] = (await db.query(`select published, announce_ready, round_id from public.activities where id = $1`, [row.id])).rows;
+  assert.deepEqual(a, { published: false, announce_ready: true, round_id: null });
 });
 
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

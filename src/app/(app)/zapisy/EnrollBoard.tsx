@@ -8,6 +8,7 @@ import { enrollAction } from "@/lib/actions/enroll";
 import { formatCountdown, windowState, type EnrollWindow } from "@/lib/enroll";
 import { plural } from "@/lib/format";
 import { formatDue } from "@/lib/time";
+import { AnnouncePanel, type AnnouncePanelData } from "./AnnouncePanel";
 import styles from "./zapisy.module.css";
 
 export type EnrollItem = {
@@ -59,11 +60,14 @@ export function EnrollBoard({
   student,
   serverNow,
   initialTab,
+  panels = null,
 }: {
   items: EnrollItem[];
   student: boolean;
   serverNow: number;
   initialTab?: string;
+  /** Učitelé: vyhlášení zápisu do ateliérů a na expedice */
+  panels?: Record<"atelier" | "expedice", AnnouncePanelData> | null;
 }) {
   const counts = Object.fromEntries(TABS.map(([key, kind]) => [key, items.filter((i) => i.kind === kind).length])) as Record<TabKey, number>;
   const firstWithItems = TABS.find(([key]) => counts[key] > 0)?.[0] ?? "kurzy";
@@ -128,6 +132,8 @@ export function EnrollBoard({
           <input type="search" placeholder="Hledat v nabídce…" value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
       </div>
+
+      {panels && kind !== "kurz" && <AnnouncePanel key={kind} data={panels[kind]} />}
 
       {groups.length === 0 && (
         <EmptyNote>

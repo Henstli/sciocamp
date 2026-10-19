@@ -19,8 +19,8 @@ export function enrollWindow(a: Activity): EnrollWindow | null {
     if (!p?.publishedAt || !p.enrollOpensAt || !p.enrollClosesAt) return null;
     return { opens: p.enrollOpensAt, closes: p.enrollClosesAt };
   }
-  if (!a.enrollOpensAt || !a.enrollClosesAt) return null;
-  return { opens: a.enrollOpensAt, closes: a.enrollClosesAt };
+  if (!a.round) return null;
+  return { opens: a.round.opensAt, closes: a.round.closesAt };
 }
 
 export function windowState(w: EnrollWindow, nowMs: number): WindowState {

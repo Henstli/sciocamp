@@ -11,7 +11,7 @@ import { getActivity, getUserById, listActivities, listPeriods, listStaff, listS
 import { atelierConflicts } from "@/lib/periods";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { initials, isAdmin } from "@/lib/roles";
-import { isoToPragueLocal } from "@/lib/time";
+import { nowMs } from "@/lib/time";
 import { waitlistFor } from "@/lib/data-enroll";
 import styles from "../ucitel.module.css";
 
@@ -116,9 +116,11 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
           milestonesTotal: activity.project?.milestonesTotal ?? 5,
           slots: activity.slots.map((s) => ({ day: s.day, start: s.start, end: s.end })),
           coTeacherIds: activity.coTeacherIds ?? [],
-          published: activity.published !== false,
-          enrollOpens: activity.enrollOpensAt ? isoToPragueLocal(activity.enrollOpensAt) : "",
-          enrollCloses: activity.enrollClosesAt ? isoToPragueLocal(activity.enrollClosesAt) : "",
+          announceReady: activity.announceReady ?? false,
+          round:
+            activity.round && Date.parse(activity.round.closesAt) > nowMs()
+              ? { opensAt: activity.round.opensAt, closesAt: activity.round.closesAt, started: Date.parse(activity.round.opensAt) <= nowMs() }
+              : null,
         }}
       />
 

@@ -331,3 +331,11 @@
 .publishConfirm p {
   margin: 0;
 }
+/* Kalendář ve formuláři období se nesmí oříznout o okraj karty. */
+.table.periods {
+  overflow: visible;
+}
+.periods .periodForm:first-child,
+.periods .toolbar {
+  border-radius: var(--r-card) var(--r-card) 0 0;
+}

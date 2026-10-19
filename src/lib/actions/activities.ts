@@ -10,7 +10,6 @@ import { normalizeMeetUrl } from "../meet";
 import { isAdmin, canTeach } from "../roles";
 import { createClient } from "../supabase/server";
 import type { ActivityKind } from "../types";
-import { parseWindowFields } from "../window-fields";
 
 export type ActivityFormState = { error?: string; info?: string; fieldErrors?: Record<string, string> };
 
@@ -108,17 +107,10 @@ function parseForm(formData: FormData) {
   }
 
   // Zápis: ateliér a expedice mají vlastní termín, kurz bere termín z období.
-  let enrollment: { published?: boolean; enroll_opens_at: string | null; enroll_closes_at: string | null } = {
-    enroll_opens_at: null,
-    enroll_closes_at: null,
-  };
+  // Zápis: ateliér a expedici učitel jen označí jako připravenou; vyhlašuje se hromadně v Zápisech.
+  const enrollment: { published?: boolean; announce_ready?: boolean } = {};
   if (kind === "atelier" || kind === "expedice") {
-    const w = parseWindowFields(String(formData.get("enrollOpens") ?? ""), String(formData.get("enrollCloses") ?? ""), fieldErrors);
-    const published = formData.get("published") === "1";
-    if (published && !w.opens && !fieldErrors.enrollOpens && !fieldErrors.enrollCloses) {
-      fieldErrors.enrollOpens = "Pro vyhlášení zápisu vyplň, kdy se otevře a kdy skončí.";
-    }
-    enrollment = { published, enroll_opens_at: w.opens, enroll_closes_at: w.closes };
+    enrollment.announce_ready = formData.get("announceReady") === "1";
   } else if (kind === "ostatni") {
     enrollment.published = true;
   }
@@ -220,7 +212,7 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
     for (let i = 2; used.has(slug); i++) slug = `${base}-${i}`;
 
     // Nový kurz je rozpracovaný, dokud admin nezveřejní období (kurz bez období je vidět hned).
-    const publishedOnInsert = values.kind === "kurz" ? !values.block_id : (values.published ?? false);
+    const publishedOnInsert = values.kind === "kurz" ? !values.block_id : values.kind === "ostatni";
     const { data, error } = await sb
       .from("activities")
       .insert({ ...values, published: publishedOnInsert, slug, teacher_id: teacher })
