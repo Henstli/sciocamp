@@ -4,7 +4,7 @@ import { keepForm } from "@/lib/use-keep-form";
 import Link from "next/link";
 import { useActionState, useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
-import { Avatar } from "@/components/PageHeader";
+import { Avatar, profileHref } from "@/components/PageHeader";
 import { changeRole, inviteUser, renameUser, type InviteState } from "@/lib/actions/users";
 import type { ActivityKind, Role } from "@/lib/types";
 import styles from "./admin.module.css";
@@ -149,7 +149,7 @@ export function AdminTabs({
               {shown.map((u) => (
                 <div key={u.id} className={styles.row}>
                   <div className={styles.person}>
-                    <Avatar initials={u.initials} size={36} tone={u.role} />
+                    <Avatar initials={u.initials} size={36} tone={u.role} href={profileHref(u.id)} title={u.name} />
                     <NameCell user={u} />
                   </div>
                   <select
