@@ -6,6 +6,9 @@
 -- Předchozí verze (týmy ve třídě) byla nasazená jen chvíli a žádné týmy v ní
 -- nevznikly, proto se tabulky zakládají znovu.
 
+-- Staré týmové úkoly (zkušební) smazat — autor souhlasil.
+delete from public.assignments where team_work;
+
 drop policy if exists "týmy: tým a vyučující nahrávají" on storage.objects;
 drop policy if exists "týmy: tým a vyučující čtou" on storage.objects;
 drop table public.team_messages;
