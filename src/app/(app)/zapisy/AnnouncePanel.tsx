@@ -19,6 +19,8 @@ export type AnnouncePanelData = {
   ready: PanelItem[];
   /** Rozpracované — studenti je nevidí, učitel je ještě neoznačil */
   drafts: PanelItem[];
+  /** Termín zápisu kurzů (zveřejněné období), který jde jedním klikem převzít */
+  courseWindow: { name: string; opensAt: string; closesAt: string } | null;
 };
 
 const WORDS = {
@@ -61,6 +63,7 @@ function NewRound({ data }: { data: AnnouncePanelData }) {
   const w = WORDS[data.kind];
   const [state, action, pending] = useActionState<RoundState, FormData>(announceRound, {});
   const [picked, setPicked] = useState(() => new Set(data.ready.map((i) => i.slug)));
+  const [win, setWin] = useState({ opens: "", closes: "", version: 0 });
   const fe = state.fieldErrors ?? {};
   if (data.ready.length === 0) {
     return (
@@ -106,15 +109,32 @@ function NewRound({ data }: { data: AnnouncePanelData }) {
         ))}
       </ul>
       {fe.items && <p className={styles.error}>{fe.items}</p>}
+      {data.courseWindow && (
+        <div>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() =>
+              setWin((w) => ({
+                opens: isoToPragueLocal(data.courseWindow!.opensAt),
+                closes: isoToPragueLocal(data.courseWindow!.closesAt),
+                version: w.version + 1,
+              }))
+            }
+          >
+            Stejný termín jako zápis kurzů ({formatDue(data.courseWindow.opensAt)} – {formatDue(data.courseWindow.closesAt)})
+          </button>
+        </div>
+      )}
       <div className={styles.windowFields}>
         <div className={styles.windowField}>
           <span>Zápis se otevře</span>
-          <DueInput name="enrollOpens" defaultTime="18:00" label="otevření zápisu" />
+          <DueInput key={`o${win.version}`} name="enrollOpens" defaultValue={win.opens} defaultTime="18:00" label="otevření zápisu" />
           {fe.enrollOpens && <span className={styles.error}>{fe.enrollOpens}</span>}
         </div>
         <div className={styles.windowField}>
           <span>Zápis skončí</span>
-          <DueInput name="enrollCloses" defaultTime="20:00" label="konce zápisu" />
+          <DueInput key={`c${win.version}`} name="enrollCloses" defaultValue={win.closes} defaultTime="20:00" label="konce zápisu" />
           {fe.enrollCloses && <span className={styles.error}>{fe.enrollCloses}</span>}
         </div>
       </div>

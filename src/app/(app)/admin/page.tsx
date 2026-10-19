@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/PageHeader";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
-import { listActivities, listPeriods, listUsers } from "@/lib/data";
+import { listActivities, listPeriods, listTerms, listUsers } from "@/lib/data";
 import { currentPeriod, describeWhen } from "@/lib/periods";
 import { KIND_LABEL } from "@/lib/links";
 import { initials } from "@/lib/roles";
-import { isoToPragueLocal, pragueNow, toIso } from "@/lib/time";
+import { isoToPragueLocal, nowMs, pragueNow, toIso } from "@/lib/time";
 import { readyTeachers } from "@/lib/data-enroll";
 import { AdminTabs } from "./AdminTabs";
 import { PeriodManager } from "./PeriodManager";
+import { TermManager } from "./TermManager";
 import styles from "./admin.module.css";
 
 export const metadata: Metadata = { title: "Uživatelé a škola" };
@@ -28,6 +29,13 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const staff = users.length - students;
   const offered = activities.filter((a) => a.kind === "kurz" || a.kind === "atelier");
 
+  const terms = await listTerms();
+  // Připravené ateliéry a expedice (do zápisu se dají vyhlásit spolu s kurzy).
+  const freeOf = (a: (typeof activities)[number]) => !(a.round && a.round.closesAt > new Date(nowMs()).toISOString());
+  const readyCounts = {
+    ateliers: activities.filter((a) => a.kind === "atelier" && a.announceReady && freeOf(a)).length,
+    expeditions: activities.filter((a) => a.kind === "expedice" && a.announceReady && freeOf(a)).length,
+  };
   // Připravenost učitelů u období, která ještě neskončila.
   const periodRows = await Promise.all(
     periods.map(async (p) => {
@@ -72,7 +80,16 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         live={isSupabase}
         initialTab={tab === "kurzy" ? "courses" : tab === "obdobi" ? "periods" : "users"}
         periodsTab={
-          <PeriodManager periods={periodRows} />
+          <div className={styles.periodsStack}>
+            <PeriodManager periods={periodRows} ready={readyCounts} />
+            <TermManager
+              terms={terms.map((t) => ({
+                ...t,
+                used: activities.filter((a) => a.termId === t.id).length,
+                ended: t.endsOn < today,
+              }))}
+            />
+          </div>
         }
         users={users.map((u) => ({
           id: u.id,

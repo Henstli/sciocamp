@@ -34,6 +34,8 @@ export type ActivityFormValues = {
   coTeacherIds: string[];
   /** Ateliér a expedice: připraveno k vyhlášení, nebo už zařazeno do zápisového kola */
   announceReady: boolean;
+  /** Termín od admina (ateliér, expedice), jinak "" */
+  termId: string;
   round: { opensAt: string; closesAt: string; started: boolean } | null;
 };
 
@@ -50,7 +52,10 @@ export function ActivityForm({
   staff,
   canPickTeacher,
   periods,
+  terms = [],
 }: {
+  /** Termíny ateliérů a expedic od admina (jen ty, které ještě neskončily) */
+  terms?: { id: string; kind: "atelier" | "expedice"; name: string | null; startsOn: string; endsOn: string }[];
   initial: ActivityFormValues;
   /** Kurzová období (zakládá je admin ve Správě) */
   periods: { id: string; name: string; startsOn: string; endsOn: string; enrollOpensAt?: string | null; enrollClosesAt?: string | null }[];
@@ -72,6 +77,13 @@ export function ActivityForm({
   const [coTeachers, setCoTeachers] = useState<string[]>(initial.coTeacherIds);
   const fe = state.fieldErrors ?? {};
   const editing = !!initial.slug;
+  // Ateliér a expedice: termín ze seznamu od admina (vlastní data jen admin nebo u starších záznamů).
+  const kindTerms = terms.filter((t) => t.kind === kind);
+  const usesTerms = (kind === "atelier" || kind === "expedice") && kindTerms.length > 0;
+  const [pickedTerm, setTermId] = useState(initial.termId);
+  // Po přepnutí ateliér ↔ expedice neplatí termín druhého druhu.
+  const termId = kindTerms.some((t) => t.id === pickedTerm) ? pickedTerm : "";
+  const allowCustomDates = canPickTeacher || (!initial.termId && !!initial.startsOn);
 
   const setSlot = (i: number, patch: Partial<(typeof slots)[number]>) =>
     setSlots((all) => all.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -145,6 +157,27 @@ export function ActivityForm({
       <fieldset className={styles.fieldset}>
         <legend className={styles.legend}>Kdy</legend>
         <div className={styles.grid}>
+          {usesTerms && (
+            <Field
+              label={kind === "expedice" ? "Týden expedice" : "Termín ateliéru"}
+              error={fe.termId}
+              hint="Termíny předem zadává admin. Data se doplní sama a posunou se, když admin termín změní."
+              wide
+            >
+              <select name="termId" value={termId} onChange={(e) => setTermId(e.target.value)} className={styles.input}>
+                <option value="">
+                  {allowCustomDates ? "Jiný termín (zadat data)" : "Vyber termín…"}
+                </option>
+                {kindTerms.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {formatDateRange(t.startsOn, t.endsOn)} {t.startsOn.slice(0, 4)}
+                    {t.name ? ` · ${t.name}` : ""}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {!(usesTerms && (termId || !allowCustomDates)) && (
           <Field
             label={kind === "ostatni" || kind === "expedice" ? "Kurzové období (nepovinné)" : "Kurzové období"}
             error={fe.periodId}
@@ -165,7 +198,8 @@ export function ActivityForm({
               ))}
             </select>
           </Field>
-          {kind !== "kurz" && (
+          )}
+          {kind !== "kurz" && !(usesTerms && (termId || !allowCustomDates)) && (
             <>
               <Field label={kind === "atelier" || kind === "ostatni" ? "Od (nepovinné)" : "Od"} error={fe.startsOn}>
                 <DateInput name="startsOn" defaultValue={initial.startsOn} ariaLabel="Začátek" />
@@ -177,7 +211,14 @@ export function ActivityForm({
           )}
         </div>
         <span className={styles.hint}>
-          {kind === "atelier"
+          {(kind === "atelier" || kind === "expedice") && kindTerms.length === 0
+            ? "Admin zatím nezadal termíny (Správa → Kurzová období → Termíny ateliérů a expedic), proto vyplň data ručně. "
+            : null}
+          {usesTerms && termId
+            ? kind === "atelier"
+              ? "Souběžné ateliéry ve stejném termínu si student vybírá mezi sebou — může být jen v jednom."
+              : "V týdnu expedic se ostatní výuka v rozvrhu nezobrazuje. Student může být jen na jedné expedici naráz."
+            : kind === "atelier"
             ? `Ateliér trvá jen část období${period ? ` (${formatDateRange(period.startsOn, period.endsOn)})` : ""}; bez data platí celé období. Student může být v jednu dobu jen v jednom ateliéru.`
             : kind === "ostatni"
               ? "Pravidelná událost (např. každý pátek): nech data prázdná a vyplň rozvrh. Jednorázová: stejné datum Od i Do."

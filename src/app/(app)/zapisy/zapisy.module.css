@@ -357,3 +357,40 @@
 .drafts .pickList {
   margin-top: 4px;
 }
+
+/* Souběžné nabídky (stejný čas / termín) pohromadě */
+.cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cluster + .cluster {
+  margin-top: 8px;
+}
+.clusterHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.clusterTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #1f4fb8;
+}
+.clusterTitle[data-kind="atelier"] {
+  color: var(--atelier-text);
+}
+.clusterTitle[data-kind="expedice"] {
+  color: #0f6b5f;
+}
+.clusterNote {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}

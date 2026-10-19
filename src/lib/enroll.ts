@@ -58,3 +58,37 @@ export function formatCountdown(ms: number): string {
   if (h > 0) return `${h} h ${m} min`;
   return `${m} min ${String(sec).padStart(2, "0")} s`;
 }
+
+/** Stejný den a čas v rozvrhu (alespoň jedna hodina se překrývá). */
+function sameTime(a: Pick<Activity, "slots">, b: Pick<Activity, "slots">): boolean {
+  return a.slots.some((s1) =>
+    b.slots.some((s2) => s1.day === s2.day && toMinutes(s1.start) < toMinutes(s2.end) && toMinutes(s2.start) < toMinutes(s1.end)),
+  );
+}
+
+export type Schedulable = Pick<Activity, "kind" | "slots" | "startsOn" | "endsOn" | "period">;
+
+/**
+ * Rozdělí nabídku na skupiny toho, co běží současně (student si z nich vybere
+ * jen jedno): kurzy podle dne a času, ateliéry a expedice podle termínu.
+ */
+export function clusterBySchedule<T extends Schedulable>(items: T[]): T[][] {
+  const parent = items.map((_, i) => i);
+  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  for (let i = 0; i < items.length; i++) {
+    for (let j = i + 1; j < items.length; j++) {
+      const a = items[i];
+      const b = items[j];
+      if (!overlaps(activityRange(a), activityRange(b))) continue;
+      const together = a.kind === "kurz" || b.kind === "kurz" ? sameTime(a, b) : a.kind === b.kind;
+      if (together) parent[find(i)] = find(j);
+    }
+  }
+  const groups = new Map<number, T[]>();
+  items.forEach((it, i) => {
+    const root = find(i);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root)!.push(it);
+  });
+  return [...groups.values()];
+}

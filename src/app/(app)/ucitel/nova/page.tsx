@@ -4,9 +4,9 @@ import { Icon } from "@/components/Icon";
 import { ActivityForm } from "@/components/manage/ActivityForm";
 import { PageHeader } from "@/components/PageHeader";
 import { requireTeacher } from "@/lib/auth";
-import { listPeriods, listStaff } from "@/lib/data";
+import { listPeriods, listStaff, listTerms } from "@/lib/data";
 import { currentPeriod } from "@/lib/periods";
-import { pragueNow, toIso } from "@/lib/time";
+import { pragueNow, toIso, todayIso } from "@/lib/time";
 import { isAdmin } from "@/lib/roles";
 import type { ActivityKind } from "@/lib/types";
 import styles from "../ucitel.module.css";
@@ -35,6 +35,7 @@ export default async function NewActivityPage({ searchParams }: PageProps<"/ucit
       />
       <ActivityForm
         periods={periods}
+        terms={(await listTerms()).filter((t) => t.endsOn >= todayIso() || t.id === "")}
         canPickTeacher={admin}
         staff={staff}
         initial={{
@@ -55,6 +56,7 @@ export default async function NewActivityPage({ searchParams }: PageProps<"/ucit
           slots: [],
           coTeacherIds: [],
           announceReady: false,
+          termId: "",
           round: null,
         }}
       />

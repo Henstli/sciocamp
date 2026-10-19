@@ -214,3 +214,8 @@ export function formatDayLabel(iso: string, now = new Date()): string {
 export function nowMs(): number {
   return Date.now();
 }
+
+/** Dnešní datum v Praze „rrrr-mm-dd“. */
+export function todayIso(): string {
+  return toIso(pragueNow());
+}

@@ -34,7 +34,14 @@ export type PeriodRow = {
  * Kurzová období (4 za rok): admin je zakládá, učitelé do nich zadávají kurzy
  * a potvrdí „Mám hotovo“. Admin pak kurzy zveřejní v Zápisech s termínem zápisu.
  */
-export function PeriodManager({ periods }: { periods: PeriodRow[] }) {
+export function PeriodManager({
+  periods,
+  ready = { ateliers: 0, expeditions: 0 },
+}: {
+  periods: PeriodRow[];
+  /** Připravené ateliéry a expedice, které jde vyhlásit spolu s kurzy */
+  ready?: { ateliers: number; expeditions: number };
+}) {
   const [editing, setEditing] = useState<PeriodRow | "new" | null>(periods.length === 0 ? "new" : null);
   const [msg, setMsg] = useState<PeriodState>({});
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -121,13 +128,14 @@ export function PeriodManager({ periods }: { periods: PeriodRow[] }) {
           {!p.ended && (!p.published || p.drafts > 0) && (
             <PublishControl
               period={p}
+              ready={ready}
               confirming={confirm === `pub-${p.id}`}
               pending={pending}
               onAsk={() => setConfirm(`pub-${p.id}`)}
               onCancel={() => setConfirm(null)}
-              onPublish={() =>
+              onPublish={(withAteliers, withExpeditions) =>
                 start(async () => {
-                  setMsg(await publishPeriod(p.id));
+                  setMsg(await publishPeriod(p.id, withAteliers, withExpeditions));
                   setConfirm(null);
                 })
               }
@@ -175,6 +183,7 @@ function Readiness({ period: p }: { period: PeriodRow }) {
 
 function PublishControl({
   period: p,
+  ready,
   confirming,
   pending,
   onAsk,
@@ -182,13 +191,16 @@ function PublishControl({
   onPublish,
 }: {
   period: PeriodRow;
+  ready: { ateliers: number; expeditions: number };
   confirming: boolean;
   pending: boolean;
   onAsk: () => void;
   onCancel: () => void;
-  onPublish: () => void;
+  onPublish: (withAteliers: boolean, withExpeditions: boolean) => void;
 }) {
   const missing = p.teachers.filter((t) => !t.ready);
+  const [withAteliers, setWithAteliers] = useState(ready.ateliers > 0);
+  const [withExpeditions, setWithExpeditions] = useState(ready.expeditions > 0);
   const label = p.published ? `Zveřejnit nové kurzy (${p.drafts})` : "Zveřejnit kurzy v Zápisech";
   if (!p.enrollOpensAt || !p.enrollClosesAt) {
     return <p className={styles.inviteNote}>Než kurzy zveřejníš, nastav přes „Upravit“, kdy se zápis otevře a kdy skončí.</p>;
@@ -206,8 +218,28 @@ function PublishControl({
             <>Kurzy uvidí všichni studenti a přijde jim oznámení s termínem zápisu. Zveřejnit?</>
           )}
         </p>
+        {(ready.ateliers > 0 || ready.expeditions > 0) && (
+          <div className={styles.publishAlso}>
+            <span>Vyhlásit zároveň se stejným termínem zápisu:</span>
+            {ready.ateliers > 0 && (
+              <label>
+                <input type="checkbox" checked={withAteliers} onChange={(e) => setWithAteliers(e.target.checked)} />
+                připravené ateliéry ({ready.ateliers})
+              </label>
+            )}
+            {ready.expeditions > 0 && (
+              <label>
+                <input type="checkbox" checked={withExpeditions} onChange={(e) => setWithExpeditions(e.target.checked)} />
+                připravené expedice ({ready.expeditions})
+              </label>
+            )}
+            <span className={styles.publishAlsoNote}>
+              Když už zápis do ateliérů (expedic) běží, přidají se do něj a ponechají si jeho termín.
+            </span>
+          </div>
+        )}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="button" className="btn btn-primary" disabled={pending} onClick={onPublish}>
+          <button type="button" className="btn btn-primary" disabled={pending} onClick={() => onPublish(withAteliers, withExpeditions)}>
             {pending ? "Zveřejňuji…" : "Ano, zveřejnit"}
           </button>
           <button type="button" className="btn btn-outline" onClick={onCancel}>

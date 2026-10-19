@@ -50,6 +50,16 @@ export type Period = {
   publishedAt?: string | null;
 };
 
+/** Termín ateliérů nebo expedic, který předem zadává admin (učitel z nich vybírá). */
+export type ActivityTerm = {
+  id: string;
+  kind: "atelier" | "expedice";
+  name: string | null;
+  /** „rrrr-mm-dd“ */
+  startsOn: string;
+  endsOn: string;
+};
+
 /** Zápisové kolo: jeden termín zápisu pro víc ateliérů (nebo expedic) naráz. */
 export type EnrollRound = {
   id: string;
@@ -89,6 +99,8 @@ export type Activity = {
   published?: boolean;
   /** Zápisové kolo ateliéru / expedice (společný termín zápisu); kurzy berou termín z období. */
   round?: EnrollRound | null;
+  /** Termín od admina (ateliér, expedice) — data se berou z něj. */
+  termId?: string | null;
   /** Učitel ateliér / expedici označil „Připraveno k vyhlášení“. */
   announceReady?: boolean;
   /** Barva hlavičky karty (z návrhu). */

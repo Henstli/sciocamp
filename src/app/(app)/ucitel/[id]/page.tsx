@@ -7,11 +7,11 @@ import { DeleteActivity } from "@/components/manage/DeleteActivity";
 import { EnrollmentManager } from "@/components/manage/EnrollmentManager";
 import { PageHeader } from "@/components/PageHeader";
 import { requireTeacher } from "@/lib/auth";
-import { getActivity, getUserById, listActivities, listPeriods, listStaff, listStudents, teachesActivity } from "@/lib/data";
+import { getActivity, getUserById, listActivities, listPeriods, listStaff, listStudents, listTerms, teachesActivity } from "@/lib/data";
 import { atelierConflicts } from "@/lib/periods";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { initials, isAdmin } from "@/lib/roles";
-import { nowMs } from "@/lib/time";
+import { nowMs, todayIso } from "@/lib/time";
 import { waitlistFor } from "@/lib/data-enroll";
 import styles from "../ucitel.module.css";
 
@@ -96,6 +96,7 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
       <h2 className="section-title">Údaje a rozvrh</h2>
       <ActivityForm
         periods={periods}
+        terms={(await listTerms()).filter((t) => t.endsOn >= todayIso() || t.id === activity.termId)}
         canPickTeacher={admin}
         staff={staff}
         initial={{
@@ -117,6 +118,7 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
           slots: activity.slots.map((s) => ({ day: s.day, start: s.start, end: s.end })),
           coTeacherIds: activity.coTeacherIds ?? [],
           announceReady: activity.announceReady ?? false,
+          termId: activity.termId ?? "",
           round:
             activity.round && Date.parse(activity.round.closesAt) > nowMs()
               ? { opensAt: activity.round.opensAt, closesAt: activity.round.closesAt, started: Date.parse(activity.round.opensAt) <= nowMs() }

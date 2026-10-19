@@ -4,10 +4,10 @@
 import "server-only";
 import { cache } from "react";
 import { isSupabase } from "./config";
-import { DEMO_ACTIVITIES, DEMO_CLASSROOMS, DEMO_HOME, DEMO_PERIODS, DEMO_USERS } from "./demo-data";
+import { DEMO_ACTIVITIES, DEMO_CLASSROOMS, DEMO_HOME, DEMO_PERIODS, DEMO_TERMS, DEMO_USERS } from "./demo-data";
 import { canTeach, isAdmin } from "./roles";
 import { createClient } from "./supabase/server";
-import type { Activity, ActivityKind, ClassroomContent, EnrollRound, Period, Role, Slot, User, Weekday } from "./types";
+import type { Activity, ActivityKind, ActivityTerm, ClassroomContent, EnrollRound, Period, Role, Slot, User, Weekday } from "./types";
 
 // ---------------------------------------------------------------------------
 // Převod řádků z databáze na typy aplikace
@@ -53,6 +53,7 @@ type ActivityRow = {
   blocks: PeriodRow | null;
   published: boolean;
   announce_ready: boolean;
+  term_id: string | null;
   enroll_rounds: RoundRow | null;
   meet_url: string | null;
   capacity: number | null;
@@ -77,7 +78,7 @@ export function toRound(r: RoundRow): EnrollRound {
 const PERIOD_COLUMNS = "id, name, starts_on, ends_on, enroll_opens_at, enroll_closes_at, published_at";
 
 const ACTIVITY_COLUMNS =
-  `id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(${PERIOD_COLUMNS}), published, announce_ready, enroll_rounds(${ROUND_COLUMNS}), meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id), activity_teachers(teacher_id)`;
+  `id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(${PERIOD_COLUMNS}), published, announce_ready, term_id, enroll_rounds(${ROUND_COLUMNS}), meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id), activity_teachers(teacher_id)`;
 
 function toActivity(r: ActivityRow): Activity {
   return {
@@ -102,6 +103,7 @@ function toActivity(r: ActivityRow): Activity {
     capacity: r.capacity ?? undefined,
     published: r.published,
     announceReady: r.announce_ready,
+    termId: r.term_id,
     round: r.enroll_rounds ? toRound(r.enroll_rounds) : null,
     tone: r.tone,
     project:
@@ -273,6 +275,20 @@ async function listPeriodsUncached(): Promise<Period[]> {
   if (error) fail("kurzová období", error);
   return (data as PeriodRow[]).map(toPeriod);
 }
+
+// ---------------------------------------------------------------------------
+// Termíny ateliérů a expedic (zadává admin)
+// ---------------------------------------------------------------------------
+
+async function listTermsUncached(): Promise<ActivityTerm[]> {
+  if (!isSupabase) return DEMO_TERMS;
+  const sb = await createClient();
+  const { data, error } = await sb.from("activity_terms").select("id, kind, name, starts_on, ends_on").order("starts_on");
+  if (error) fail("termíny", error);
+  return (data ?? []).map((r) => ({ id: r.id, kind: r.kind, name: r.name, startsOn: r.starts_on, endsOn: r.ends_on }));
+}
+
+export const listTerms = cache(listTermsUncached);
 
 // ---------------------------------------------------------------------------
 // Kontakty

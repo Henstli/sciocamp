@@ -339,3 +339,68 @@
 .periods .toolbar {
   border-radius: var(--r-card) var(--r-card) 0 0;
 }
+
+/* Termíny ateliérů a expedic */
+.termGroup {
+  border-top: 1px solid var(--border-soft);
+}
+.termHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 14px 20px 8px;
+}
+.termHead > div {
+  flex: 1 1 260px;
+}
+.termTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+.termRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 20px;
+  border-top: 1px dashed var(--border-soft);
+}
+.termName {
+  font-weight: 500;
+  color: var(--text-2);
+}
+.showPast {
+  margin: 12px 20px;
+  align-self: flex-start;
+}
+.periodsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.publishAlso {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+}
+.publishAlso label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.publishAlso input {
+  width: 18px;
+  height: 18px;
+}
+.publishAlsoNote {
+  font-size: 13px;
+  opacity: 0.85;
+}

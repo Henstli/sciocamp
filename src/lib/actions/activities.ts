@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireTeacher } from "../auth";
 import { isSupabase } from "../config";
-import { getActivity, getUserById, getUsersByIds, listActivities, listPeriods, teachesActivity } from "../data";
+import { getActivity, getUserById, getUsersByIds, listActivities, listPeriods, listTerms, teachesActivity } from "../data";
 import { atelierConflicts, formatDateRange } from "../periods";
 import { normalizeMeetUrl } from "../meet";
 import { isAdmin, canTeach } from "../roles";
@@ -40,6 +40,8 @@ function parseForm(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim() || null;
   const location = String(formData.get("location") ?? "").trim().slice(0, 160) || null;
   const periodId = String(formData.get("periodId") ?? "").trim() || null;
+  // Ateliér a expedice: termín od admina (data se vezmou z něj).
+  const termId = kind === "atelier" || kind === "expedice" ? String(formData.get("termId") ?? "").trim() || null : null;
   const startsRaw = String(formData.get("startsOn") ?? "").trim();
   const endsRaw = String(formData.get("endsOn") ?? "").trim();
   const capacityRaw = String(formData.get("capacity") ?? "").trim();
@@ -91,7 +93,7 @@ function parseForm(formData: FormData) {
   const ISO = /^\d{4}-\d{2}-\d{2}$/;
   let startsOn: string | null = null;
   let endsOn: string | null = null;
-  if (kind !== "kurz") {
+  if (kind !== "kurz" && !termId) {
     if (startsRaw && !ISO.test(startsRaw)) fieldErrors.startsOn = "Napiš datum jako 21. 10. 2026.";
     else startsOn = startsRaw || null;
     if (endsRaw && !ISO.test(endsRaw)) fieldErrors.endsOn = "Napiš datum jako 23. 10. 2026.";
@@ -126,7 +128,8 @@ function parseForm(formData: FormData) {
       title,
       description,
       location,
-      block_id: periodId,
+      block_id: termId ? null : periodId,
+      term_id: termId,
       starts_on: startsOn,
       ends_on: endsOn,
       capacity,
@@ -149,16 +152,35 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
   const user = await requireTeacher();
   const editingSlug = String(formData.get("slug") ?? "") || null;
   const { fieldErrors, values, teacherId, coTeacherIds: rawCoTeachers, slots } = parseForm(formData);
+  // Ateliér / expedice bez termínu, i když admin termíny zadal: chyba patří k výběru termínu.
+  if ((values.kind === "atelier" || values.kind === "expedice") && !values.term_id) {
+    const hasTerms = (await listTerms()).some((t) => t.kind === values.kind);
+    if (hasTerms && !formData.get("startsOn")) {
+      delete fieldErrors.startsOn;
+      delete fieldErrors.endsOn;
+      fieldErrors.termId = values.kind === "expedice" ? "Vyber týden expedice." : "Vyber termín ateliéru.";
+    }
+  }
   if (Object.keys(fieldErrors).length) return { error: "Zkontroluj zvýrazněná pole.", fieldErrors };
+
+  // Termín od admina: musí existovat a sedět druhem; data a období doplní databáze.
+  if (values.term_id) {
+    const term = (await listTerms()).find((t) => t.id === values.term_id);
+    if (!term || term.kind !== values.kind) {
+      return { error: "Zkontroluj zvýrazněná pole.", fieldErrors: { termId: "Vyber termín ze seznamu." } };
+    }
+    values.starts_on = term.startsOn;
+    values.ends_on = term.endsOn;
+  }
 
   // Období: kurz a ateliér ho musí mít (pokud admin nějaká založil), data ateliéru musí ležet uvnitř.
   const periods = await listPeriods();
   const period = periods.find((p) => p.id === values.block_id) ?? null;
   if (values.block_id && !period) return { error: "Vybrané období neexistuje.", fieldErrors: { periodId: "Vyber období." } };
-  if (!period && periods.length > 0 && (values.kind === "kurz" || values.kind === "atelier")) {
+  if (!period && !values.term_id && periods.length > 0 && (values.kind === "kurz" || values.kind === "atelier")) {
     return { error: "Zkontroluj zvýrazněná pole.", fieldErrors: { periodId: "Vyber kurzové období." } };
   }
-  if (period && values.kind === "atelier") {
+  if (period && values.kind === "atelier" && !values.term_id) {
     const outside = (d: string | null) => d && (d < period.startsOn || d > period.endsOn);
     if (outside(values.starts_on) || outside(values.ends_on)) {
       const range = formatDateRange(period.startsOn, period.endsOn);

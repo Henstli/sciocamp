@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { EnrollBoard, type EnrollItem } from "./EnrollBoard";
 import { PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
-import { getUsersByIds, listActivities } from "@/lib/data";
+import { getUsersByIds, listActivities, listPeriods, listTerms } from "@/lib/data";
 import { enrollmentOverview, openRounds } from "@/lib/data-enroll";
 import type { AnnouncePanelData } from "./AnnouncePanel";
 import { ENROLL_KINDS, clashWith, enrollWindow } from "@/lib/enroll";
@@ -33,6 +33,7 @@ export default async function EnrollPage({ searchParams }: PageProps<"/zapisy">)
   });
   const mine = all.filter((a) => a.studentIds.includes(user.id));
   const teachers = await getUsersByIds([...new Set(offer.map((a) => a.teacherId))]);
+  const terms = await listTerms();
 
   const items: EnrollItem[] = offer.map((a) => {
     const info = overview.get(a.id) ?? { enrolled: a.studentIds.length, waiting: 0, myPosition: null };
@@ -48,6 +49,10 @@ export default async function EnrollPage({ searchParams }: PageProps<"/zapisy">)
       when: describeWhen(a),
       location: a.location,
       startsOn: range.from,
+      endsOn: range.to,
+      slots: a.slots,
+      period: a.period,
+      term: a.termId ? (terms.find((t) => t.id === a.termId)?.name ?? null) : null,
       teacher: t ? { id: t.id, name: t.name, initials: initials(t.name) } : null,
       enrolled,
       taken: info.enrolled,
@@ -66,6 +71,13 @@ export default async function EnrollPage({ searchParams }: PageProps<"/zapisy">)
   let panels: Record<"atelier" | "expedice", AnnouncePanelData> | null = null;
   if (canTeach(user.role)) {
     const rounds = await openRounds();
+    // Zápis kurzů, který ještě neskončil (nabídne se jako termín pro ateliéry a expedice).
+    const coursePeriod = (await listPeriods())
+      .filter((p) => p.publishedAt && p.enrollOpensAt && p.enrollClosesAt && Date.parse(p.enrollClosesAt) > now)
+      .sort((a, b) => a.enrollOpensAt!.localeCompare(b.enrollOpensAt!))[0];
+    const courseWindow = coursePeriod
+      ? { name: coursePeriod.name, opensAt: coursePeriod.enrollOpensAt!, closesAt: coursePeriod.enrollClosesAt! }
+      : null;
     const staff = await getUsersByIds([...new Set(all.map((a) => a.teacherId))]);
     const nameOf = (id: string) => staff.find((u) => u.id === id)?.name ?? "";
     const build = (kind: "atelier" | "expedice"): AnnouncePanelData => {
@@ -90,6 +102,7 @@ export default async function EnrollPage({ searchParams }: PageProps<"/zapisy">)
           : null,
         ready: pool.filter((a) => a.announceReady).map(item),
         drafts: pool.filter((a) => !a.announceReady && a.published === false).map(item),
+        courseWindow,
       };
     };
     panels = { atelier: build("atelier"), expedice: build("expedice") };

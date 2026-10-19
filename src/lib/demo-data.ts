@@ -1,7 +1,7 @@
 // Ukázková data pro etapu 1. Jména, kurzy a časy odpovídají schválenému návrhu
 // (design/*.dc.html). Až bude hotové Supabase, tento soubor zůstane jen jako seed.
 
-import type { Activity, ClassroomContent, EnrollRound, Period, User } from "./types";
+import type { Activity, ActivityTerm, ClassroomContent, EnrollRound, Period, User } from "./types";
 
 export const DEMO_USERS: User[] = [
   // Vedení a vyučující
@@ -54,6 +54,16 @@ export const DEMO_PERIODS: Period[] = [
   },
 ];
 const P1 = DEMO_PERIODS[0];
+
+/** Termíny ateliérů a expedic, které zadal admin. */
+export const DEMO_TERMS: ActivityTerm[] = [
+  { id: "termin-at-3", kind: "atelier", name: "Ateliéry listopad", startsOn: "2026-11-02", endsOn: "2026-11-27" },
+  { id: "termin-at-4", kind: "atelier", name: "Ateliéry prosinec", startsOn: "2026-11-30", endsOn: "2026-12-18" },
+  { id: "termin-at-5", kind: "atelier", name: "Ateliéry leden", startsOn: "2027-01-04", endsOn: "2027-01-29" },
+  { id: "termin-ex-11", kind: "expedice", name: "Expedice listopad", startsOn: "2026-11-16", endsOn: "2026-11-20" },
+  { id: "termin-ex-12", kind: "expedice", name: "Expedice prosinec", startsOn: "2026-12-07", endsOn: "2026-12-11" },
+  { id: "termin-ex-4", kind: "expedice", name: "Expedice duben", startsOn: "2027-04-12", endsOn: "2027-04-16" },
+];
 
 /** Zápisová kola ateliérů a expedic (vyhlašují je učitelé hromadně). */
 export const DEMO_ROUNDS: EnrollRound[] = [
@@ -112,28 +122,38 @@ function nextPeriod(): Activity[] {
     { ...course("poezie-3", "Poezie a rap", "u-jakubcova", 3, "11:30", "12:30", 14, [], { published: false, description: "Rytmus, rým a obraz od Máchy po současný rap." }), period: DEMO_PERIODS[2] },
     course("nova-matematika-2", "Matematika v přírodě", "u-jakubcova", 5, "11:00", "12:00", 12, [], { published: false, description: "Rozpracovaný kurz — studenti ho zatím nevidí." }),
     {
-      ...base, id: "fotografie", kind: "atelier", title: "Fotografie", teacherId: "u-hankova", period: P2, startsOn: "2026-11-02", endsOn: "2026-11-27",
+      ...base, id: "fotografie", termId: "termin-at-3", kind: "atelier", title: "Fotografie", teacherId: "u-hankova", period: P2, startsOn: "2026-11-02", endsOn: "2026-11-27",
       slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 12, studentIds: S.slice(0, 7), tone: "violet", ...ATELIERY,
       description: "Reportážní fotka: světlo, kompozice a vyprávění příběhu v sérii snímků.",
     },
     {
-      ...base, id: "sachy-2", kind: "atelier", title: "Šachy pro pokročilé", teacherId: "u-lukes", period: P2, startsOn: "2026-11-02", endsOn: "2026-11-27",
+      ...base, id: "sachy-2", termId: "termin-at-3", kind: "atelier", title: "Šachy pro pokročilé", teacherId: "u-lukes", period: P2, startsOn: "2026-11-02", endsOn: "2026-11-27",
       slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 10, studentIds: ["u-liska", ...S.slice(8, 12)], tone: "violet", ...ATELIERY,
       description: "Zahájení, taktika a rozbor vlastních partií.",
     },
     {
-      ...base, id: "retorika", kind: "atelier", title: "Rétorika", teacherId: "u-kumstat", period: P2, startsOn: "2026-11-30", endsOn: "2026-12-18",
+      ...base, id: "keramika", termId: "termin-at-3", kind: "atelier", title: "Keramika", teacherId: "u-jakubcova", period: P2, startsOn: "2026-11-02", endsOn: "2026-11-27",
+      slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 8, studentIds: S.slice(3, 11), tone: "violet", ...ATELIERY,
+      description: "Točení na kruhu, glazury a vlastní sada hrnků.",
+    },
+    {
+      ...base, id: "retorika", termId: "termin-at-4", kind: "atelier", title: "Rétorika", teacherId: "u-kumstat", period: P2, startsOn: "2026-11-30", endsOn: "2026-12-18",
       slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 12, studentIds: [], tone: "violet",
       published: false, announceReady: true,
       description: "Hlas, pauza a argument. Zakončeno veřejnou debatou.",
     },
     {
-      ...base, id: "zazij-evropu", kind: "expedice", title: "Zažij Evropu!", teacherId: "u-kubesova", coTeacherIds: ["u-kumstat"], period: null,
+      ...base, id: "zazij-evropu", termId: "termin-ex-4", kind: "expedice", title: "Zažij Evropu!", teacherId: "u-kubesova", coTeacherIds: ["u-kumstat"], period: null,
       startsOn: "2027-04-12", endsOn: "2027-04-16", location: "Vlakem přes 4 země", slots: [], capacity: 12, studentIds: S.slice(0, 5), tone: "teal", ...EXPEDICE,
       description: "Vlakem napříč čtyřmi zeměmi. Plán a rozpočet si připravíte sami.",
     },
     {
-      ...base, id: "krkonose-na-snezu", kind: "expedice", title: "Krkonoše na sněžnicích", teacherId: "u-lukes", coTeacherIds: ["u-pietraszek"], period: null,
+      ...base, id: "vltava-na-lodich", termId: "termin-ex-4", kind: "expedice", title: "Vltava na lodích", teacherId: "u-kumstat", coTeacherIds: ["u-pavel"], period: null,
+      startsOn: "2027-04-12", endsOn: "2027-04-16", location: "Vyšší Brod – Boršov", slots: [], capacity: 14, studentIds: S.slice(6, 10), tone: "teal", ...EXPEDICE,
+      description: "Pět dní na vodě, kempy a vaření na ohni.",
+    },
+    {
+      ...base, id: "krkonose-na-snezu", termId: "termin-ex-4", kind: "expedice", title: "Krkonoše na sněžnicích", teacherId: "u-lukes", coTeacherIds: ["u-pietraszek"], period: null,
       startsOn: "2027-04-12", endsOn: "2027-04-16", location: "Pec pod Sněžkou", slots: [], capacity: 10, studentIds: S.slice(5, 9), tone: "teal",
       published: false, announceReady: false,
       description: "Horská chata, sněžnice a lavinová prevence s instruktorem.",

@@ -768,4 +768,59 @@ await test("zápisová kola: před otevřením jde nabídku stáhnout, prázdné
   assert.deepEqual(a, { published: false, announce_ready: true, round_id: null });
 });
 
+await test("termíny: zadává admin, ateliér z termínu převezme data a období", async () => {
+  await assert.rejects(() => as(teacher, `insert into public.activity_terms (kind, starts_on, ends_on) values ('atelier', current_date + 30, current_date + 50)`));
+  const [{ id: term }] = await as(
+    admin,
+    `insert into public.activity_terms (kind, name, starts_on, ends_on) values ('atelier', 'Ateliéry 1', current_date + 35, current_date + 55) returning id`,
+  );
+  const [{ id: week }] = await as(
+    admin,
+    `insert into public.activity_terms (kind, starts_on, ends_on) values ('expedice', current_date + 60, current_date + 64) returning id`,
+  );
+  assert.equal((await as(student, `select id from public.activity_terms`)).length, 2);
+  const [a] = await as(
+    teacher,
+    `insert into public.activities (slug, kind, title, teacher_id, term_id) values ('keramika', 'atelier', 'Keramika', $1, $2)
+     returning starts_on = current_date + 35 as from_ok, ends_on = current_date + 55 as to_ok, block_id`,
+    [teacher, term],
+  );
+  assert.equal(a.from_ok && a.to_ok, true);
+  const [{ id: expected }] = (await db.query(`select public.block_of(current_date + 35) as id`)).rows;
+  assert.ok(a.block_id && a.block_id === expected, "období podle termínu");
+  // Termín expedice se k ateliéru nehodí.
+  await assert.rejects(() => as(teacher, `update public.activities set term_id = $1 where slug = 'keramika'`, [week]), /jiný druh/);
+  // Posunutý termín posune ateliér.
+  await as(admin, `update public.activity_terms set starts_on = current_date + 36 where id = $1`, [term]);
+  const [moved] = (await db.query(`select starts_on = current_date + 36 as ok from public.activities where slug = 'keramika'`)).rows;
+  assert.equal(moved.ok, true);
+});
+
+await test("zveřejnění období může vyhlásit i připravené ateliéry a expedice", async () => {
+  const { rows: [{ id: block3 }] } = await db.query(
+    `insert into public.blocks (name, starts_on, ends_on, enroll_opens_at, enroll_closes_at)
+     values ('Období 3', current_date + 120, current_date + 180, now() + interval '2 days', now() + interval '4 days') returning id`,
+  );
+  await as(teacher, `update public.activities set announce_ready = true where slug = 'keramika'`);
+  const [{ id: exp }] = await as(
+    teacher2,
+    `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on, announce_ready)
+     values ('hory-3', 'expedice', 'Hory', $1, current_date + 150, current_date + 154, true) returning id`,
+    [teacher2],
+  );
+  const [{ publish_block: res }] = await as(admin, `select public.publish_block($1, true, true)`, [block3]);
+  const [, ateliers, expeditions] = res.split(":").map(Number);
+  // (připravené z dřívějších testů se zařadí taky)
+  assert.ok(ateliers >= 1 && expeditions >= 1);
+  // Ateliér šel do běžícího kola ateliérů, expedice do nového kola s termínem kurzů.
+  const [k] = (await db.query(`select round_id is not null as in_round, published from public.activities where slug = 'keramika'`)).rows;
+  assert.deepEqual(k, { in_round: true, published: true });
+  const [e] = (await db.query(
+    `select r.opens_at = b.enroll_opens_at as same from public.activities a join public.enroll_rounds r on r.id = a.round_id, public.blocks b
+     where a.id = $1 and b.id = $2`,
+    [exp, block3],
+  )).rows;
+  assert.equal(e.same, true);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

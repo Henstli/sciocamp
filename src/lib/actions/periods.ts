@@ -45,14 +45,20 @@ function parseWindow(formData: FormData, fieldErrors: Record<string, string>) {
 }
 
 /** Admin zveřejní kurzy období v Zápisech (a studentům přijde oznámení). */
-export async function publishPeriod(id: string): Promise<PeriodState> {
+export async function publishPeriod(id: string, withAteliers = false, withExpeditions = false): Promise<PeriodState> {
   await requireAdmin();
   if (!isSupabase) return { info: "Ukázkový režim: změny se neukládají." };
   const sb = await createClient();
-  const { error } = await sb.rpc("publish_block", { block: id });
+  const { data, error } = await sb.rpc("publish_block", { block: id, with_ateliers: withAteliers, with_expeditions: withExpeditions });
   if (error) return { error: /termín|Nejdřív/.test(error.message) ? error.message : "Období se nepodařilo zveřejnit." };
   refresh();
-  return { info: "Kurzy jsou zveřejněné v Zápisech. Studentům přišlo oznámení." };
+  const [courses, ateliers, expeditions] = String(data ?? "0:0:0").split(":").map(Number);
+  const parts = [
+    `${courses} ${courses === 1 ? "kurz" : courses >= 2 && courses <= 4 ? "kurzy" : "kurzů"}`,
+    ateliers > 0 && `${ateliers} ${ateliers === 1 ? "ateliér" : ateliers <= 4 ? "ateliéry" : "ateliérů"}`,
+    expeditions > 0 && `${expeditions} ${expeditions === 1 || (expeditions >= 2 && expeditions <= 4) ? "expedice" : "expedic"}`,
+  ].filter(Boolean);
+  return { info: `Zveřejněno v Zápisech: ${parts.join(", ")}. Studentům přišlo oznámení.` };
 }
 
 /** Učitel potvrdí (nebo zruší), že má kurzy v období připravené. */

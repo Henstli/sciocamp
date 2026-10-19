@@ -5,7 +5,10 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { Avatar, EmptyNote, profileHref } from "@/components/PageHeader";
 import { enrollAction } from "@/lib/actions/enroll";
-import { formatCountdown, windowState, type EnrollWindow } from "@/lib/enroll";
+import { clusterBySchedule, formatCountdown, windowState, type EnrollWindow } from "@/lib/enroll";
+import { formatDateRange } from "@/lib/periods";
+import { formatSlots } from "@/lib/time";
+import type { Period, Slot } from "@/lib/types";
 import { plural } from "@/lib/format";
 import { formatDue } from "@/lib/time";
 import { AnnouncePanel, type AnnouncePanelData } from "./AnnouncePanel";
@@ -19,6 +22,11 @@ export type EnrollItem = {
   when: string;
   location: string | null;
   startsOn: string | null;
+  endsOn: string | null;
+  slots: Slot[];
+  period: Period | null;
+  /** Název termínu od admina (ateliér, expedice) */
+  term: string | null;
   teacher: { id: string; name: string; initials: string } | null;
   enrolled: boolean;
   taken: number;
@@ -156,15 +164,63 @@ export function EnrollBoard({
             mineCount={student ? g.items.filter((i) => i.enrolled).length : null}
             kind={kind}
           />
-          <div className={styles.grid}>
-            {g.items.map((i) => (
-              <EnrollCard key={i.slug} item={i} student={student} now={now} />
-            ))}
-          </div>
+          {clusters(g.items).map((c) => (
+            <div key={c.key} className={styles.cluster}>
+              <div className={styles.clusterHead}>
+                <span className={styles.clusterTitle} data-kind={kind}>
+                  <Icon name={kind === "kurz" ? "clock" : "calendar"} size={16} />
+                  {c.title}
+                </span>
+                {c.items.length > 1 && (
+                  <span className={styles.clusterNote}>
+                    {c.items.length} {plural(c.items.length, "možnost", "možnosti", "možností")} ve stejném čase — vybereš si jednu
+                  </span>
+                )}
+              </div>
+              <div className={styles.grid}>
+                {c.items.map((i) => (
+                  <EnrollCard key={i.slug} item={i} student={student} now={now} />
+                ))}
+              </div>
+            </div>
+          ))}
         </section>
       ))}
     </div>
   );
+}
+
+/**
+ * Souběžné nabídky pohromadě: kurzy podle dne a času, ateliéry a expedice podle
+ * termínu. Skupiny jdou po sobě v čase.
+ */
+function clusters(items: EnrollItem[]) {
+  return clusterBySchedule(items.map((i) => ({ ...i, startsOn: i.startsOn, endsOn: i.endsOn })))
+    .map((list) => {
+      const first = list[0];
+      let title: string;
+      let sortKey: string;
+      if (first.kind === "kurz") {
+        const slots = [...new Map(list.flatMap((i) => i.slots).map((s) => [`${s.day}${s.start}${s.end}`, s])).values()].sort(
+          (a, b) => a.day - b.day || a.start.localeCompare(b.start),
+        );
+        title = formatSlots(slots) || "Bez rozvrhu";
+        sortKey = slots[0] ? `${slots[0].day}${slots[0].start}` : "9";
+      } else {
+        const from = list.map((i) => i.startsOn ?? "").sort()[0] ?? "";
+        const to = list.map((i) => i.endsOn ?? "").sort().at(-1) ?? "";
+        const names = [...new Set(list.map((i) => i.term).filter(Boolean))];
+        title = [names.length === 1 ? names[0] : null, formatDateRange(from || null, to || null)].filter(Boolean).join(" · ");
+        sortKey = from;
+      }
+      return {
+        key: list.map((i) => i.slug).join("|"),
+        title,
+        sortKey,
+        items: list.sort((a, b) => a.title.localeCompare(b.title, "cs")),
+      };
+    })
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 }
 
 function WindowBanner({
