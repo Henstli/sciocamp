@@ -157,7 +157,8 @@ function Work({ work }: { work: ClassView["work"] }) {
       {work.newHref && (
         <div className={styles.workActions}>
           <Link href={work.newHref} className="btn btn-primary">
-            + Zadat úkol nebo materiál
+            <Icon name="plus" size={16} strokeWidth={2.8} />
+            Zadat úkol nebo materiál
           </Link>
         </div>
       )}

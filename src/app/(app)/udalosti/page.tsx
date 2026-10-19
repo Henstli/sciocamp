@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Icon } from "@/components/Icon";
 import { MyActivities } from "@/components/MyActivities";
 import { requireUser } from "@/lib/auth";
 import { plural } from "@/lib/format";
@@ -18,7 +19,8 @@ export default async function EventsPage() {
       action={
         canTeach(user.role) ? (
           <Link href="/ucitel/nova?typ=ostatni" className="btn btn-outline-primary">
-            + Nová událost
+            <Icon name="plus" size={16} strokeWidth={2.8} />
+            Nová událost
           </Link>
         ) : null
       }

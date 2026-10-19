@@ -36,10 +36,10 @@ const KIND_TABS = [
 type TabKey = "users" | "periods" | (typeof KIND_TABS)[number][0];
 
 const KIND_WORDS: Record<ActivityKind, { title: string; add: string; empty: string; past: string }> = {
-  kurz: { title: "Všechny kurzy", add: "+ Nový kurz", empty: "Zatím tu není žádný kurz.", past: "Proběhlé kurzy" },
-  atelier: { title: "Všechny ateliéry", add: "+ Nový ateliér", empty: "Zatím tu není žádný ateliér.", past: "Proběhlé ateliéry" },
-  ostatni: { title: "Všechny události", add: "+ Nová událost", empty: "Zatím tu není žádná událost.", past: "Proběhlé události" },
-  expedice: { title: "Všechny expedice", add: "+ Nová expedice", empty: "Zatím tu není žádná expedice.", past: "Proběhlé expedice" },
+  kurz: { title: "Všechny kurzy", add: "Nový kurz", empty: "Zatím tu není žádný kurz.", past: "Proběhlé kurzy" },
+  atelier: { title: "Všechny ateliéry", add: "Nový ateliér", empty: "Zatím tu není žádný ateliér.", past: "Proběhlé ateliéry" },
+  ostatni: { title: "Všechny události", add: "Nová událost", empty: "Zatím tu není žádná událost.", past: "Proběhlé události" },
+  expedice: { title: "Všechny expedice", add: "Nová expedice", empty: "Zatím tu není žádná expedice.", past: "Proběhlé expedice" },
 };
 
 const FILTERS = [
@@ -111,7 +111,8 @@ export function AdminTabs({
 
       {tab === "users" && !inviting && (
         <button type="button" className="btn btn-primary" style={{ alignSelf: "flex-start" }} onClick={() => setInviting(true)}>
-          + Přidat uživatele
+          <Icon name="plus" size={16} strokeWidth={2.8} />
+          Přidat uživatele
         </button>
       )}
       {tab === "users" && inviting && <InviteForm live={live} onClose={() => setInviting(false)} />}
@@ -329,6 +330,7 @@ function ActivityList({ kind, items }: { kind: ActivityKind; items: AdminCourse[
           <input type="search" aria-label="Hledat" placeholder="Hledat název nebo vyučujícího…" value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
         <Link href={`/ucitel/nova?typ=${kind}`} className="btn btn-primary" style={{ minHeight: 40 }}>
+          <Icon name="plus" size={16} strokeWidth={2.8} />
           {w.add}
         </Link>
       </div>

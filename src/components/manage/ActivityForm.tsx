@@ -382,7 +382,8 @@ export function ActivityForm({
             setNextUid((n) => n + 1);
           }}
         >
-          + Přidat hodinu
+          <Icon name="plus" size={16} strokeWidth={2.8} />
+          Přidat hodinu
         </button>
         <span className={styles.hint}>
           {kind === "ostatni"

@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { DateInput } from "@/components/fields/DateTime";
+import { Icon } from "@/components/Icon";
 import { deleteTerm, saveTerm, type TermState } from "@/lib/actions/terms";
 import { plural } from "@/lib/format";
 import { formatDateRangeWithYear } from "@/lib/periods";
@@ -56,7 +57,8 @@ export function TermManager({ terms }: { terms: TermRow[] }) {
               </div>
               {!formHere && (
                 <button type="button" className="btn btn-outline" onClick={() => setEditing({ kind })}>
-                  + {kind === "atelier" ? "Termín ateliérů" : "Týden expedic"}
+                  <Icon name="plus" size={16} strokeWidth={2.8} />
+                  {kind === "atelier" ? "Termín ateliérů" : "Týden expedic"}
                 </button>
               )}
             </div>

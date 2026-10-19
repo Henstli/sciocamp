@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Icon } from "@/components/Icon";
 import { MyActivities } from "@/components/MyActivities";
 import { requireUser } from "@/lib/auth";
 import { plural } from "@/lib/format";
@@ -19,7 +20,8 @@ export default async function ExpeditionsPage() {
       action={
         teacher ? (
           <Link href="/ucitel/nova?typ=expedice" className="btn btn-outline-primary">
-            + Nová expedice
+            <Icon name="plus" size={16} strokeWidth={2.8} />
+            Nová expedice
           </Link>
         ) : (
           <Link href="/zapisy?tab=expedice" className="btn btn-outline-primary">

@@ -61,7 +61,8 @@ export function PeriodManager({
         </div>
         {editing === null && (
           <button type="button" className="btn btn-primary" style={{ marginLeft: "auto" }} onClick={() => setEditing("new")}>
-            + Nové období
+            <Icon name="plus" size={16} strokeWidth={2.8} />
+            Nové období
           </button>
         )}
       </div>

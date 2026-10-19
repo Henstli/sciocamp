@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { STATE_CHIP, STATE_LABEL, isOpen } from "@/lib/assignments";
 import { requireUser } from "@/lib/auth";
@@ -53,7 +54,8 @@ export default async function TasksPage() {
           avatar={avatar}
         >
           <Link href="/ukoly/novy" className="btn btn-primary">
-            + Zadat úkol
+            <Icon name="plus" size={16} strokeWidth={2.8} />
+            Zadat úkol
           </Link>
         </PageHeader>
         <TaskList

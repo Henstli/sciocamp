@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Icon } from "@/components/Icon";
 import { MeetLink } from "@/components/MeetLink";
 import { EmptyNote, PageHeader } from "@/components/PageHeader";
 import { requireTeacher } from "@/lib/auth";
@@ -37,7 +38,8 @@ export default async function TeacherPage({ searchParams }: PageProps<"/ucitel">
     <>
       <PageHeader eyebrow={`${formatLongDate(now)} · pohled učitele`} title="Moje třídy">
         <Link href="/ucitel/nova" className="btn btn-primary">
-          + Nová aktivita
+          <Icon name="plus" size={16} strokeWidth={2.8} />
+          Nová aktivita
         </Link>
       </PageHeader>
 
