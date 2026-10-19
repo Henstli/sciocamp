@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Icon } from "./Icon";
 import { activityHref } from "@/lib/links";
 import { hasEnded } from "@/lib/periods";
 import { ROLE_LABEL, initials } from "@/lib/roles";
@@ -33,7 +32,10 @@ export function ProfileView({
     .filter((a) => !hasEnded(a, todayIso))
     .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || a.title.localeCompare(b.title, "cs"));
   const student = person.role === "student";
-  const teaching = current.filter((a) => a.teacherId === person.id || (a.coTeacherIds ?? []).includes(person.id));
+  // Třídy = kurzy a ateliéry (události a expedice se nepočítají).
+  const teaching = current.filter(
+    (a) => (a.kind === "kurz" || a.kind === "atelier") && (a.teacherId === person.id || (a.coTeacherIds ?? []).includes(person.id)),
+  );
   const courses = current.filter((a) => a.kind === "kurz");
   const ateliers = current.filter((a) => a.kind === "atelier");
 
@@ -89,21 +91,14 @@ export function ProfileView({
             <Field label="Telefon" value={<Link href="/nastaveni">Doplnit telefon</Link>} />
           ) : null}
           {socials?.instagram ? (
-            <a
-              href={`https://www.instagram.com/${socials.instagram}/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.instagram}
-              aria-label={`Instagram: @${socials.instagram} (otevře se v nové kartě)`}
-            >
-              <span className={styles.instagramIcon} aria-hidden>
-                <Icon name="camera" size={18} strokeWidth={2} />
-              </span>
-              <span className={styles.instagramText}>
-                <span className={styles.instagramLabel}>Instagram</span>
-                <span className={styles.instagramHandle}>@{socials.instagram}</span>
-              </span>
-            </a>
+            <Field
+              label="Instagram"
+              value={
+                <a href={`https://www.instagram.com/${socials.instagram}/`} target="_blank" rel="noopener noreferrer">
+                  @{socials.instagram}
+                </a>
+              }
+            />
           ) : isMe ? (
             <Field label="Instagram" value={<Link href="/nastaveni">Přidat Instagram</Link>} />
           ) : null}
