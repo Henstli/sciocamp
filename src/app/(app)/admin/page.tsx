@@ -5,7 +5,7 @@ import { isSupabase } from "@/lib/config";
 import { listActivities, listPeriods, listTerms, listUsers } from "@/lib/data";
 import { currentPeriod, describeWhen } from "@/lib/periods";
 import { KIND_LABEL } from "@/lib/links";
-import { initials } from "@/lib/roles";
+import { canTeach, initials } from "@/lib/roles";
 import { isoToPragueLocal, nowMs, pragueNow, toIso } from "@/lib/time";
 import { readyTeachers } from "@/lib/data-enroll";
 import { AdminTabs } from "./AdminTabs";
@@ -41,7 +41,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     periods.map(async (p) => {
       const courses = activities.filter((a) => a.kind === "kurz" && a.period?.id === p.id);
       const ready = new Set(p.endsOn >= today ? await readyTeachers(p.id) : []);
-      const teacherIds = new Set([...users.filter((u) => u.role === "ucitel").map((u) => u.id), ...courses.map((c) => c.teacherId)]);
+      const teacherIds = new Set([...users.filter((u) => canTeach(u.role)).map((u) => u.id), ...courses.map((c) => c.teacherId)]);
       return {
         id: p.id,
         name: p.name,
