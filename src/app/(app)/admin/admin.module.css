@@ -447,3 +447,21 @@
   color: #17704a;
   font-weight: 600;
 }
+.pastList {
+  border-top: 1px solid var(--border-soft);
+}
+.pastList summary {
+  cursor: pointer;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.courseRow > :global(.chip) {
+  min-width: 118px;
+  justify-content: center;
+  text-align: center;
+}

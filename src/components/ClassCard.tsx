@@ -3,6 +3,7 @@ import { Icon } from "./Icon";
 import { MeetLink } from "./MeetLink";
 import { activityHref } from "@/lib/links";
 import { describeWhen } from "@/lib/periods";
+import { plural } from "@/lib/format";
 import type { Activity, User } from "@/lib/types";
 import styles from "./ClassCard.module.css";
 
@@ -23,9 +24,8 @@ export function ClassCard({
   extra?: React.ReactNode;
 }) {
   const href = activityHref(activity);
-  const big = activity.kind === "atelier";
   return (
-    <article className={`card ${styles.card}`} data-big={big}>
+    <article className={`card ${styles.card}`}>
       <Link href={href} className={styles.head} data-tone={activity.tone}>
         <div className={styles.when}>
           {describeWhen(activity) || "Bez rozvrhu"}
@@ -50,14 +50,15 @@ export function ClassCard({
             )}
             <div className={styles.line}>
               <Icon name="users" size={16} />
-              {activity.studentIds.length} studentů{activity.capacity ? ` z ${activity.capacity} míst` : ""}
+              {activity.studentIds.length} {plural(activity.studentIds.length, "student", "studenti", "studentů")}
+              {activity.capacity ? ` z ${activity.capacity} míst` : ""}
             </div>
           </>
         )}
       </div>
       <div className={styles.actions}>
         <Link href={href} className="btn btn-outline" style={{ flex: 1 }}>
-          {big ? "Otevřít ateliér" : "Otevřít"}
+          Otevřít
         </Link>
         <MeetLink
           url={activity.meetUrl}

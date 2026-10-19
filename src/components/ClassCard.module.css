@@ -3,9 +3,6 @@
   flex-direction: column;
   overflow: hidden;
 }
-.card[data-big="true"] {
-  border-radius: 20px;
-}
 
 .head {
   display: block;
@@ -27,9 +24,6 @@
 .head[data-tone="teal"] {
   background: var(--other);
 }
-.card[data-big="true"] .head {
-  padding: 22px;
-}
 
 .when {
   font-size: 12px;
@@ -41,9 +35,6 @@
   font-weight: 800;
   letter-spacing: -0.01em;
   margin-top: 6px;
-}
-.card[data-big="true"] .title {
-  font-size: 22px;
 }
 .lector {
   font-size: 13px;
@@ -57,10 +48,6 @@
   flex-direction: column;
   gap: 10px;
   flex: 1;
-}
-.card[data-big="true"] .body {
-  padding: 20px 20px 14px;
-  gap: 14px;
 }
 .line {
   display: flex;

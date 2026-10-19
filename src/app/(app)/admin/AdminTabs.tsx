@@ -12,6 +12,10 @@ import styles from "./admin.module.css";
 type AdminUser = { id: string; name: string; email: string; role: Role; group: string; active: boolean; initials: string };
 type AdminCourse = {
   id: string;
+  /** Adresa třídy (detail) */
+  href: string;
+  /** Už proběhlo */
+  ended: boolean;
   kind: string;
   kindKey: ActivityKind;
   title: string;
@@ -20,6 +24,22 @@ type AdminCourse = {
   taken: number;
   cap: number | null;
   meetUrl: string | null;
+};
+
+/** Záložky s aktivitami podle druhu. */
+const KIND_TABS = [
+  ["kurz", "Kurzy"],
+  ["atelier", "Ateliéry"],
+  ["ostatni", "Události"],
+  ["expedice", "Expedice"],
+] as const;
+type TabKey = "users" | "periods" | (typeof KIND_TABS)[number][0];
+
+const KIND_WORDS: Record<ActivityKind, { title: string; add: string; empty: string; past: string }> = {
+  kurz: { title: "Všechny kurzy", add: "+ Nový kurz", empty: "Zatím tu není žádný kurz.", past: "Proběhlé kurzy" },
+  atelier: { title: "Všechny ateliéry", add: "+ Nový ateliér", empty: "Zatím tu není žádný ateliér.", past: "Proběhlé ateliéry" },
+  ostatni: { title: "Všechny události", add: "+ Nová událost", empty: "Zatím tu není žádná událost.", past: "Proběhlé události" },
+  expedice: { title: "Všechny expedice", add: "+ Nová expedice", empty: "Zatím tu není žádná expedice.", past: "Proběhlé expedice" },
 };
 
 const FILTERS = [
@@ -42,11 +62,11 @@ export function AdminTabs({
   users: AdminUser[];
   courses: AdminCourse[];
   live: boolean;
-  initialTab?: "users" | "courses" | "periods";
+  initialTab?: TabKey;
   /** Obsah záložky Kurzová období (vykreslený na serveru) */
   periodsTab?: React.ReactNode;
 }) {
-  const [tab, setTab] = useState<"users" | "courses" | "periods">(initialTab);
+  const [tab, setTab] = useState<TabKey>(initialTab);
   const [filter, setFilter] = useState<(typeof FILTERS)[number][0]>("all");
   const [query, setQuery] = useState("");
   const [roles, setRoles] = useState<Record<string, Role>>({});
@@ -82,9 +102,11 @@ export function AdminTabs({
         <button role="tab" aria-selected={tab === "periods"} className="tab" onClick={() => setTab("periods")}>
           Kurzová období
         </button>
-        <button role="tab" aria-selected={tab === "courses"} className="tab" onClick={() => setTab("courses")}>
-          Kurzy a ateliéry
-        </button>
+        {KIND_TABS.map(([key, label]) => (
+          <button key={key} role="tab" aria-selected={tab === key} className="tab" onClick={() => setTab(key)}>
+            {label}
+          </button>
+        ))}
       </div>
 
       {tab === "users" && !inviting && (
@@ -157,54 +179,8 @@ export function AdminTabs({
 
       {tab === "periods" && periodsTab}
 
-      {tab === "courses" && (
-        <section aria-label="Kurzy a ateliéry" className={`card ${styles.table}`}>
-          <div className={styles.toolbar}>
-            <h2 className="section-title">Kurzy, ateliéry a další aktivity</h2>
-            <Link href="/ucitel/nova" className="btn btn-primary" style={{ marginLeft: "auto", minHeight: 40 }}>
-              + Nová aktivita
-            </Link>
-          </div>
-          {courses.length === 0 && (
-            <p className={styles.inviteNote} style={{ padding: "16px 20px" }}>
-              Zatím tu nic není. Aktivitu může založit admin i kterýkoli učitel.
-            </p>
-          )}
-          {courses.map((c) => {
-            const full = c.cap !== null && c.taken >= c.cap;
-            return (
-              <div key={c.id} className={styles.courseRow}>
-                <span className={`chip ${c.kindKey === "atelier" ? styles.chipAtelier : "chip-primary"}`}>{c.kind}</span>
-                <div className={styles.courseMain}>
-                  <Link href={`/ucitel/${c.id}`} className={styles.name} style={{ color: "inherit", display: "block" }}>
-                    {c.title}
-                  </Link>
-                  <div className={styles.email}>
-                    {c.lector} · {c.when}
-                  </div>
-                </div>
-                <div className={styles.capacity}>
-                  <div className={styles.capLabel}>{c.cap !== null ? `${c.taken} / ${c.cap} míst` : `${c.taken} studentů`}</div>
-                  {c.cap !== null && (
-                    <div className={styles.capBar}>
-                      <div style={{ width: `${Math.min(100, Math.round((c.taken / c.cap) * 100))}%` }} data-full={full} />
-                    </div>
-                  )}
-                </div>
-                {c.meetUrl ? (
-                  <a href={c.meetUrl} target="_blank" rel="noopener noreferrer" className="chip chip-ok" style={{ textDecoration: "none" }}>
-                    Meet připraven
-                  </a>
-                ) : (
-                  <span className="chip chip-wait">Bez Meetu</span>
-                )}
-                <Link href={`/ucitel/${c.id}`} className="btn btn-outline" style={{ minHeight: 36, padding: "0 12px" }}>
-                  Upravit
-                </Link>
-              </div>
-            );
-          })}
-        </section>
+      {KIND_TABS.map(([key]) =>
+        tab === key ? <ActivityList key={key} kind={key} items={courses.filter((c) => c.kindKey === key)} /> : null,
       )}
     </>
   );
@@ -330,6 +306,85 @@ function NameCell({ user: u }: { user: { id: string; name: string; email: string
         {u.email}
         {msg.info && <span className={styles.savedNote}> · {msg.info}</span>}
       </div>
+    </div>
+  );
+}
+
+/** Admin: všechny aktivity jednoho druhu (běžící a nadcházející, proběhlé sbalené). */
+function ActivityList({ kind, items }: { kind: ActivityKind; items: AdminCourse[] }) {
+  const w = KIND_WORDS[kind];
+  const [query, setQuery] = useState("");
+  const q = fold(query.trim());
+  const match = (c: AdminCourse) => !q || fold(c.title).includes(q) || fold(c.lector).includes(q);
+  const current = items.filter((c) => !c.ended && match(c));
+  const past = items.filter((c) => c.ended && match(c));
+  return (
+    <section aria-label={w.title} className={`card ${styles.table}`}>
+      <div className={styles.toolbar}>
+        <h2 className="section-title">
+          {w.title} · {items.filter((c) => !c.ended).length}
+        </h2>
+        <label className={styles.search} style={{ marginLeft: "auto" }}>
+          <Icon name="search" size={18} />
+          <input type="search" aria-label="Hledat" placeholder="Hledat název nebo vyučujícího…" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
+        <Link href={`/ucitel/nova?typ=${kind}`} className="btn btn-primary" style={{ minHeight: 40 }}>
+          {w.add}
+        </Link>
+      </div>
+      {current.length === 0 && (
+        <p className={styles.inviteNote} style={{ padding: "16px 20px" }}>
+          {q ? "Nic takového tu není." : w.empty}
+        </p>
+      )}
+      {current.map((c) => (
+        <ActivityRow key={c.id} c={c} />
+      ))}
+      {past.length > 0 && (
+        <details className={styles.pastList}>
+          <summary>
+            {w.past} ({past.length})
+          </summary>
+          {past.map((c) => (
+            <ActivityRow key={c.id} c={c} />
+          ))}
+        </details>
+      )}
+    </section>
+  );
+}
+
+function ActivityRow({ c }: { c: AdminCourse }) {
+  const full = c.cap !== null && c.taken >= c.cap;
+  return (
+    <div className={styles.courseRow}>
+      <div className={styles.courseMain}>
+        <Link href={c.href} className={styles.name} style={{ color: "inherit", display: "block" }}>
+          {c.title}
+        </Link>
+        <div className={styles.email}>{[c.lector, c.when].filter(Boolean).join(" · ")}</div>
+      </div>
+      <div className={styles.capacity}>
+        <div className={styles.capLabel}>{c.cap !== null ? `${c.taken} / ${c.cap} míst` : `${c.taken} studentů`}</div>
+        {c.cap !== null && (
+          <div className={styles.capBar}>
+            <div style={{ width: `${Math.min(100, Math.round((c.taken / c.cap) * 100))}%` }} data-full={full} />
+          </div>
+        )}
+      </div>
+      {c.meetUrl ? (
+        <a href={c.meetUrl} target="_blank" rel="noopener noreferrer" className="chip chip-ok" style={{ textDecoration: "none" }}>
+          Meet připraven
+        </a>
+      ) : (
+        <span className="chip chip-wait">Bez Meetu</span>
+      )}
+      <Link href={c.href} className="btn btn-outline" style={{ minHeight: 36, padding: "0 12px" }}>
+        Otevřít
+      </Link>
+      <Link href={`/ucitel/${c.id}`} className="btn btn-outline" style={{ minHeight: 36, padding: "0 12px" }}>
+        Upravit
+      </Link>
     </div>
   );
 }
