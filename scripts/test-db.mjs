@@ -532,43 +532,58 @@ await test("telefon: učitele vidí všichni, studenta jen učitelé a admin", a
   assert.equal((await as(outsider, `select user_id from public.profile_contacts`)).length, 1);
 });
 
-await test("týmy: skládá je vyučující, student je ve třídě jen v jednom týmu", async () => {
-  const [tA] = await as(teacher, `insert into public.teams (activity_id, name) values ($1, 'Tým A') returning id`, [course.id]);
-  const [tB] = await as(teacher, `insert into public.teams (activity_id, name) values ($1, 'Tým B') returning id`, [course.id]);
-  await assert.rejects(() => as(student, `insert into public.teams (activity_id, name) values ($1, 'Můj tým')`, [course.id]));
-  await assert.rejects(() => as(teacher2, `insert into public.teams (activity_id, name) values ($1, 'Cizí')`, [course.id]));
+await test("týmy úkolu: rozděluje vyučující, student jen v jednom týmu", async () => {
+  const [a] = await as(teacher, `insert into public.assignments (activity_id, title, created_by, team_work, max_points) values ($1, 'Týmová prezentace', $2, true, 10) returning id`, [course.id, teacher]);
+  const [tA] = await as(teacher, `insert into public.teams (assignment_id, name) values ($1, 'Tým A') returning id`, [a.id]);
+  const [tB] = await as(teacher, `insert into public.teams (assignment_id, name) values ($1, 'Tým B') returning id`, [a.id]);
+  await assert.rejects(() => as(student, `insert into public.teams (assignment_id, name) values ($1, 'Můj')`, [a.id]));
+  await assert.rejects(() => as(teacher2, `insert into public.teams (assignment_id, name) values ($1, 'Cizí')`, [a.id]));
   await as(teacher, `insert into public.team_members (team_id, student_id) values ($1, $2), ($1, $3)`, [tA.id, student, student2]);
   await assert.rejects(() => as(teacher, `insert into public.team_members (team_id, student_id) values ($1, $2)`, [tB.id, student]), /duplicate|unique/);
   await assert.rejects(() => as(teacher, `insert into public.team_members (team_id, student_id) values ($1, $2)`, [tB.id, outsider]), /zapsaný ve třídě/);
-  assert.equal((await as(student2, `select student_id from public.team_members`)).length, 2);
+  // V režimu „rozdělí vyučující“ se student sám nepřidá.
+  await assert.rejects(() => as(student, `select public.join_team($1)`, [tB.id]), /rozděluje vyučující/);
+  assert.equal((await as(student2, `select student_id from public.team_members where assignment_id = $1`, [a.id])).length, 2);
   assert.equal((await as(outsider, `select id from public.teams`)).length, 0);
 });
 
-await test("týmový úkol: společná práce, soubory týmu, hodnocení celému týmu", async () => {
+await test("týmový úkol: společná práce a soubory, hodnocení týmu i jednotlivce", async () => {
+  const [a] = await as(teacher, `select id from public.assignments where title = 'Týmová prezentace'`);
   const [{ id: team }] = await as(teacher, `select id from public.teams where name = 'Tým A'`);
-  const [a] = await as(teacher, `insert into public.assignments (activity_id, title, created_by, team_work, max_points) values ($1, 'Týmová prezentace', $2, true, 10) returning id`, [course.id, teacher]);
-  // Šimon odevzdá za tým → Eliot má stejnou práci.
-  await as(student, `insert into public.submissions (assignment_id, student_id, status, note, links) values ($1, $2, 'odevzdano', 'Za tým A', '[{"title":"Prezentace","url":"https://docs.google.com/x"}]')`, [a.id, student]);
-  const [eliot] = await as(student2, `select status, note, links from public.submissions where assignment_id = $1`, [a.id]);
-  assert.equal(eliot.status, "odevzdano");
-  assert.equal(eliot.note, "Za tým A");
-  assert.equal(eliot.links.length, 1);
-  // Učitel dostal jen jednu notifikaci, se jménem týmu.
+  await as(student, `insert into public.submissions (assignment_id, student_id, status, note) values ($1, $2, 'odevzdano', 'Za tým A')`, [a.id, student]);
+  const [eliot] = await as(student2, `select status, note from public.submissions where assignment_id = $1`, [a.id]);
+  assert.deepEqual(eliot, { status: "odevzdano", note: "Za tým A" });
   const n = await as(teacher, `select title from public.notifications where kind = 'odevzdani' and href like $1`, [`/ukoly/${a.id}%`]);
   assert.equal(n.length, 1);
   assert.match(n[0].title, /Tým A/);
-  // Soubory: oba členové nahrávají i čtou ve složce týmu, cizí student ne.
   await as(student2, `insert into storage.objects (bucket_id, name) values ('odevzdani', $1)`, [`${a.id}/${team}/slajdy.pdf`]);
   assert.equal((await as(student, `select name from storage.objects where name = $1`, [`${a.id}/${team}/slajdy.pdf`])).length, 1);
-  assert.equal((await as(teacher, `select name from storage.objects where name = $1`, [`${a.id}/${team}/slajdy.pdf`])).length, 1);
   await assert.rejects(() => as(outsider, `insert into storage.objects (bucket_id, name) values ('odevzdani', $1)`, [`${a.id}/${team}/x.pdf`]));
-  // Hodnocení jednoho člena dostane celý tým (i s notifikací).
+  // Hodnocení celého týmu.
   await as(teacher, `insert into public.reviews (assignment_id, student_id, result, points, feedback, reviewed_by) values ($1, $2, 'splneno', 9, 'Výborně', $3)`, [a.id, student, teacher]);
-  const [r] = await as(student2, `select result, points, feedback from public.reviews where assignment_id = $1`, [a.id]);
-  assert.deepEqual(r, { result: "splneno", points: 9, feedback: "Výborně" });
-  assert.equal((await as(student2, `select id from public.notifications where kind = 'hodnoceni' and href = $1`, [`/ukoly/${a.id}`])).length, 1);
-  // Uzavřenou práci už nikdo z týmu nezmění.
-  await assert.rejects(() => as(student2, `update public.submissions set note = 'změna' where assignment_id = $1 and student_id = $2 returning 1`, [a.id, student2]).then((rows) => { if (!rows.length) throw new Error("zamítnuto"); }));
+  assert.deepEqual((await as(student2, `select result, points from public.reviews where assignment_id = $1`, [a.id]))[0], { result: "splneno", points: 9 });
+  // Individuální úprava jednoho člena (nepracoval) …
+  await as(teacher, `update public.reviews set result = 'nesplneno', points = 2, individual = true where assignment_id = $1 and student_id = $2`, [a.id, student2]);
+  assert.equal((await as(student, `select points from public.reviews where assignment_id = $1`, [a.id]))[0].points, 9, "ostatní beze změny");
+  // … a pozdější přehodnocení týmu ji nepřepíše.
+  await as(teacher, `update public.reviews set points = 10 where assignment_id = $1 and student_id = $2`, [a.id, student]);
+  assert.equal((await as(student2, `select points from public.reviews where assignment_id = $1`, [a.id]))[0].points, 2);
+});
+
+await test("týmy: studenti se rozdělí sami (max. velikost, odchod, prázdný tým zmizí)", async () => {
+  const [a] = await as(teacher, `insert into public.assignments (activity_id, title, created_by, team_work, team_mode, team_max_size) values ($1, 'Projekt ve dvojicích', $2, true, 'students', 2) returning id`, [course.id, teacher]);
+  const [{ create_own_team: t1 }] = await as(student, `select public.create_own_team($1, 'Šimonův tým')`, [a.id]);
+  await assert.rejects(() => as(student, `select public.create_own_team($1, 'Druhý')`, [a.id]), /Už jsi v týmu/);
+  await as(student2, `select public.join_team($1)`, [t1]);
+  // Třetí do dvojice nesmí (outsider ani není ve třídě).
+  await assert.rejects(() => as(outsider, `select public.join_team($1)`, [t1]));
+  const extra = await createUser("treti.student@scioskola.cz", {}, { full_name: "Třetí Student" });
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2)`, [course.id, extra]);
+  await assert.rejects(() => as(extra, `select public.join_team($1)`, [t1]), /plný/);
+  // Odchod: tým zůstane, dokud v něm někdo je.
+  await as(student2, `select public.leave_team($1)`, [t1]);
+  await as(student, `select public.leave_team($1)`, [t1]);
+  assert.equal((await db.query(`select 1 from public.teams where id = $1`, [t1])).rows.length, 0);
 });
 
 await test("týmový chat: jen tým a vyučující", async () => {

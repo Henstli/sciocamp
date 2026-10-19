@@ -710,3 +710,9 @@ a.attachment:hover {
   flex-wrap: wrap;
   gap: 6px;
 }
+.chatTitle {
+  margin: 0;
+  padding: 16px 20px 0;
+  font-size: 16px;
+  font-weight: 800;
+}

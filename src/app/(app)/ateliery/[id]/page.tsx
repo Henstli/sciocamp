@@ -9,6 +9,6 @@ export async function generateMetadata({ params }: PageProps<"/ateliery/[id]">):
 
 export default async function AtelierPage({ params, searchParams }: PageProps<"/ateliery/[id]">) {
   const { id } = await params;
-  const { tab, tym } = await searchParams;
-  return <ClassroomPage id={id} kinds={["atelier"]} back={{ href: "/ateliery", label: "Ateliéry" }} tab={typeof tab === "string" ? tab : undefined} team={typeof tym === "string" ? tym : undefined} />;
+  const { tab } = await searchParams;
+  return <ClassroomPage id={id} kinds={["atelier"]} back={{ href: "/ateliery", label: "Ateliéry" }} tab={typeof tab === "string" ? tab : undefined} />;
 }

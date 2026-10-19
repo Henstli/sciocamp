@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { isSupabase } from "@/lib/config";
+import { teamOptions } from "@/lib/team-options";
 import Link from "next/link";
 import { AssignmentForm } from "@/components/assignments/AssignmentForm";
 import { Icon } from "@/components/Icon";
@@ -20,6 +21,7 @@ export default async function NewAssignmentPage({ searchParams }: PageProps<"/uk
   const classes = isAdmin(user.role) ? await listActivities() : await activitiesTaughtBy(user);
   const preselected = classes.find((c) => c.id === trida);
   const topics = topicsByClass(await assignmentsForUser(user));
+  const { classStudents, presets } = await teamOptions(classes);
 
   return (
     <>
@@ -39,6 +41,8 @@ export default async function NewAssignmentPage({ searchParams }: PageProps<"/uk
           live={isSupabase}
           classes={classes.map((c) => ({ id: c.id, title: c.title }))}
           topics={topics}
+          classStudents={classStudents}
+          teamPresets={presets}
           initial={{
             activity: preselected?.id ?? classes[0].id,
             kind: "ukol",

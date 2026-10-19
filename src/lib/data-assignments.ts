@@ -25,11 +25,13 @@ type AssignmentRow = {
   links: LinkItem[];
   created_at: string;
   team_work: boolean;
+  team_mode: "teacher" | "students";
+  team_max_size: number | null;
   activities: { slug: string; title: string; kind: Activity["kind"]; teacher_id: string };
 };
 
 const ASSIGNMENT_COLUMNS =
-  "id, kind, title, instructions, topic, due_at, max_points, links, created_at, team_work, activity_id, activities!inner(slug, title, kind, teacher_id)";
+  "id, kind, title, instructions, topic, due_at, max_points, links, created_at, team_work, team_mode, team_max_size, activity_id, activities!inner(slug, title, kind, teacher_id)";
 
 function toAssignment(r: AssignmentRow): Assignment {
   return {
@@ -46,6 +48,8 @@ function toAssignment(r: AssignmentRow): Assignment {
     links: Array.isArray(r.links) ? r.links : [],
     createdAt: r.created_at,
     teamWork: r.team_work,
+    teamMode: r.team_mode,
+    teamMaxSize: r.team_max_size,
   };
 }
 
@@ -143,6 +147,7 @@ type ReviewRow = {
   feedback: string | null;
   request: string | null;
   reviewed_at: string;
+  individual?: boolean;
 };
 
 function toSubmission(r: SubmissionRow, files: SubmissionFile[] = []): Submission {
@@ -161,6 +166,7 @@ function toReview(r: ReviewRow): Review {
     feedback: r.feedback,
     request: r.request,
     reviewedAt: new Date(r.reviewed_at).toISOString(),
+    individual: r.individual,
   };
 }
 
@@ -180,7 +186,7 @@ export async function workMap(assignmentIds: string[], studentIds?: string[]): P
   }
   const sb = await createClient();
   let sq = sb.from("submissions").select("assignment_id, student_id, status, links, note, submitted_at").in("assignment_id", assignmentIds);
-  let rq = sb.from("reviews").select("assignment_id, student_id, result, points, feedback, request, reviewed_at").in("assignment_id", assignmentIds);
+  let rq = sb.from("reviews").select("assignment_id, student_id, result, points, feedback, request, reviewed_at, individual").in("assignment_id", assignmentIds);
   if (studentIds) {
     sq = sq.in("student_id", studentIds);
     rq = rq.in("student_id", studentIds);

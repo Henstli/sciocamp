@@ -9,6 +9,6 @@ export async function generateMetadata({ params }: PageProps<"/expedice/[id]">):
 
 export default async function ExpeditionPage({ params, searchParams }: PageProps<"/expedice/[id]">) {
   const { id } = await params;
-  const { tab, tym } = await searchParams;
-  return <ClassroomPage id={id} kinds={["expedice"]} back={{ href: "/expedice", label: "Expedice" }} tab={typeof tab === "string" ? tab : undefined} team={typeof tym === "string" ? tym : undefined} />;
+  const { tab } = await searchParams;
+  return <ClassroomPage id={id} kinds={["expedice"]} back={{ href: "/expedice", label: "Expedice" }} tab={typeof tab === "string" ? tab : undefined} />;
 }
