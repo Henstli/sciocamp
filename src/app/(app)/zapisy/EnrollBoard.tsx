@@ -340,7 +340,7 @@ function EnrollCard({ item: i, student, now }: { item: EnrollItem; student: bool
       </div>
       <div>
         <h3 className={styles.title}>{i.href ? <Link href={i.href}>{i.title}</Link> : i.title}</h3>
-        {i.description && <p className={styles.desc}>{i.description}</p>}
+        {i.description && <Description text={i.description} />}
         {i.location && (
           <p className={styles.meta}>
             <Icon name="pin" size={14} /> {i.location}
@@ -348,7 +348,7 @@ function EnrollCard({ item: i, student, now }: { item: EnrollItem; student: bool
         )}
       </div>
       {i.teacher && (
-        <div className={styles.teacher}>
+        <div className={`${styles.teacher} ${styles.pinned}`}>
           <Avatar initials={i.teacher.initials} size={32} tone="ucitel" href={profileHref(i.teacher.id)} title={i.teacher.name} />
           <span>{i.teacher.name}</span>
         </div>
@@ -382,5 +382,23 @@ function Disabled({ children }: { children: React.ReactNode }) {
     <button type="button" className={`btn ${styles.disabled}`} disabled>
       {children}
     </button>
+  );
+}
+
+/** Popis zkrácený na pár řádků (karty jsou pak stejně vysoké), celý po rozkliknutí. */
+function Description({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const long = text.length > 180;
+  return (
+    <>
+      <p className={styles.desc} data-clamped={long && !open ? true : undefined}>
+        {text}
+      </p>
+      {long && (
+        <button type="button" className={styles.more} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+          {open ? "Méně" : "Celý popis"}
+        </button>
+      )}
+    </>
   );
 }

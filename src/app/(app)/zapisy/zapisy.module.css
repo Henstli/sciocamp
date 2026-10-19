@@ -166,6 +166,9 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+/* Vyučující, obsazenost a tlačítko drží u všech karet stejnou polohu dole. */
+.pinned {
   margin-top: auto;
 }
 .capacityRow {
@@ -393,4 +396,25 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+.desc[data-clamped] {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.more {
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f4fb8;
+  cursor: pointer;
+}
+.more:hover {
+  text-decoration: underline;
 }
