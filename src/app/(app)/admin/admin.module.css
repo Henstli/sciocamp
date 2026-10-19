@@ -404,3 +404,46 @@
   font-size: 13px;
   opacity: 0.85;
 }
+
+/* Úprava jména v seznamu uživatelů */
+.nameLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.name[data-missing] {
+  color: var(--text-muted);
+  font-style: italic;
+}
+.editName {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.editName:hover {
+  background: var(--border-soft);
+  color: var(--primary);
+}
+.nameForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.nameForm .textInput {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.savedNote {
+  color: #17704a;
+  font-weight: 600;
+}

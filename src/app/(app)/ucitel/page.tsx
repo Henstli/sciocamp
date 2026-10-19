@@ -25,7 +25,11 @@ export default async function TeacherPage({ searchParams }: PageProps<"/ucitel">
   // Období v přípravě: učitel zadá kurzy a potvrdí, že má hotovo.
   const preparing = await Promise.all(
     (await listPeriods())
-      .filter((p) => !p.publishedAt && p.endsOn >= today)
+      // Jen nejbližší příští období (a jen dokud není zveřejněné); další se ukáže, až začne to předchozí.
+      .filter((p) => p.startsOn > today)
+      .sort((a, b) => a.startsOn.localeCompare(b.startsOn))
+      .slice(0, 1)
+      .filter((p) => !p.publishedAt)
       .map(async (p) => ({ period: p, ready: (await readyTeachers(p.id)).includes(user.id) })),
   );
 

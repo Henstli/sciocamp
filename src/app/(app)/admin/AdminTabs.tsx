@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useActionState, useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/PageHeader";
-import { changeRole, inviteUser, type InviteState } from "@/lib/actions/users";
+import { changeRole, inviteUser, renameUser, type InviteState } from "@/lib/actions/users";
 import type { ActivityKind, Role } from "@/lib/types";
 import styles from "./admin.module.css";
 
@@ -127,10 +127,7 @@ export function AdminTabs({
                 <div key={u.id} className={styles.row}>
                   <div className={styles.person}>
                     <Avatar initials={u.initials} size={36} tone={u.role} />
-                    <div className={styles.personText}>
-                      <div className={styles.name}>{u.name}</div>
-                      <div className={styles.email}>{u.email}</div>
-                    </div>
+                    <NameCell user={u} />
                   </div>
                   <select
                     aria-label={`Role uživatele ${u.name}`}
@@ -275,5 +272,64 @@ function InviteForm({ live, onClose }: { live: boolean; onClose: () => void }) {
         {pending ? "Odesílám…" : "Poslat pozvánku"}
       </button>
     </form>
+  );
+}
+
+/** Jméno uživatele s možností úpravy (tužka → pole → Uložit). */
+function NameCell({ user: u }: { user: { id: string; name: string; email: string } }) {
+  const placeholderName = u.name === u.email.split("@")[0];
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(placeholderName ? "" : u.name);
+  const [msg, setMsg] = useState<{ error?: string; info?: string }>({});
+  const [pending, start] = useTransition();
+  const save = () =>
+    start(async () => {
+      const res = await renameUser(u.id, value);
+      setMsg(res);
+      if (!res.error) setEditing(false);
+    });
+  if (editing) {
+    return (
+      <form
+        className={styles.nameForm}
+        onSubmit={(e) => {
+          e.preventDefault();
+          save();
+        }}
+      >
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Jméno Příjmení"
+          aria-label={`Jméno a příjmení: ${u.email}`}
+          className={styles.textInput}
+          onKeyDown={(e) => e.key === "Escape" && setEditing(false)}
+        />
+        <button type="submit" className="btn btn-primary" disabled={pending} style={{ minHeight: 40 }}>
+          {pending ? "…" : "Uložit"}
+        </button>
+        <button type="button" className="btn btn-outline" style={{ minHeight: 40 }} onClick={() => setEditing(false)}>
+          Zrušit
+        </button>
+        {msg.error && <span className={styles.msgError}>{msg.error}</span>}
+      </form>
+    );
+  }
+  return (
+    <div className={styles.personText}>
+      <div className={styles.nameLine}>
+        <span className={styles.name} data-missing={placeholderName || undefined}>
+          {placeholderName ? "Bez jména" : u.name}
+        </span>
+        <button type="button" className={styles.editName} onClick={() => setEditing(true)} aria-label={`Upravit jméno: ${u.email}`} title="Upravit jméno">
+          <Icon name="edit" size={14} />
+        </button>
+      </div>
+      <div className={styles.email}>
+        {u.email}
+        {msg.info && <span className={styles.savedNote}> · {msg.info}</span>}
+      </div>
+    </div>
   );
 }

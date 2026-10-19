@@ -73,3 +73,18 @@ export async function changeRole(userId: string, role: Role): Promise<RoleState>
   refresh();
   return { info: "Role je uložená." };
 }
+
+/** Admin upraví jméno a příjmení uživatele. */
+export async function renameUser(userId: string, fullName: string): Promise<RoleState> {
+  await requireAdmin();
+  const name = fullName.replace(/\s+/g, " ").trim();
+  if (name.length < 3 || !name.includes(" ")) return { error: "Napiš jméno i příjmení, např. Jana Nováková." };
+  if (name.length > 80) return { error: "Jméno je moc dlouhé." };
+  if (!isSupabase) return { info: "Ukázkový režim: změny se neukládají." };
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.from("profiles").update({ full_name: name }).eq("id", userId).select("id");
+  if (error || !data?.length) return { error: "Jméno se nepodařilo uložit." };
+  refresh();
+  return { info: "Jméno je uložené." };
+}
