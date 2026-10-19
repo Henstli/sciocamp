@@ -107,3 +107,9 @@ export function atelierConflicts(activity: Activity, all: Activity[]): Record<st
   }
   return out;
 }
+
+/** „2.–27. 11. 2026“, „1. 12. 2026 – 25. 1. 2027“ — vždy s rokem, nikdy dvakrát. */
+export function formatDateRangeWithYear(from: string, to: string): string {
+  const text = formatDateRange(from, to);
+  return /\d{4}/.test(text) ? text : `${text} ${to.slice(0, 4)}`;
+}

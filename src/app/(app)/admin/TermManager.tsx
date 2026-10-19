@@ -4,7 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { DateInput } from "@/components/fields/DateTime";
 import { deleteTerm, saveTerm, type TermState } from "@/lib/actions/terms";
 import { plural } from "@/lib/format";
-import { formatDateRange } from "@/lib/periods";
+import { formatDateRangeWithYear } from "@/lib/periods";
 import { keepForm } from "@/lib/use-keep-form";
 import styles from "./admin.module.css";
 
@@ -73,7 +73,7 @@ export function TermManager({ terms }: { terms: TermRow[] }) {
               <div key={t.id} className={styles.termRow}>
                 <div className={styles.courseMain}>
                   <div className={styles.name}>
-                    {formatDateRange(t.startsOn, t.endsOn)} {t.startsOn.slice(0, 4)}
+                    {formatDateRangeWithYear(t.startsOn, t.endsOn)}
                     {t.name && <span className={styles.termName}> · {t.name}</span>}
                   </div>
                   <div className={styles.email}>

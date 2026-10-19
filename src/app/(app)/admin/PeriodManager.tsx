@@ -5,7 +5,7 @@ import { DateInput, DueInput } from "@/components/fields/DateTime";
 import { Icon } from "@/components/Icon";
 import { deletePeriod, publishPeriod, savePeriod, type PeriodState } from "@/lib/actions/periods";
 import { plural } from "@/lib/format";
-import { formatDateRange } from "@/lib/periods";
+import { formatDateRangeWithYear } from "@/lib/periods";
 import { formatDue } from "@/lib/time";
 import { keepForm } from "@/lib/use-keep-form";
 import styles from "./admin.module.css";
@@ -90,7 +90,7 @@ export function PeriodManager({
                 )}
               </div>
               <div className={styles.email}>
-                {formatDateRange(p.startsOn, p.endsOn)} {p.startsOn.slice(0, 4)} · {p.activities}{" "}
+                {formatDateRangeWithYear(p.startsOn, p.endsOn)} · {p.activities}{" "}
                 {plural(p.activities, "aktivita", "aktivity", "aktivit")}
                 {p.drafts > 0 && ` · ${p.drafts} ${plural(p.drafts, "nezveřejněný kurz", "nezveřejněné kurzy", "nezveřejněných kurzů")}`}
               </div>

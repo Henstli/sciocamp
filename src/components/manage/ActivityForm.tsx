@@ -6,7 +6,7 @@ import { DateInput, TimeInput } from "@/components/fields/DateTime";
 import { Icon } from "@/components/Icon";
 import { StaffPicker } from "./StaffPicker";
 import { saveActivity, type ActivityFormState } from "@/lib/actions/activities";
-import { formatDateRange } from "@/lib/periods";
+import { formatDateRange, formatDateRangeWithYear } from "@/lib/periods";
 import { formatDue } from "@/lib/time";
 import { leaveRound } from "@/lib/actions/rounds";
 import type { ActivityKind } from "@/lib/types";
@@ -169,7 +169,7 @@ export function ActivityForm({
                 </option>
                 {kindTerms.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {formatDateRange(t.startsOn, t.endsOn)} {t.startsOn.slice(0, 4)}
+                    {formatDateRangeWithYear(t.startsOn, t.endsOn)}
                     {t.name ? ` · ${t.name}` : ""}
                   </option>
                 ))}
