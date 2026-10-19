@@ -136,11 +136,28 @@
   color: #fff;
 }
 .entryTitle {
+  flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.entry[data-short="true"] .entryTitle {
+/* Kratší bloky: název na jeden řádek (čas je v bublině po najetí myší). */
+.entry[data-size="short"] .entryTitle,
+.entry[data-size="small"] .entryTitle,
+.entry[data-size="tiny"] .entryTitle {
   white-space: nowrap;
+}
+.entry[data-size="small"] {
+  padding: 4px 8px;
+  justify-content: center;
+}
+/* 15–25 min: jeden řádek přes celou výšku bloku. */
+.entry[data-size="tiny"] {
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .entryTime {
   font-weight: 500;

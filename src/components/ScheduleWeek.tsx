@@ -119,14 +119,15 @@ export function ScheduleWeek({
                       className={styles.entry}
                       data-kind={e.activity.kind}
                       data-live={e.live}
-                      data-short={h <= 60}
+                      // Velikost bloku: malé ukážou jen název (čas je v bublině), nejmenší (15 min) menším písmem.
+                      data-size={h < 30 ? "tiny" : h < 50 ? "small" : h <= 60 ? "short" : "normal"}
                       title={`${e.activity.title}, ${formatRange(e.slot)}`}
-                      style={{ top: top + 2, height: h - 4 }}
+                      style={h < 30 ? { top: top + 1, height: h - 2, lineHeight: `${h - 2}px` } : { top: top + 2, height: h - 4 }}
                     >
                       <span className={styles.entryTitle}>
-                        {e.activity.kind === "atelier" ? `Ateliér: ${e.activity.title}` : e.activity.title}
+                        {e.activity.kind === "atelier" && h >= 50 ? `Ateliér: ${e.activity.title}` : e.activity.title}
                       </span>
-                      <span className={styles.entryTime}>{formatRange(e.slot)}</span>
+                      {h >= 50 && <span className={styles.entryTime}>{formatRange(e.slot)}</span>}
                       {e.live && <span className="sr-only"> (právě probíhá)</span>}
                     </Link>
                   );
