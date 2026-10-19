@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { activityHref } from "@/lib/links";
-import { hasEnded } from "@/lib/periods";
+import { hasEnded, hasStarted } from "@/lib/periods";
 import { ROLE_LABEL, initials } from "@/lib/roles";
 import type { Activity, User } from "@/lib/types";
 import styles from "@/app/(app)/profil/profil.module.css";
@@ -28,8 +28,9 @@ export function ProfileView({
   activities: Activity[];
   todayIso: string;
 }) {
+  // Jen kurzy a ateliéry, které právě běží (začaly a ještě neskončily).
   const current = activities
-    .filter((a) => !hasEnded(a, todayIso))
+    .filter((a) => (a.kind === "kurz" || a.kind === "atelier") && hasStarted(a, todayIso) && !hasEnded(a, todayIso))
     .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || a.title.localeCompare(b.title, "cs"));
   const student = person.role === "student";
   // Třídy = kurzy a ateliéry (události a expedice se nepočítají).
@@ -110,7 +111,7 @@ export function ProfileView({
         </section>
 
         <section aria-label="Výuka" className={`card ${styles.panel}`} style={{ flex: "2 1 420px" }}>
-          <h2 className={styles.h2}>{student ? "Kurzy, ateliéry a akce" : "Výuka"}</h2>
+          <h2 className={styles.h2}>{student ? "Kurzy a ateliéry" : "Výuka"}</h2>
           {current.length === 0 ? (
             <p className={styles.empty}>{isMe ? "Teď nemáš žádné probíhající třídy." : "Žádné společné probíhající třídy."}</p>
           ) : (
@@ -125,8 +126,6 @@ export function ProfileView({
           <div className={styles.legend}>
             <span><i data-kind="kurz" />Kurz</span>
             <span><i data-kind="atelier" />Ateliér</span>
-            <span><i data-kind="ostatni" />Událost</span>
-            <span><i data-kind="expedice" />Expedice</span>
           </div>
         </section>
       </div>
