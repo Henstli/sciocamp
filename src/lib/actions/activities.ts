@@ -10,6 +10,7 @@ import { normalizeMeetUrl } from "../meet";
 import { isAdmin, canTeach } from "../roles";
 import { createClient } from "../supabase/server";
 import type { ActivityKind } from "../types";
+import { parseWindowFields } from "../window-fields";
 
 export type ActivityFormState = { error?: string; info?: string; fieldErrors?: Record<string, string> };
 
@@ -106,6 +107,22 @@ function parseForm(formData: FormData) {
     }
   }
 
+  // Zápis: ateliér a expedice mají vlastní termín, kurz bere termín z období.
+  let enrollment: { published?: boolean; enroll_opens_at: string | null; enroll_closes_at: string | null } = {
+    enroll_opens_at: null,
+    enroll_closes_at: null,
+  };
+  if (kind === "atelier" || kind === "expedice") {
+    const w = parseWindowFields(String(formData.get("enrollOpens") ?? ""), String(formData.get("enrollCloses") ?? ""), fieldErrors);
+    const published = formData.get("published") === "1";
+    if (published && !w.opens && !fieldErrors.enrollOpens && !fieldErrors.enrollCloses) {
+      fieldErrors.enrollOpens = "Pro vyhlášení zápisu vyplň, kdy se otevře a kdy skončí.";
+    }
+    enrollment = { published, enroll_opens_at: w.opens, enroll_closes_at: w.closes };
+  } else if (kind === "ostatni") {
+    enrollment.published = true;
+  }
+
   if (milestonesTotal < 0 || milestonesTotal > 20 || milestonesDone < 0 || milestonesDone > milestonesTotal) {
     fieldErrors.milestones = "Hotových milníků nemůže být víc než všech (max. 20).";
   }
@@ -127,6 +144,7 @@ function parseForm(formData: FormData) {
       project_name: kind === "atelier" ? projectName : null,
       milestones_total: kind === "atelier" && projectName ? milestonesTotal : 0,
       milestones_done: kind === "atelier" && projectName ? milestonesDone : 0,
+      ...enrollment,
     },
     teacherId,
     coTeacherIds,
@@ -201,9 +219,11 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
     slug = base;
     for (let i = 2; used.has(slug); i++) slug = `${base}-${i}`;
 
+    // Nový kurz je rozpracovaný, dokud admin nezveřejní období (kurz bez období je vidět hned).
+    const publishedOnInsert = values.kind === "kurz" ? !values.block_id : (values.published ?? false);
     const { data, error } = await sb
       .from("activities")
-      .insert({ ...values, slug, teacher_id: teacher })
+      .insert({ ...values, published: publishedOnInsert, slug, teacher_id: teacher })
       .select("id")
       .single();
     if (error || !data) return { error: `Aktivitu se nepodařilo založit${error?.message ? `: ${error.message}` : "."}` };

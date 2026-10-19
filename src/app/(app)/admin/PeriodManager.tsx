@@ -1,15 +1,39 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { DateInput } from "@/components/fields/DateTime";
-import { deletePeriod, savePeriod, type PeriodState } from "@/lib/actions/periods";
+import { DateInput, DueInput } from "@/components/fields/DateTime";
+import { Icon } from "@/components/Icon";
+import { deletePeriod, publishPeriod, savePeriod, type PeriodState } from "@/lib/actions/periods";
+import { plural } from "@/lib/format";
 import { formatDateRange } from "@/lib/periods";
+import { formatDue } from "@/lib/time";
 import { keepForm } from "@/lib/use-keep-form";
 import styles from "./admin.module.css";
 
-export type PeriodRow = { id: string; name: string; startsOn: string; endsOn: string; activities: number; current: boolean };
+export type PeriodRow = {
+  id: string;
+  name: string;
+  startsOn: string;
+  endsOn: string;
+  /** Termín zápisu pro formulář (pražský čas „rrrr-mm-ddThh:mm“) */
+  enrollOpens: string;
+  enrollCloses: string;
+  enrollOpensAt: string | null;
+  enrollClosesAt: string | null;
+  published: boolean;
+  ended: boolean;
+  current: boolean;
+  activities: number;
+  courses: number;
+  /** Kurzy, které studenti ještě nevidí */
+  drafts: number;
+  teachers: { id: string; name: string; courses: number; ready: boolean }[];
+};
 
-/** Kurzová období (4 za rok): admin je zakládá, kurzy a ateliéry se do nich řadí. */
+/**
+ * Kurzová období (4 za rok): admin je zakládá, učitelé do nich zadávají kurzy
+ * a potvrdí „Mám hotovo“. Admin pak kurzy zveřejní v Zápisech s termínem zápisu.
+ */
 export function PeriodManager({ periods }: { periods: PeriodRow[] }) {
   const [editing, setEditing] = useState<PeriodRow | "new" | null>(periods.length === 0 ? "new" : null);
   const [msg, setMsg] = useState<PeriodState>({});
@@ -22,7 +46,8 @@ export function PeriodManager({ periods }: { periods: PeriodRow[] }) {
         <div>
           <h2 className="section-title">Kurzová období</h2>
           <p className={styles.inviteNote}>
-            Za rok jsou 4 období, 2 v každém pololetí. Kurz trvá celé období, ateliéry se během něj střídají.
+            Za rok jsou 4 období, 2 v každém pololetí. Učitelé do nového období zadají kurzy a potvrdí „Mám hotovo“. Pak
+            nastavíš termín zápisu a kurzy zveřejníš v Zápisech.
           </p>
         </div>
         {editing === null && (
@@ -42,33 +67,71 @@ export function PeriodManager({ periods }: { periods: PeriodRow[] }) {
       )}
 
       {periods.map((p) => (
-        <div key={p.id} className={styles.courseRow}>
-          <div className={styles.courseMain}>
-            <div className={styles.name}>
-              {p.name} {p.current && <span className="chip chip-ok">Právě běží</span>}
+        <div key={p.id} className={styles.periodRow}>
+          <div className={styles.periodHead}>
+            <div className={styles.courseMain}>
+              <div className={styles.name}>
+                {p.name}{" "}
+                {p.current ? (
+                  <span className="chip chip-ok">Právě běží</span>
+                ) : p.ended ? (
+                  <span className="chip">Proběhlo</span>
+                ) : p.published ? (
+                  <span className="chip chip-primary">Zveřejněno v Zápisech</span>
+                ) : (
+                  <span className="chip chip-wait">Příprava</span>
+                )}
+              </div>
+              <div className={styles.email}>
+                {formatDateRange(p.startsOn, p.endsOn)} {p.startsOn.slice(0, 4)} · {p.activities}{" "}
+                {plural(p.activities, "aktivita", "aktivity", "aktivit")}
+                {p.drafts > 0 && ` · ${p.drafts} ${plural(p.drafts, "nezveřejněný kurz", "nezveřejněné kurzy", "nezveřejněných kurzů")}`}
+              </div>
+              {!p.ended && (
+                <div className={styles.email}>
+                  <Icon name="clock" size={14} />{" "}
+                  {p.enrollOpensAt && p.enrollClosesAt
+                    ? `Zápis ${formatDue(p.enrollOpensAt)} – ${formatDue(p.enrollClosesAt)}`
+                    : "Termín zápisu zatím není nastavený"}
+                </div>
+              )}
             </div>
-            <div className={styles.email}>
-              {formatDateRange(p.startsOn, p.endsOn)} {p.startsOn.slice(0, 4)} · {p.activities}{" "}
-              {p.activities === 1 ? "aktivita" : p.activities >= 2 && p.activities <= 4 ? "aktivity" : "aktivit"}
-            </div>
+            <button type="button" className="btn btn-outline" style={{ minHeight: 40 }} onClick={() => setEditing(p)}>
+              Upravit
+            </button>
+            {confirm === `del-${p.id}` ? (
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ minHeight: 40, color: "var(--late)", borderColor: "#e7b4b4" }}
+                disabled={pending}
+                onClick={() => start(async () => setMsg(await deletePeriod(p.id)))}
+              >
+                Opravdu smazat?
+              </button>
+            ) : (
+              <button type="button" className="btn btn-outline" style={{ minHeight: 40 }} onClick={() => setConfirm(`del-${p.id}`)}>
+                Smazat
+              </button>
+            )}
           </div>
-          <button type="button" className="btn btn-outline" style={{ minHeight: 40 }} onClick={() => setEditing(p)}>
-            Upravit
-          </button>
-          {confirm === p.id ? (
-            <button
-              type="button"
-              className="btn btn-outline"
-              style={{ minHeight: 40, color: "var(--late)", borderColor: "#e7b4b4" }}
-              disabled={pending}
-              onClick={() => start(async () => setMsg(await deletePeriod(p.id)))}
-            >
-              Opravdu smazat?
-            </button>
-          ) : (
-            <button type="button" className="btn btn-outline" style={{ minHeight: 40 }} onClick={() => setConfirm(p.id)}>
-              Smazat
-            </button>
+
+          {!p.ended && (!p.published || p.drafts > 0) && <Readiness period={p} />}
+
+          {!p.ended && (!p.published || p.drafts > 0) && (
+            <PublishControl
+              period={p}
+              confirming={confirm === `pub-${p.id}`}
+              pending={pending}
+              onAsk={() => setConfirm(`pub-${p.id}`)}
+              onCancel={() => setConfirm(null)}
+              onPublish={() =>
+                start(async () => {
+                  setMsg(await publishPeriod(p.id));
+                  setConfirm(null);
+                })
+              }
+            />
           )}
         </div>
       ))}
@@ -79,6 +142,87 @@ export function PeriodManager({ periods }: { periods: PeriodRow[] }) {
         </p>
       )}
     </section>
+  );
+}
+
+/** Kdo z učitelů má kurzy v období hotové. */
+function Readiness({ period: p }: { period: PeriodRow }) {
+  const ready = p.teachers.filter((t) => t.ready).length;
+  return (
+    <details className={styles.ready}>
+      <summary>
+        <span className={styles.readyCount} data-all={ready === p.teachers.length || undefined}>
+          {ready} / {p.teachers.length}
+        </span>{" "}
+        učitelů má kurzy hotové
+      </summary>
+      <ul className={styles.readyList}>
+        {p.teachers.map((t) => (
+          <li key={t.id} data-ready={t.ready || undefined}>
+            <span className={styles.readyMark} aria-hidden>
+              {t.ready ? <Icon name="tick" size={14} strokeWidth={2.6} /> : "…"}
+            </span>
+            <span className={styles.grow}>{t.name}</span>
+            <span className={styles.email}>
+              {t.courses} {plural(t.courses, "kurz", "kurzy", "kurzů")} · {t.ready ? "hotovo" : "ještě připravuje"}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function PublishControl({
+  period: p,
+  confirming,
+  pending,
+  onAsk,
+  onCancel,
+  onPublish,
+}: {
+  period: PeriodRow;
+  confirming: boolean;
+  pending: boolean;
+  onAsk: () => void;
+  onCancel: () => void;
+  onPublish: () => void;
+}) {
+  const missing = p.teachers.filter((t) => !t.ready);
+  const label = p.published ? `Zveřejnit nové kurzy (${p.drafts})` : "Zveřejnit kurzy v Zápisech";
+  if (!p.enrollOpensAt || !p.enrollClosesAt) {
+    return <p className={styles.inviteNote}>Než kurzy zveřejníš, nastav přes „Upravit“, kdy se zápis otevře a kdy skončí.</p>;
+  }
+  if (confirming) {
+    return (
+      <div className={styles.publishConfirm} role="alert">
+        <p>
+          {missing.length > 0 ? (
+            <>
+              Ještě nemají hotovo: <strong>{missing.map((t) => t.name).join(", ")}</strong>. Jejich rozpracované kurzy se
+              zveřejní taky. Přesto zveřejnit?
+            </>
+          ) : (
+            <>Kurzy uvidí všichni studenti a přijde jim oznámení s termínem zápisu. Zveřejnit?</>
+          )}
+        </p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" className="btn btn-primary" disabled={pending} onClick={onPublish}>
+            {pending ? "Zveřejňuji…" : "Ano, zveřejnit"}
+          </button>
+          <button type="button" className="btn btn-outline" onClick={onCancel}>
+            Zpět
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <button type="button" className="btn btn-primary" onClick={onAsk}>
+        {label}
+      </button>
+    </div>
   );
 }
 
@@ -105,6 +249,21 @@ function PeriodForm({ period, suggestedName, onClose }: { period: PeriodRow | nu
           {fe.endsOn && <span className={styles.msgError}>{fe.endsOn}</span>}
         </div>
       </div>
+      <div className={styles.inviteGrid}>
+        <div className={styles.field}>
+          Zápis do kurzů se otevře
+          <DueInput name="enrollOpens" defaultValue={period?.enrollOpens ?? ""} defaultTime="18:00" label="otevření zápisu" />
+          {fe.enrollOpens && <span className={styles.msgError}>{fe.enrollOpens}</span>}
+        </div>
+        <div className={styles.field}>
+          Zápis skončí
+          <DueInput name="enrollCloses" defaultValue={period?.enrollCloses ?? ""} defaultTime="20:00" label="konce zápisu" />
+          {fe.enrollCloses && <span className={styles.msgError}>{fe.enrollCloses}</span>}
+        </div>
+      </div>
+      <p className={styles.inviteNote}>
+        Termín zápisu můžeš nastavit i později. Studenti ho uvidí, až kurzy období zveřejníš.
+      </p>
       {(state.error || state.info) && (
         <p role="status" className={state.error ? styles.msgError : styles.inviteNote}>
           {state.error ?? state.info}

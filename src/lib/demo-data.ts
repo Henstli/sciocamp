@@ -33,10 +33,28 @@ const ALL_STUDENTS = DEMO_USERS.filter((u) => u.role === "student").map((u) => u
 const PRESENTACE = ["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna", "u-kubicek", "u-maly", "u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-horakova", "u-vesely"];
 
 export const DEMO_PERIODS: Period[] = [
-  { id: "obdobi-1", name: "Kurzové období 1", startsOn: "2026-09-01", endsOn: "2026-10-30" },
-  { id: "obdobi-2", name: "Kurzové období 2", startsOn: "2026-11-02", endsOn: "2026-12-18" },
+  { id: "obdobi-1", name: "Kurzové období 1", startsOn: "2026-09-01", endsOn: "2026-10-30", publishedAt: "2026-08-20T08:00:00Z" },
+  {
+    id: "obdobi-2",
+    name: "Kurzové období 2",
+    startsOn: "2026-11-02",
+    endsOn: "2026-12-18",
+    enrollOpensAt: "2026-10-19T14:00:00Z",
+    enrollClosesAt: "2026-10-23T18:00:00Z",
+    publishedAt: "2026-10-12T08:00:00Z",
+  },
+  {
+    id: "obdobi-3",
+    name: "Kurzové období 3",
+    startsOn: "2027-01-04",
+    endsOn: "2027-02-26",
+    enrollOpensAt: "2026-12-07T17:00:00Z",
+    enrollClosesAt: "2026-12-11T19:00:00Z",
+    publishedAt: null,
+  },
 ];
 const P1 = DEMO_PERIODS[0];
+const P2 = DEMO_PERIODS[1];
 
 export const DEMO_ACTIVITIES: Activity[] = [
   // Kurzy
@@ -62,7 +80,64 @@ export const DEMO_ACTIVITIES: Activity[] = [
   // Týden expedic: všechny expedice běží souběžně po–pá, ostatní výuka ten týden neprobíhá.
   { id: "za-vlky-do-javorniku", kind: "expedice", title: "Za vlky do Javorníků", teacherId: "u-kumstat", coTeacherIds: ["u-pietraszek"], location: "Javorníky, chata pod Kohútkou", period: null, startsOn: "2026-10-26", endsOn: "2026-10-30", meetUrl: null, allowedGrades: null, slots: [], studentIds: ["u-liska", "u-komarek", "u-cerny", "u-svobodova", "u-vesely", "u-kral", "u-benes", "u-maly"], capacity: 12, tone: "teal" },
   { id: "sumava-na-kolech", kind: "expedice", title: "Šumava na kolech", teacherId: "u-lukes", coTeacherIds: ["u-hankova", "u-kubesova"], location: "Kvilda, Šumava", period: null, startsOn: "2026-10-26", endsOn: "2026-10-30", meetUrl: null, allowedGrades: null, slots: [], studentIds: ["u-kolarova", "u-jaukner", "u-novotna", "u-kubicek", "u-dvorakova", "u-horakova"], capacity: 14, tone: "teal" },
+
+  // --- Další období: nabídka v Zápisech ---
+  ...nextPeriod(),
 ];
+
+/** Kurzy, ateliéry a expedice dalšího období (zápis právě běží). */
+function nextPeriod(): Activity[] {
+  const base = { location: null, meetUrl: null, allowedGrades: null, startsOn: null, endsOn: null, coTeacherIds: [] as string[] };
+  const OPEN = { enrollOpensAt: "2026-10-19T14:00:00Z", enrollClosesAt: "2026-10-23T18:00:00Z" };
+  const course = (id: string, title: string, teacherId: string, day: 1 | 2 | 3 | 4 | 5, start: string, end: string, capacity: number, studentIds: string[], extra: Partial<Activity> = {}): Activity => ({
+    ...base, id, kind: "kurz", title, teacherId, period: P2, slots: [{ day, start, end }], capacity, studentIds, tone: "blue", ...extra,
+  });
+  const S = DEMO_USERS.filter((u) => u.role === "student" && u.id !== "u-liska").map((u) => u.id);
+  return [
+    course("cestomanie-2", "Cestománie", "u-kumstat", 3, "11:30", "12:30", 16, S.slice(0, 14), { description: "Plánování cest, rozpočet a orientace v neznámém prostředí." }),
+    course("jak-cist-film-2", "Jak číst film", "u-kubesova", 4, "12:00", "13:00", 14, S.slice(2, 11), { description: "Filmový jazyk, střih a kamera. Co film říká, aniž to vysloví." }),
+    course("chemie-leku-a-jedu-2", "Chemie léků a jedů", "u-pietraszek", 2, "10:00", "11:00", 6, S.slice(0, 6), { description: "Kde končí lék a začíná jed. Dávky, účinky a příběhy z historie." }),
+    course("literatura-ve-filmu-2", "Literatura ve filmu", "u-jakubcova", 2, "11:30", "12:30", 18, ["u-liska", ...S.slice(4, 13)], { description: "Knihy a jejich filmové adaptace. Co se při převodu ztrácí a co získává." }),
+    course("psychoterapeuticke-minimum-2", "Psychoterapeutické minimum", "u-pietraszek", 2, "09:00", "10:00", 12, ["u-liska", ...S.slice(1, 6)], { description: "Základy psychoterapeutických směrů a práce s klientem." }),
+    course("komplexni-cisla-a-fraktaly-2", "Komplexní čísla a fraktály", "u-pavel", 3, "10:00", "11:00", 12, ["u-liska", ...S.slice(6, 10)], { description: "Od imaginární jednotky k Mandelbrotově množině." }),
+    course("kriticke-mysleni-2", "Kritické myšlení", "u-hankova", 2, "11:30", "12:30", 14, S.slice(3, 8), { description: "Jak poznat manipulaci, chybné argumenty a falešné zprávy." }),
+    course("priprava-k-maturite-2", "Příprava k maturitě", "u-pavel", 4, "10:00", "11:00", 20, [], { allowedGrades: [4], description: "Opakování a nácvik ústní části. Jen pro maturanty." }),
+    { ...course("poezie-3", "Poezie a rap", "u-jakubcova", 3, "11:30", "12:30", 14, [], { published: false, description: "Rytmus, rým a obraz od Máchy po současný rap." }), period: DEMO_PERIODS[2] },
+    course("nova-matematika-2", "Matematika v přírodě", "u-jakubcova", 5, "11:00", "12:00", 12, [], { published: false, description: "Rozpracovaný kurz — studenti ho zatím nevidí." }),
+    {
+      ...base, id: "fotografie", kind: "atelier", title: "Fotografie", teacherId: "u-hankova", period: P2, startsOn: "2026-11-02", endsOn: "2026-11-27",
+      slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 12, studentIds: S.slice(0, 7), tone: "violet", ...OPEN,
+      description: "Reportážní fotka: světlo, kompozice a vyprávění příběhu v sérii snímků.",
+    },
+    {
+      ...base, id: "sachy-2", kind: "atelier", title: "Šachy pro pokročilé", teacherId: "u-lukes", period: P2, startsOn: "2026-11-02", endsOn: "2026-11-27",
+      slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 10, studentIds: ["u-liska", ...S.slice(8, 12)], tone: "violet", ...OPEN,
+      description: "Zahájení, taktika a rozbor vlastních partií.",
+    },
+    {
+      ...base, id: "retorika", kind: "atelier", title: "Rétorika", teacherId: "u-kumstat", period: P2, startsOn: "2026-11-30", endsOn: "2026-12-18",
+      slots: [{ day: 1, start: "09:00", end: "11:30" }], capacity: 12, studentIds: [], tone: "violet",
+      enrollOpensAt: "2026-11-09T17:00:00Z", enrollClosesAt: "2026-11-13T18:00:00Z",
+      description: "Hlas, pauza a argument. Zakončeno veřejnou debatou.",
+    },
+    {
+      ...base, id: "zazij-evropu", kind: "expedice", title: "Zažij Evropu!", teacherId: "u-kubesova", coTeacherIds: ["u-kumstat"], period: null,
+      startsOn: "2027-04-12", endsOn: "2027-04-16", location: "Vlakem přes 4 země", slots: [], capacity: 12, studentIds: S.slice(0, 5), tone: "teal", ...OPEN,
+      description: "Vlakem napříč čtyřmi zeměmi. Plán a rozpočet si připravíte sami.",
+    },
+    {
+      ...base, id: "krkonose-na-snezu", kind: "expedice", title: "Krkonoše na sněžnicích", teacherId: "u-lukes", coTeacherIds: ["u-pietraszek"], period: null,
+      startsOn: "2027-04-12", endsOn: "2027-04-16", location: "Pec pod Sněžkou", slots: [], capacity: 10, studentIds: S.slice(5, 9), tone: "teal",
+      enrollOpensAt: "2026-11-02T17:00:00Z", enrollClosesAt: "2026-11-06T18:00:00Z",
+      description: "Horská chata, sněžnice a lavinová prevence s instruktorem.",
+    },
+  ];
+}
+
+/** Ukázková čekací řada: slug → počet čekajících a pořadí jednotlivých studentů. */
+export const DEMO_WAITLIST: Record<string, string[]> = {
+  "chemie-leku-a-jedu-2": ["u-vesely", "u-liska", "u-kral"],
+};
 
 // Obsah tříd, který zatím žije jen v ukázkových datech (týmy). Nástěnka, chat
 // a zprávy jsou v demo-communication.ts.

@@ -2,11 +2,12 @@
 
 import { keepForm } from "@/lib/use-keep-form";
 import { useActionState, useState } from "react";
-import { DateInput, TimeInput } from "@/components/fields/DateTime";
+import { DateInput, DueInput, TimeInput } from "@/components/fields/DateTime";
 import { Icon } from "@/components/Icon";
 import { StaffPicker } from "./StaffPicker";
 import { saveActivity, type ActivityFormState } from "@/lib/actions/activities";
 import { formatDateRange } from "@/lib/periods";
+import { formatDue, isoToPragueLocal } from "@/lib/time";
 import type { ActivityKind } from "@/lib/types";
 import styles from "./manage.module.css";
 
@@ -30,6 +31,10 @@ export type ActivityFormValues = {
   slots: { day: number; start: string; end: string }[];
   /** Další vyučující */
   coTeacherIds: string[];
+  /** Ateliér a expedice: zveřejněno v Zápisech a vlastní termín zápisu (pražský čas „rrrr-mm-ddThh:mm“) */
+  published: boolean;
+  enrollOpens: string;
+  enrollCloses: string;
 };
 
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek"];
@@ -48,7 +53,7 @@ export function ActivityForm({
 }: {
   initial: ActivityFormValues;
   /** Kurzová období (zakládá je admin ve Správě) */
-  periods: { id: string; name: string; startsOn: string; endsOn: string }[];
+  periods: { id: string; name: string; startsOn: string; endsOn: string; enrollOpensAt?: string | null; enrollClosesAt?: string | null }[];
   /** Učitelé a admini (výběr hlavního vyučujícího pro admina, další vyučující pro všechny). */
   staff: { id: string; name: string }[];
   canPickTeacher: boolean;
@@ -67,6 +72,9 @@ export function ActivityForm({
   const [coTeachers, setCoTeachers] = useState<string[]>(initial.coTeacherIds);
   const fe = state.fieldErrors ?? {};
   const editing = !!initial.slug;
+  // Termín zápisu ateliéru / expedice; „Stejně jako kurzy“ ho přepíše termínem období.
+  const [enroll, setEnroll] = useState({ opens: initial.enrollOpens, closes: initial.enrollCloses, version: 0 });
+  const [published, setPublished] = useState(initial.published);
 
   const setSlot = (i: number, patch: Partial<(typeof slots)[number]>) =>
     setSlots((all) => all.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -181,6 +189,54 @@ export function ActivityForm({
                 : null}
         </span>
       </fieldset>
+
+      {(kind === "atelier" || kind === "expedice") && (
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.legend}>Zápis studentů</legend>
+          <label className={styles.check}>
+            <input type="checkbox" name="published" value="1" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+            <span>
+              <strong>Vyhlásit zápis</strong> — {kind === "expedice" ? "expedici" : "ateliér"} uvidí všichni studenti v Zápisech a v termínu se
+              zapíšou sami (kapacitu, čekačku a kolize hlídá aplikace).
+            </span>
+          </label>
+          <div className={styles.grid}>
+            <Field label="Zápis se otevře" error={fe.enrollOpens}>
+              <DueInput key={`o${enroll.version}`} name="enrollOpens" defaultValue={enroll.opens} defaultTime="18:00" label="otevření zápisu" />
+            </Field>
+            <Field label="Zápis skončí" error={fe.enrollCloses}>
+              <DueInput key={`c${enroll.version}`} name="enrollCloses" defaultValue={enroll.closes} defaultTime="20:00" label="konce zápisu" />
+            </Field>
+          </div>
+          {period?.enrollOpensAt && period.enrollClosesAt && (
+            <div>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() =>
+                  setEnroll((e) => ({
+                    opens: isoToPragueLocal(period.enrollOpensAt!),
+                    closes: isoToPragueLocal(period.enrollClosesAt!),
+                    version: e.version + 1,
+                  }))
+                }
+              >
+                Stejný termín jako kurzy ({formatDue(period.enrollOpensAt)} – {formatDue(period.enrollClosesAt)})
+              </button>
+            </div>
+          )}
+          <span className={styles.hint}>
+            Termín může být stejný jako u kurzů, nebo úplně jiný. Souběžné {kind === "expedice" ? "expedice" : "ateliéry"} ve
+            stejných dnech si student nezapíše dvakrát. Bez vyhlášení zápisu studenty zapisuješ sám v části Studenti.
+          </span>
+        </fieldset>
+      )}
+      {kind === "kurz" && (
+        <p className={styles.hint}>
+          Kurz uvidí studenti v Zápisech, až admin zveřejní kurzové období. Termín zápisu do kurzů nastavuje admin. V Moje
+          třídy pak dej vědět „Mám hotovo“.
+        </p>
+      )}
 
       <fieldset className={styles.fieldset}>
         <legend className={styles.legend}>{kind === "expedice" ? "Další vyučující (aspoň jeden)" : "Další vyučující (nepovinné)"}</legend>

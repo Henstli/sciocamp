@@ -6,7 +6,8 @@ import { listActivities, listPeriods, listUsers } from "@/lib/data";
 import { currentPeriod, describeWhen } from "@/lib/periods";
 import { KIND_LABEL } from "@/lib/links";
 import { initials } from "@/lib/roles";
-import { pragueNow, toIso } from "@/lib/time";
+import { isoToPragueLocal, pragueNow, toIso } from "@/lib/time";
+import { readyTeachers } from "@/lib/data-enroll";
 import { AdminTabs } from "./AdminTabs";
 import { PeriodManager } from "./PeriodManager";
 import styles from "./admin.module.css";
@@ -27,6 +28,35 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const staff = users.length - students;
   const offered = activities.filter((a) => a.kind === "kurz" || a.kind === "atelier");
 
+  // Připravenost učitelů u období, která ještě neskončila.
+  const periodRows = await Promise.all(
+    periods.map(async (p) => {
+      const courses = activities.filter((a) => a.kind === "kurz" && a.period?.id === p.id);
+      const ready = new Set(p.endsOn >= today ? await readyTeachers(p.id) : []);
+      const teacherIds = new Set([...users.filter((u) => u.role === "ucitel").map((u) => u.id), ...courses.map((c) => c.teacherId)]);
+      return {
+        id: p.id,
+        name: p.name,
+        startsOn: p.startsOn,
+        endsOn: p.endsOn,
+        enrollOpens: p.enrollOpensAt ? isoToPragueLocal(p.enrollOpensAt) : "",
+        enrollCloses: p.enrollClosesAt ? isoToPragueLocal(p.enrollClosesAt) : "",
+        enrollOpensAt: p.enrollOpensAt ?? null,
+        enrollClosesAt: p.enrollClosesAt ?? null,
+        published: !!p.publishedAt,
+        ended: p.endsOn < today,
+        current: p.id === current?.id && p.startsOn <= today && today <= p.endsOn,
+        activities: activities.filter((a) => a.period?.id === p.id).length,
+        courses: courses.length,
+        drafts: courses.filter((c) => c.published === false).length,
+        teachers: [...teacherIds]
+          .map((id) => ({ id, name: nameOf(id), courses: courses.filter((c) => c.teacherId === id).length, ready: ready.has(id) }))
+          .filter((t) => t.name)
+          .sort((a, b) => a.name.localeCompare(b.name, "cs")),
+      };
+    }),
+  );
+
   return (
     <>
       <PageHeader eyebrow="Správa školy" title="Uživatelé a škola" />
@@ -42,13 +72,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         live={isSupabase}
         initialTab={tab === "kurzy" ? "courses" : tab === "obdobi" ? "periods" : "users"}
         periodsTab={
-          <PeriodManager
-            periods={periods.map((p) => ({
-              ...p,
-              current: p.id === current?.id && p.startsOn <= today && today <= p.endsOn,
-              activities: activities.filter((a) => a.period?.id === p.id).length,
-            }))}
-          />
+          <PeriodManager periods={periodRows} />
         }
         users={users.map((u) => ({
           id: u.id,

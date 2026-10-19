@@ -95,13 +95,13 @@ const student2 = await createUser("eliot.komarek@scioskola.cz", { grade: "4" }, 
 const outsider = await createUser("cizi.student@scioskola.cz", {}, { full_name: "Cizí Student" });
 
 const { rows: [course] } = await db.query(
-  `insert into public.activities (slug, kind, title, teacher_id, location, meet_url)
-   values ('literatura-ve-filmu', 'kurz', 'Literatura ve filmu', $1, 'učebna 204', 'https://meet.google.com/abc-defg-hij') returning id`,
+  `insert into public.activities (slug, kind, title, teacher_id, location, meet_url, published)
+   values ('literatura-ve-filmu', 'kurz', 'Literatura ve filmu', $1, 'učebna 204', 'https://meet.google.com/abc-defg-hij', true) returning id`,
   [teacher],
 );
 const { rows: [atelier] } = await db.query(
-  `insert into public.activities (slug, kind, title, teacher_id, allowed_grades)
-   values ('prezentacni-schopnosti', 'atelier', 'Prezentační schopnosti', $1, '{3,4}') returning id`,
+  `insert into public.activities (slug, kind, title, teacher_id, allowed_grades, published)
+   values ('prezentacni-schopnosti', 'atelier', 'Prezentační schopnosti', $1, '{3,4}', true) returning id`,
   [teacher2],
 );
 await db.query(`insert into public.activity_slots (activity_id, weekday, starts_at, ends_at) values ($1, 2, '11:30', '12:30')`, [course.id]);
@@ -600,6 +600,141 @@ await test("týmový chat: jen tým a vyučující", async () => {
   await db.query(`delete from public.enrollments where activity_id = $1 and student_id = $2`, [course.id, student2]);
   assert.equal((await db.query(`select 1 from public.team_members where student_id = $1`, [student2])).rows.length, 0);
   await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2)`, [course.id, student2]);
+});
+
+
+// ---------------------------------------------------------------------------
+// Zápisy
+// ---------------------------------------------------------------------------
+
+const { rows: [{ id: block2 }] } = await db.query(
+  `insert into public.blocks (name, starts_on, ends_on, enroll_opens_at, enroll_closes_at)
+   values ('Období 2', current_date + 30, current_date + 90, now() - interval '1 hour', now() + interval '1 day') returning id`,
+);
+
+async function newCourse(slug, weekday, from, to, capacity = null, extra = {}) {
+  const [row] = await as(
+    teacher,
+    `insert into public.activities (slug, kind, title, teacher_id, block_id, capacity, allowed_grades)
+     values ($1, 'kurz', $1, $2, $3, $4, $5) returning id`,
+    [slug, teacher, extra.block ?? block2, capacity, extra.grades ?? null],
+  );
+  await as(teacher, `insert into public.activity_slots (activity_id, weekday, starts_at, ends_at) values ($1, $2, $3, $4)`, [row.id, weekday, from, to]);
+  return row.id;
+}
+
+await test("zápisy: nový kurz je rozpracovaný, studenti ho nevidí a nezapíšou se", async () => {
+  const id = await newCourse("chemie-leku", 3, "10:00", "11:00", 1);
+  assert.equal((await as(student, `select id from public.activities where id = $1`, [id])).length, 0);
+  assert.equal((await as(teacher2, `select id from public.activities where id = $1`, [id])).length, 1);
+  await assert.rejects(() => as(student, `select public.enroll_self($1)`, [id]), /neprobíhá/);
+});
+
+await test("zápisy: učitel potvrdí hotovo, admin zveřejní období a studenti dostanou oznámení", async () => {
+  await as(teacher, `insert into public.block_ready (block_id) values ($1)`, [block2]);
+  await assert.rejects(() => as(teacher, `insert into public.block_ready (block_id, teacher_id) values ($1, $2)`, [block2, teacher2]));
+  assert.equal((await as(student, `select * from public.block_ready`)).length, 0);
+  await assert.rejects(() => as(teacher, `select public.publish_block($1)`, [block2]), /admin/);
+  const before = (await db.query(`select count(*)::int n from public.notifications where user_id = $1`, [student])).rows[0].n;
+  await as(admin, `select public.publish_block($1)`, [block2]);
+  const [{ id }] = await as(student, `select id from public.activities where slug = 'chemie-leku'`);
+  assert.ok(id);
+  const after = (await db.query(`select count(*)::int n from public.notifications where user_id = $1 and kind = 'zapis'`, [student])).rows[0].n;
+  assert.ok(after > 0 && after + before > before);
+});
+
+await test("zápisy: kapacitu nejde překročit, plný kurz má čekací řadu", async () => {
+  const [{ id }] = await as(student, `select id from public.activities where slug = 'chemie-leku'`);
+  await as(student, `select public.enroll_self($1)`, [id]);
+  await assert.rejects(() => as(student2, `select public.enroll_self($1)`, [id]), /plno/);
+  await as(student2, `select public.join_waitlist($1)`, [id]);
+  const [row] = await as(student2, `select enrolled, waiting, my_position from public.enrollment_overview() where activity_id = $1`, [id]);
+  assert.deepEqual(row, { enrolled: 1, waiting: 1, my_position: 1 });
+  // Do enrollments napřímo student nezapíše.
+  await assert.rejects(() => as(student2, `insert into public.enrollments (activity_id, student_id) values ($1, $2)`, [id, student2]));
+  // Na čekačku jen u plného kurzu.
+  const free = await newCourse("jak-cist-film", 4, "12:00", "13:00", 10, { grades: [3, 4] });
+  await as(admin, `select public.publish_block($1)`, [block2]);
+  await assert.rejects(() => as(student, `select public.join_waitlist($1)`, [free]), /volné/);
+});
+
+await test("zápisy: nejde se zapsat na nic, co se časově kříží", async () => {
+  const clash = await newCourse("cestomanie", 3, "10:30", "11:30", 20);
+  await as(admin, `select public.publish_block($1)`, [block2]);
+  await assert.rejects(() => as(student, `select public.enroll_self($1)`, [clash]), /Kříží se s „chemie-leku“/);
+  // Jiný den nevadí.
+  const other = await newCourse("komplexni-cisla", 5, "10:00", "11:00", 20);
+  await as(admin, `select public.publish_block($1)`, [block2]);
+  await as(student, `select public.enroll_self($1)`, [other]);
+});
+
+await test("zápisy: odhlášení posune prvního z čekačky a ten dostane notifikaci", async () => {
+  const [{ id }] = await as(student, `select id from public.activities where slug = 'chemie-leku'`);
+  await as(student, `select public.leave_self($1)`, [id]);
+  const enrolled = (await db.query(`select student_id from public.enrollments where activity_id = $1`, [id])).rows.map((r) => r.student_id);
+  assert.deepEqual(enrolled, [student2]);
+  assert.equal((await db.query(`select 1 from public.waitlist where activity_id = $1`, [id])).rows.length, 0);
+  const n = await db.query(`select title from public.notifications where user_id = $1 and kind = 'zapis' and title like 'Uvolnilo%'`, [student2]);
+  assert.equal(n.rows.length, 1);
+});
+
+await test("zápisy: z čekačky se přeskočí ten, komu se kurz mezitím kříží", async () => {
+  const [{ id }] = await as(student, `select id from public.activities where slug = 'chemie-leku'`);
+  // student2 je zapsaný (kapacita 1); student a třetí čekají, student si mezitím zapíše kolizní kurz.
+  const extra = (await db.query(`select id from public.profiles where email = 'treti.student@scioskola.cz'`)).rows[0].id;
+  await as(student, `select public.join_waitlist($1)`, [id]);
+  await as(extra, `select public.join_waitlist($1)`, [id]);
+  const [{ id: clash }] = await as(student, `select id from public.activities where slug = 'cestomanie'`);
+  await as(student, `select public.enroll_self($1)`, [clash]);
+  await as(student2, `select public.leave_self($1)`, [id]);
+  const enrolled = (await db.query(`select student_id from public.enrollments where activity_id = $1`, [id])).rows.map((r) => r.student_id);
+  assert.deepEqual(enrolled, [extra]);
+  assert.equal((await as(student, `select my_position from public.enrollment_overview() where activity_id = $1`, [id]))[0].my_position, 1);
+  await as(student, `select public.leave_waitlist($1)`, [id]);
+  assert.equal((await as(student, `select my_position from public.enrollment_overview() where activity_id = $1`, [id]))[0].my_position, null);
+});
+
+await test("zápisy: ročník, role a termín zápisu", async () => {
+  const [{ id: film }] = await as(student, `select id from public.activities where slug = 'jak-cist-film'`);
+  await assert.rejects(() => as(outsider, `select public.enroll_self($1)`, [film]), /ročník/);
+  await assert.rejects(() => as(teacher, `select public.enroll_self($1)`, [film]), /jen studenti/);
+  await as(student, `select public.enroll_self($1)`, [film]);
+  // Po konci zápisu se student sám neodhlásí, vyučující ho odepsat může.
+  await db.query(`update public.blocks set enroll_closes_at = now() - interval '1 minute', enroll_opens_at = now() - interval '2 hours' where id = $1`, [block2]);
+  await assert.rejects(() => as(student, `select public.leave_self($1)`, [film]), /skončil/);
+  await assert.rejects(() => as(student2, `select public.enroll_self($1)`, [film]), /neprobíhá/);
+  await as(teacher, `delete from public.enrollments where activity_id = $1 and student_id = $2`, [film, student]);
+});
+
+await test("zápisy: ateliér a expedice s vlastním termínem, jen jeden ateliér naráz", async () => {
+  const mk = async (slug, from, to) => {
+    const [row] = await as(
+      teacher2,
+      `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on, capacity)
+       values ($1, 'atelier', $1, $2, current_date + $3::int, current_date + $4::int, 10) returning id`,
+      [slug, teacher2, from, to],
+    );
+    return row.id;
+  };
+  const kid = await createUser("ateliery.student@scioskola.cz", { grade: "2" }, { full_name: "Nový Student" });
+  const a1 = await mk("sachy-2", 40, 60);
+  const a2 = await mk("pamet-2", 40, 60);
+  const a3 = await mk("foto-2", 70, 80);
+  const before = (await db.query(`select count(*)::int n from public.notifications where user_id = $1 and title like 'Zápis do ateliéru%'`, [kid])).rows[0].n;
+  for (const id of [a1, a2, a3]) {
+    await as(teacher2, `update public.activities set published = true, enroll_opens_at = now() - interval '1 hour', enroll_closes_at = now() + interval '1 hour' where id = $1`, [id]);
+  }
+  const after = (await db.query(`select count(*)::int n from public.notifications where user_id = $1 and title like 'Zápis do ateliéru%'`, [kid])).rows[0].n;
+  assert.equal(after - before, 3);
+  await as(kid, `select public.enroll_self($1)`, [a1]);
+  await assert.rejects(() => as(kid, `select public.enroll_self($1)`, [a2]), /Kříží se/);
+  // Na pozdější ateliér se zapsat dopředu jde.
+  await as(kid, `select public.enroll_self($1)`, [a3]);
+  // Cizí učitel ateliér nezveřejní.
+  await assert.rejects(async () => {
+    const r = await as(teacher, `update public.activities set published = false where id = $1 returning id`, [a1]);
+    if (!r.length) throw new Error("nic");
+  });
 });
 
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

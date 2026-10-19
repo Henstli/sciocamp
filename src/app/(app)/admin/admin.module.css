@@ -238,3 +238,96 @@
   border-bottom: 1px solid var(--border-soft);
   background: var(--primary-tint);
 }
+
+/* Kurzová období: připravenost učitelů a zveřejnění */
+.periodRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-soft);
+}
+.periodHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.periodHead .email {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+.ready {
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.ready summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.readyCount {
+  font-weight: 800;
+  color: #8a5300;
+}
+.readyCount[data-all] {
+  color: #17704a;
+}
+.readyList {
+  list-style: none;
+  margin: 0;
+  padding: 0 14px 10px;
+  display: flex;
+  flex-direction: column;
+}
+.readyList li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 40px;
+  font-size: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+.readyMark {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fdf1dc;
+  color: #8a5300;
+  font-size: 12px;
+  font-weight: 800;
+}
+.readyList li[data-ready] .readyMark {
+  background: #e3f4ec;
+  color: #17704a;
+}
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+.publishConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fdf1dc;
+  color: #5c3a00;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.publishConfirm p {
+  margin: 0;
+}

@@ -43,6 +43,11 @@ export type Period = {
   /** „rrrr-mm-dd“ */
   startsOn: string;
   endsOn: string;
+  /** Termín zápisu do kurzů (ISO čas). */
+  enrollOpensAt?: string | null;
+  enrollClosesAt?: string | null;
+  /** Kdy admin kurzy období zveřejnil; null = příprava. */
+  publishedAt?: string | null;
 };
 
 /** Kurz, ateliér nebo jiná aktivita (třídnická hodina, příprava expedice …). */
@@ -71,6 +76,11 @@ export type Activity = {
   /** Další vyučující kromě hlavního (expedice jich má aspoň jednoho). */
   coTeacherIds?: string[];
   capacity?: number;
+  /** Zveřejněná v nabídce (rozpracovanou vidí jen učitelé a zapsaní). Chybí = ano. */
+  published?: boolean;
+  /** Vlastní termín zápisu (ateliér, expedice); kurzy ho berou z období. */
+  enrollOpensAt?: string | null;
+  enrollClosesAt?: string | null;
   /** Barva hlavičky karty (z návrhu). */
   tone: "blue" | "blueDark" | "violet" | "teal";
   project?: Project;

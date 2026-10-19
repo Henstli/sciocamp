@@ -58,3 +58,70 @@
   padding: 12px 16px;
   border-radius: 12px;
 }
+
+/* Příprava období */
+.prepare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid #f3dcb0;
+  background: #fffaf0;
+}
+.prepareText {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.prepareNote {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.readyBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.readyDone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  color: #17704a;
+}
+.readyInfo,
+.readyError {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.readyError {
+  color: var(--late);
+}
+.waitlist {
+  padding: 16px 20px;
+  margin: 12px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.waitTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+.waitList {
+  margin: 0;
+  padding-left: 22px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.waitMeta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}

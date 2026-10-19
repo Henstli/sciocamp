@@ -209,3 +209,8 @@ export function formatDayLabel(iso: string, now = new Date()): string {
   if (sameDate(p, addDays(t, -1))) return "Včera";
   return `${DAYS_SHORT[isoWeekdayOf(p) - 1]} ${p.d}. ${p.m}.${p.y !== t.y ? ` ${p.y}` : ""}`;
 }
+
+/** Teď v milisekundách (na serveru při vykreslení stránky). */
+export function nowMs(): number {
+  return Date.now();
+}

@@ -11,6 +11,8 @@ import { getActivity, getUserById, listActivities, listPeriods, listStaff, listS
 import { atelierConflicts } from "@/lib/periods";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { initials, isAdmin } from "@/lib/roles";
+import { isoToPragueLocal } from "@/lib/time";
+import { waitlistFor } from "@/lib/data-enroll";
 import styles from "../ucitel.module.css";
 
 export async function generateMetadata({ params }: PageProps<"/ucitel/[id]">): Promise<Metadata> {
@@ -30,6 +32,7 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
   const teacher = await getUserById(activity.teacherId);
   const periods = await listPeriods();
   const conflicts = atelierConflicts(activity, await listActivities());
+  const waitlist = await waitlistFor(activity.id, activity.dbId);
   const students = (await listStudents()).map((s) => ({
     id: s.id,
     name: s.name,
@@ -69,6 +72,26 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
         capacity={activity.capacity ?? null}
         conflicts={conflicts}
       />
+      {waitlist.length > 0 && (
+        <section aria-label="Čekací řada" className={`card ${styles.waitlist}`}>
+          <h3 className={styles.waitTitle}>Čekací řada · {waitlist.length}</h3>
+          <ol className={styles.waitList}>
+            {waitlist.map((sid) => {
+              const s = students.find((x) => x.id === sid);
+              return (
+                <li key={sid}>
+                  {s?.name ?? "Student"}
+                  {s?.grade ? <span className={styles.waitMeta}> · {s.grade}. ročník</span> : null}
+                </li>
+              );
+            })}
+          </ol>
+          <p className={styles.waitMeta}>
+            Když se uvolní místo, první z řady se zapíše sám (pokud se mu nic nekříží) a přijde mu oznámení. Zapsáním výše ho
+            z řady vezmeš hned.
+          </p>
+        </section>
+      )}
 
       <h2 className="section-title">Údaje a rozvrh</h2>
       <ActivityForm
@@ -93,6 +116,9 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
           milestonesTotal: activity.project?.milestonesTotal ?? 5,
           slots: activity.slots.map((s) => ({ day: s.day, start: s.start, end: s.end })),
           coTeacherIds: activity.coTeacherIds ?? [],
+          published: activity.published !== false,
+          enrollOpens: activity.enrollOpensAt ? isoToPragueLocal(activity.enrollOpensAt) : "",
+          enrollCloses: activity.enrollClosesAt ? isoToPragueLocal(activity.enrollClosesAt) : "",
         }}
       />
 

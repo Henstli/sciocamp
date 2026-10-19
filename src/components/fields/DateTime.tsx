@@ -414,16 +414,29 @@ export function TimeInput({
  * Termín (datum + čas). Skryté pole `name` nese „rrrr-mm-ddTHH:MM“ v pražském
  * čase, nebo prázdnou hodnotu. Čas je předvyplněný na 23:59.
  */
-export function DueInput({ name, defaultValue = "" }: { name: string; defaultValue?: string }) {
+export function DueInput({
+  name,
+  defaultValue = "",
+  defaultTime = "23:59",
+  label = "termínu",
+}: {
+  name: string;
+  /** Pražský místní čas „rrrr-mm-ddThh:mm“ */
+  defaultValue?: string;
+  /** Čas, když se vyplní jen datum */
+  defaultTime?: string;
+  /** Pro čtečky: „Datum <label>“, „Čas <label>“ */
+  label?: string;
+}) {
   // "" = bez termínu, null = neplatně vyplněno
   const [date, setDate] = useState<string | null>(defaultValue.slice(0, 10));
-  const [time, setTime] = useState<string | null>(defaultValue ? defaultValue.slice(11, 16) : "23:59");
-  const value = date === "" ? "" : date && time !== null ? `${date}T${time || "23:59"}` : "neplatne";
+  const [time, setTime] = useState<string | null>(defaultValue ? defaultValue.slice(11, 16) : defaultTime);
+  const value = date === "" ? "" : date && time !== null ? `${date}T${time || defaultTime}` : "neplatne";
 
   return (
     <span className={styles.due}>
-      <DateInput ariaLabel="Datum termínu" defaultValue={defaultValue.slice(0, 10)} onChange={setDate} />
-      <TimeInput ariaLabel="Čas termínu" defaultValue={time || "23:59"} onChange={setTime} />
+      <DateInput ariaLabel={`Datum ${label}`} defaultValue={defaultValue.slice(0, 10)} onChange={setDate} />
+      <TimeInput ariaLabel={`Čas ${label}`} defaultValue={time || defaultTime} onChange={setTime} />
       <input type="hidden" name={name} value={value} />
     </span>
   );

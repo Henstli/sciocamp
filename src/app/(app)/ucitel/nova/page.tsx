@@ -54,6 +54,9 @@ export default async function NewActivityPage({ searchParams }: PageProps<"/ucit
           milestonesTotal: 5,
           slots: [],
           coTeacherIds: [],
+          published: false,
+          enrollOpens: "",
+          enrollCloses: "",
         }}
       />
     </>

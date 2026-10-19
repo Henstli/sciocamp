@@ -50,7 +50,10 @@ type ActivityRow = {
   location: string | null;
   starts_on: string | null;
   ends_on: string | null;
-  blocks: { id: string; name: string; starts_on: string; ends_on: string } | null;
+  blocks: PeriodRow | null;
+  published: boolean;
+  enroll_opens_at: string | null;
+  enroll_closes_at: string | null;
   meet_url: string | null;
   capacity: number | null;
   allowed_grades: number[] | null;
@@ -63,8 +66,10 @@ type ActivityRow = {
   activity_teachers: { teacher_id: string }[];
 };
 
+const PERIOD_COLUMNS = "id, name, starts_on, ends_on, enroll_opens_at, enroll_closes_at, published_at";
+
 const ACTIVITY_COLUMNS =
-  "id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(id, name, starts_on, ends_on), meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id), activity_teachers(teacher_id)";
+  `id, slug, kind, title, description, teacher_id, location, starts_on, ends_on, blocks(${PERIOD_COLUMNS}), published, enroll_opens_at, enroll_closes_at, meet_url, capacity, allowed_grades, tone, project_name, milestones_done, milestones_total, activity_slots(weekday, starts_at, ends_at), enrollments(student_id), activity_teachers(teacher_id)`;
 
 function toActivity(r: ActivityRow): Activity {
   return {
@@ -87,6 +92,9 @@ function toActivity(r: ActivityRow): Activity {
     studentIds: r.enrollments.map((e) => e.student_id),
     coTeacherIds: (r.activity_teachers ?? []).map((t) => t.teacher_id),
     capacity: r.capacity ?? undefined,
+    published: r.published,
+    enrollOpensAt: r.enroll_opens_at,
+    enrollClosesAt: r.enroll_closes_at,
     tone: r.tone,
     project:
       r.project_name && r.milestones_total > 0
@@ -95,10 +103,26 @@ function toActivity(r: ActivityRow): Activity {
   };
 }
 
-type PeriodRow = { id: string; name: string; starts_on: string; ends_on: string };
+type PeriodRow = {
+  id: string;
+  name: string;
+  starts_on: string;
+  ends_on: string;
+  enroll_opens_at: string | null;
+  enroll_closes_at: string | null;
+  published_at: string | null;
+};
 
 function toPeriod(r: PeriodRow): Period {
-  return { id: r.id, name: r.name, startsOn: r.starts_on, endsOn: r.ends_on };
+  return {
+    id: r.id,
+    name: r.name,
+    startsOn: r.starts_on,
+    endsOn: r.ends_on,
+    enrollOpensAt: r.enroll_opens_at,
+    enrollClosesAt: r.enroll_closes_at,
+    publishedAt: r.published_at,
+  };
 }
 
 function fail(what: string, error: { message: string }): never {
@@ -237,7 +261,7 @@ export async function getHomeSummary(): Promise<typeof DEMO_HOME | null> {
 async function listPeriodsUncached(): Promise<Period[]> {
   if (!isSupabase) return DEMO_PERIODS;
   const sb = await createClient();
-  const { data, error } = await sb.from("blocks").select("id, name, starts_on, ends_on").order("starts_on");
+  const { data, error } = await sb.from("blocks").select(PERIOD_COLUMNS).order("starts_on");
   if (error) fail("kurzová období", error);
   return (data as PeriodRow[]).map(toPeriod);
 }
