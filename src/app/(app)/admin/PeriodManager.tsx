@@ -22,6 +22,8 @@ export type PeriodRow = {
   enrollClosesAt: string | null;
   published: boolean;
   ended: boolean;
+  /** Nejbližší příští období (připravenost a zveřejnění se ukazuje jen u něj) */
+  nearest: boolean;
   current: boolean;
   activities: number;
   courses: number;
@@ -86,7 +88,11 @@ export function PeriodManager({
                 ) : p.published ? (
                   <span className="chip chip-primary">Zveřejněno v Zápisech</span>
                 ) : (
-                  <span className="chip chip-wait">Příprava</span>
+                  p.nearest ? (
+                    <span className="chip chip-wait">Příprava</span>
+                  ) : (
+                    <span className="chip chip-info">Naplánováno</span>
+                  )
                 )}
               </div>
               <div className={styles.email}>
@@ -123,9 +129,9 @@ export function PeriodManager({
             )}
           </div>
 
-          {!p.ended && (!p.published || p.drafts > 0) && <Readiness period={p} />}
+          {!p.ended && (p.nearest || p.published) && (!p.published || p.drafts > 0) && <Readiness period={p} />}
 
-          {!p.ended && (!p.published || p.drafts > 0) && (
+          {!p.ended && (p.nearest || p.published) && (!p.published || p.drafts > 0) && (
             <PublishControl
               period={p}
               ready={ready}

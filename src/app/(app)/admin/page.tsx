@@ -43,6 +43,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       (a) => a.kind === "expedice" && a.announceReady && freeOf(a),
     ).length,
   };
+  const nextPeriodId = [...periods].filter((p) => p.startsOn > today).sort((a, b) => a.startsOn.localeCompare(b.startsOn))[0]?.id ?? null;
   // Připravenost učitelů u období, která ještě neskončila.
   const periodRows = await Promise.all(
     periods.map(async (p) => {
@@ -67,6 +68,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         enrollClosesAt: p.enrollClosesAt ?? null,
         published: !!p.publishedAt,
         ended: p.endsOn < today,
+        // Nejbližší příští období: jen u něj se řeší připravenost a zveřejnění.
+        nearest: p.id === nextPeriodId,
         current:
           p.id === current?.id && p.startsOn <= today && today <= p.endsOn,
         activities: activities.filter((a) => a.period?.id === p.id).length,
