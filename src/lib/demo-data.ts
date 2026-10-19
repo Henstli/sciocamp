@@ -69,11 +69,7 @@ export const DEMO_ACTIVITIES: Activity[] = [
 export const DEMO_CLASSROOMS: Record<string, ClassroomContent> = {
   "prezentacni-schopnosti": {
     topics: [],
-    teams: [
-      { id: "tym-a", name: "Tým A · Klima", memberIds: ["u-liska", "u-komarek", "u-kolarova", "u-cerny"] },
-      { id: "tym-b", name: "Tým B · Technologie", memberIds: ["u-jaukner", "u-novotna", "u-kubicek", "u-maly"] },
-      { id: "tym-c", name: "Tým C · Města", memberIds: ["u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-horakova", "u-vesely"] },
-    ],
+    teams: [],
     upcoming: [],
   },
 };

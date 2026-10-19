@@ -5,9 +5,6 @@ import { Icon } from "@/components/Icon";
 import { ActivityForm } from "@/components/manage/ActivityForm";
 import { DeleteActivity } from "@/components/manage/DeleteActivity";
 import { EnrollmentManager } from "@/components/manage/EnrollmentManager";
-import { TeamEditor } from "@/components/manage/TeamEditor";
-import { teamsFor } from "@/lib/data-teams";
-import { isSupabase } from "@/lib/config";
 import { PageHeader } from "@/components/PageHeader";
 import { requireTeacher } from "@/lib/auth";
 import { getActivity, getUserById, listActivities, listPeriods, listStaff, listStudents, teachesActivity } from "@/lib/data";
@@ -33,7 +30,6 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
   const teacher = await getUserById(activity.teacherId);
   const periods = await listPeriods();
   const conflicts = atelierConflicts(activity, await listActivities());
-  const teams = await teamsFor(activity);
   const students = (await listStudents()).map((s) => ({
     id: s.id,
     name: s.name,
@@ -72,13 +68,6 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
         allowedGrades={activity.allowedGrades}
         capacity={activity.capacity ?? null}
         conflicts={conflicts}
-      />
-
-      <TeamEditor
-        key={teams.map((t) => `${t.id}:${t.memberIds.join(",")}`).join("|")}
-        slug={activity.id}
-        students={students.filter((s) => activity.studentIds.includes(s.id)).map((s) => ({ id: s.id, name: s.name }))}
-        initial={teams.map((t) => ({ id: isSupabase ? t.id : undefined, name: t.name, memberIds: t.memberIds }))}
       />
 
       <h2 className="section-title">Údaje a rozvrh</h2>

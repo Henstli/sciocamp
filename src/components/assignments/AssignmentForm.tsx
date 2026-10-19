@@ -8,6 +8,7 @@ import type { AssignmentKind, SubmissionFile } from "@/lib/types";
 import { removeFile, uploadFiles } from "@/lib/upload";
 import { Icon } from "../Icon";
 import { WorkFiles } from "./WorkFiles";
+import { TeamsField, type TeamDraft, type TeamPreset } from "./TeamsField";
 import styles from "../manage/manage.module.css";
 import own from "./assignment.module.css";
 
@@ -26,6 +27,9 @@ export type AssignmentFormValues = {
   /** Jeden odkaz na řádek, volitelně „Název | https://…“ */
   links: string;
   teamWork?: boolean;
+  teamMode?: "teacher" | "students";
+  teamMaxSize?: string;
+  teams?: TeamDraft[];
 };
 
 const KIND_OPTIONS: { value: AssignmentKind; label: string; hint: string }[] = [
@@ -39,7 +43,13 @@ export function AssignmentForm({
   topics,
   files = [],
   live,
+  classStudents = {},
+  teamPresets = {},
 }: {
+  /** Zapsaní studenti podle třídy (pro rozdělení do týmů) */
+  classStudents?: Record<string, { id: string; name: string }[]>;
+  /** Týmy z dřívějších týmových úkolů podle třídy */
+  teamPresets?: Record<string, TeamPreset[]>;
   initial: AssignmentFormValues;
   /** Soubory, které už u úkolu jsou (při úpravě). */
   files?: SubmissionFile[];
@@ -61,6 +71,9 @@ export function AssignmentForm({
   const fileInput = useRef<HTMLInputElement>(null);
   const [kind, setKind] = useState<AssignmentKind>(initial.kind);
   const [activity, setActivity] = useState(initial.activity || classes[0]?.id || "");
+  const [teamWork, setTeamWork] = useState(!!initial.teamWork);
+  const [teamMode, setTeamMode] = useState<"teacher" | "students">(initial.teamMode ?? "teacher");
+  const [teams, setTeams] = useState<TeamDraft[]>(initial.teams ?? []);
   const fe = state.fieldErrors ?? {};
   const editing = !!initial.id;
 
@@ -129,7 +142,15 @@ export function AssignmentForm({
           <input type="hidden" name="activity" value={activity} />
         ) : (
           <Field label="Třída" wide>
-            <select name="activity" value={activity} onChange={(e) => setActivity(e.target.value)} className={styles.input}>
+            <select
+              name="activity"
+              value={activity}
+              onChange={(e) => {
+                setActivity(e.target.value);
+                setTeams([]); // týmy patří k žákům vybrané třídy
+              }}
+              className={styles.input}
+            >
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.title}
@@ -179,14 +200,53 @@ export function AssignmentForm({
             </Field>
             <div className={styles.field} data-wide="true">
               <label className={styles.check}>
-                <input type="checkbox" name="teamWork" value="1" defaultChecked={initial.teamWork} />
+                <input type="checkbox" name="teamWork" value="1" checked={teamWork} onChange={(e) => setTeamWork(e.target.checked)} />
                 Týmový úkol
               </label>
-              <span className={styles.hint}>
-                Odevzdává celý tým společně a hodnocení dostanou všichni členové. Týmy nastavíš v Moje třídy → třída → Týmy. Kdo
-                v týmu není, odevzdává sám.
-              </span>
+              <span className={styles.hint}>Tým odevzdává jednu společnou práci. Hodnotit můžeš celý tým najednou i každého zvlášť.</span>
             </div>
+            {teamWork && (
+              <div className={styles.teamPanel} data-wide="true" style={{ gridColumn: "1 / -1" }}>
+                <input type="hidden" name="teamMode" value={teamMode} />
+                <input type="hidden" name="teams" value={JSON.stringify(teams)} />
+                <div className={styles.modes} role="radiogroup" aria-label="Jak vzniknou týmy">
+                  {(
+                    [
+                      ["teacher", "Týmy rozdělím já", "Ručně, náhodně, nebo převezmeš týmy z jiného úkolu."],
+                      ["students", "Studenti se rozdělí sami", "V úkolu si založí tým nebo se přidají k existujícímu."],
+                    ] as const
+                  ).map(([value, label, hint]) => (
+                    <label key={value} className={styles.kind} data-checked={teamMode === value}>
+                      <input
+                        type="radio"
+                        name="teamModeChoice"
+                        value={value}
+                        checked={teamMode === value}
+                        onChange={() => setTeamMode(value)}
+                        className="sr-only"
+                      />
+                      <span className={styles.kindLabel}>{label}</span>
+                      <span className={styles.hint}>{hint}</span>
+                    </label>
+                  ))}
+                </div>
+                {teamMode === "teacher" ? (
+                  <>
+                    {fe.teams && <span className={styles.fieldError}>{fe.teams}</span>}
+                    <TeamsField
+                      students={classStudents[activity] ?? []}
+                      value={teams}
+                      onChange={setTeams}
+                      presets={teamPresets[activity] ?? []}
+                    />
+                  </>
+                ) : (
+                  <Field label="Největší velikost týmu (nepovinné)" error={fe.teamMaxSize} hint="Např. 3 = nejvýš trojice. Prázdné = bez omezení.">
+                    <input name="teamMaxSize" type="number" min={2} max={20} defaultValue={initial.teamMaxSize} className={styles.input} placeholder="Bez omezení" />
+                  </Field>
+                )}
+              </div>
+            )}
           </>
         )}
 

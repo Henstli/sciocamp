@@ -25,18 +25,6 @@ export type ClassView = {
     /** Odkaz na zadání nového úkolu (jen vyučující a admin) */
     newHref: string | null;
   };
-  teams: { id: string; name: string; members: string }[];
-  /** Týmový chat: tým studenta, u vyučujícího vybraný tým (null = žádný) */
-  teamTab: {
-    id: string;
-    name: string;
-    members: Person[];
-    chat: ChatLine[];
-    /** Týmy na výběr (jen vyučující) */
-    choices: { id: string; name: string }[];
-    /** Id týmu pro Realtime (naostro) */
-    dbId?: string;
-  } | null;
   students: Person[];
   chat: ChatLine[];
   /** Lidé, kteří můžou psát do chatu (studenti, vyučující, admini) */
@@ -57,7 +45,6 @@ const TABS = [
   ["work", "Úkoly a materiály"],
   ["people", "Lidé"],
   ["chat", "Chat třídy"],
-  ["team", "Tým"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
@@ -68,7 +55,7 @@ export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: 
   return (
     <>
       <div role="tablist" aria-label="Sekce třídy" className="tablist">
-        {TABS.filter(([key]) => key !== "team" || view.teamTab).map(([key, label]) => (
+        {TABS.map(([key, label]) => (
           <button
             key={key}
             role="tab"
@@ -78,7 +65,7 @@ export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: 
             className="tab"
             onClick={() => setTab(key)}
           >
-            {key === "team" && view.teamTab && view.teamTab.choices.length === 0 ? view.teamTab.name : label}
+            {label}
           </button>
         ))}
       </div>
@@ -87,7 +74,6 @@ export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: 
         {tab === "stream" && <StreamTab view={view} />}
         {tab === "work" && <Work work={view.work} />}
         {tab === "people" && <People view={view} />}
-        {tab === "team" && view.teamTab && <TeamTab view={view} team={view.teamTab} />}
         {tab === "chat" && (
           <ClassChat
             initial={view.chat}
@@ -218,19 +204,6 @@ function People({ view }: { view: ClassView }) {
             </Link>
           )}
         </div>
-        {view.teams.length > 0 && (
-          <>
-            <h2 className={styles.h2} style={{ marginTop: 8 }}>
-              Týmy
-            </h2>
-            {view.teams.map((t) => (
-              <div key={t.name} className={styles.team}>
-                <div className={styles.strong}>{t.name}</div>
-                <div className={styles.meta}>{t.members}</div>
-              </div>
-            ))}
-          </>
-        )}
       </section>
       <section aria-label="Studenti" className={`card ${styles.students}`}>
         <h2 className={styles.h2}>Studenti · {view.students.length}</h2>
@@ -248,52 +221,6 @@ function People({ view }: { view: ClassView }) {
           ))}
         </div>
       </section>
-    </div>
-  );
-}
-
-function TeamTab({ view, team }: { view: ClassView; team: NonNullable<ClassView["teamTab"]> }) {
-  return (
-    <div className="stack" style={{ gap: 16 }}>
-      {team.choices.length > 1 && (
-        <nav aria-label="Vybrat tým" className={styles.teamSwitch}>
-          {team.choices.map((t) => (
-            <Link
-              key={t.id}
-              href={`?tab=team&tym=${t.id}`}
-              scroll={false}
-              className={styles.teamPill}
-              aria-current={t.id === team.id ? "true" : undefined}
-            >
-              {t.name}
-            </Link>
-          ))}
-        </nav>
-      )}
-      <section className={`card ${styles.teamHeader}`} aria-label={`Tým ${team.name}`}>
-        <div>
-          <h2 className={styles.h2}>{team.name}</h2>
-          <div className={styles.meta}>
-            {team.choices.length > 0 ? "Chat týmu vidí jeho členové a vyučující." : "Chat vidíte jen vy v týmu a vyučující."}
-          </div>
-        </div>
-        <div className={styles.teamFaces}>
-          {team.members.map((m) => (
-            <Avatar key={m.id} initials={m.initials} size={36} tone={m.id === view.me.id ? "me" : "student"} href={profileHref(m.id)} title={m.name} />
-          ))}
-        </div>
-      </section>
-      <ClassChat
-        key={team.id}
-        kind="team"
-        label={`Chat týmu ${team.name}`}
-        initial={team.chat}
-        me={view.me}
-        people={view.people}
-        activityDbId={team.dbId}
-        live={view.live}
-        canModerate={view.canManage}
-      />
     </div>
   );
 }

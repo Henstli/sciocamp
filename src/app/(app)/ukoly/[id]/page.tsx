@@ -11,7 +11,10 @@ import { STATE_CHIP, STATE_LABEL, formatLate, isHandedIn, lateBy, linkTitle, wor
 import { requireUser } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
 import { canOpenActivity, getActivity, getUsersByIds, teachesActivity } from "@/lib/data";
-import { teamsFor } from "@/lib/data-teams";
+import { teamChat, teamsForAssignment } from "@/lib/data-teams";
+import { ClassChat, type ChatLine } from "@/components/classroom/ClassChat";
+import { TeamPicker } from "@/components/assignments/TeamPicker";
+import type { Person } from "@/components/classroom/people";
 import { assignmentFiles, commentCounts, getAssignment, getComments, getWork, workMap } from "@/lib/data-assignments";
 import { plural } from "@/lib/format";
 import { KIND_LABEL, activityHref } from "@/lib/links";
@@ -38,7 +41,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
   const isTask = a.kind === "ukol";
   const files = await assignmentFiles(a.id);
   // Týmový úkol: týmy třídy (kdo v týmu není, odevzdává sám).
-  const teams = a.teamWork ? await teamsFor(activity) : [];
+  const teams = a.teamWork ? await teamsForAssignment(a.id) : [];
   const teamOfStudent = (sid: string) => teams.find((t) => t.memberIds.includes(sid)) ?? null;
 
   const people = new Map<string, User>();
@@ -57,6 +60,31 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
         time: formatStamp(c.createdAt),
       };
     });
+
+  // Týmový chat úkolu (tým studenta, u vyučujícího tým vybraného studenta).
+  async function teamChatBlock(teamId: string, teamName: string, canModerate: boolean) {
+    const team = teams.find((t) => t.id === teamId);
+    remember(await getUsersByIds([...(team?.memberIds ?? []), activity!.teacherId, ...(activity!.coTeacherIds ?? [])]));
+    const personMap: Record<string, Person> = {};
+    for (const u of people.values()) personMap[u.id] = { id: u.id, name: u.name, initials: initials(u.name), role: u.role };
+    const stampNow = new Date();
+    const lines: ChatLine[] = (await teamChat(teamId)).map((m) => ({ ...m, when: formatStamp(m.createdAt, stampNow) }));
+    const me = personMap[user.id];
+    return (
+      <ClassChat
+        key={teamId}
+        kind="team"
+        label={`Chat: ${teamName}`}
+        title={`Chat: ${teamName}`}
+        initial={lines}
+        me={me}
+        people={personMap}
+        activityDbId={isSupabase ? teamId : undefined}
+        live={isSupabase}
+        canModerate={canModerate}
+      />
+    );
+  }
 
   // --- Hlavička se zadáním (stejná pro všechny) ---
   const article = (
@@ -215,6 +243,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                           ? `odevzdáno ${formatStamp(work.submission.submittedAt)}`
                           : "nic neodevzdal(a)"}
                         {late !== null && <strong className={styles.lateText}> · pozdě {formatLate(late)}</strong>}
+                        {a.teamWork && work?.review?.individual && " · hodnoceno jednotlivě"}
                         {n > 0 && ` · ${n} ${plural(n, "komentář", "komentáře", "komentářů")}`}
                       </span>
                     </span>
@@ -281,6 +310,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                   hint={`Vidíš jen ty a ${selected.name.split(" ")[0]}.`}
                   placeholder={`Napiš: ${selected.name.split(" ")[0]}…`}
                 />
+                {selectedTeam && (await teamChatBlock(selectedTeam.id, selectedTeam.name, true))}
               </>
             ) : (
               <section className={`card ${styles.panel}`}>
@@ -299,7 +329,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
 
   // --- Pohled studenta ---
   const myTeam = teamOfStudent(user.id);
-  if (myTeam) remember(await getUsersByIds(myTeam.memberIds));
+  if (a.teamWork) remember(await getUsersByIds(teams.flatMap((t) => t.memberIds)));
   const work = await getWork(a.id, user.id, myTeam?.id);
   const state = workState(a, work);
   const thread = toView(await getComments(a.id, user.id));
@@ -309,8 +339,20 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       {header}
       {notice}
       <div className={styles.columns}>
-        <div className={styles.mainCol}>{article}</div>
+        <div className={styles.mainCol}>
+          {article}
+          {myTeam && (await teamChatBlock(myTeam.id, myTeam.name, false))}
+        </div>
         <div className={styles.sideCol}>
+          {a.teamWork && a.teamMode === "students" && (
+            <TeamPicker
+              assignmentId={a.id}
+              teams={teams.map((t) => ({ id: t.id, name: t.name, members: t.memberIds.map((m) => people.get(m)?.name ?? "?") }))}
+              myTeamId={myTeam?.id ?? null}
+              maxSize={a.teamMaxSize ?? null}
+              locked={state === "splneno" || state === "nesplneno"}
+            />
+          )}
           <StudentWork
             assignmentId={a.id}
             userId={user.id}

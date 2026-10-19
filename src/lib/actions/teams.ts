@@ -1,64 +1,49 @@
 "use server";
 
+// Studenti se do týmů rozdělují sami (úkoly s team_mode = 'students').
+// Pravidla (třída, plný tým, jeden tým na úkol) hlídají funkce v databázi.
+
 import { refresh } from "next/cache";
-import { requireTeacher } from "../auth";
+import { requireUser } from "../auth";
 import { isSupabase } from "../config";
-import { getActivity, teachesActivity } from "../data";
 import { createClient } from "../supabase/server";
 
-export type TeamDraft = { id?: string; name: string; memberIds: string[] };
+const DEMO = "Ukázkový režim: týmy se neukládají.";
 
-/**
- * Uloží týmy třídy celé najednou (jak je vyučující poskládal v editoru):
- * smazané týmy zmizí, nové přibudou, členství se nastaví znovu.
- */
-export async function saveTeams(activitySlug: string, drafts: TeamDraft[]): Promise<{ error?: string; info?: string }> {
-  const user = await requireTeacher();
-  const activity = await getActivity(activitySlug);
-  if (!activity || !teachesActivity(user, activity)) return { error: "Týmy v téhle třídě upravovat nemůžeš." };
+function explain(message: string | undefined, fallback: string) {
+  if (!message) return fallback;
+  if (/plný|Už jsi v týmu|rozděluje vyučující|ohodnocený|nepatříš/.test(message)) return message;
+  return fallback;
+}
 
-  const teams = drafts
-    .map((t) => ({ ...t, name: t.name.trim().slice(0, 80), memberIds: [...new Set(t.memberIds)] }))
-    .filter((t) => t.name || t.memberIds.length);
-  if (teams.some((t) => !t.name)) return { error: "Každý tým potřebuje název." };
-  if (teams.length > 40) return { error: "Týmů je moc (nejvýš 40)." };
-  const seen = new Set<string>();
-  for (const t of teams) {
-    for (const id of t.memberIds) {
-      if (!activity.studentIds.includes(id)) return { error: "V týmu je někdo, kdo není ve třídě zapsaný." };
-      if (seen.has(id)) return { error: "Student může být jen v jednom týmu." };
-      seen.add(id);
-    }
-  }
-  if (!isSupabase || !activity.dbId) return { info: "Ukázkový režim: týmy se neukládají." };
-
+export async function createOwnTeam(assignmentId: string, name: string): Promise<{ error?: string; info?: string }> {
+  await requireUser();
+  const teamName = name.trim().slice(0, 80);
+  if (!teamName) return { error: "Napiš název týmu." };
+  if (!isSupabase) return { info: DEMO };
   const sb = await createClient();
-  const { data: existing } = await sb.from("teams").select("id").eq("activity_id", activity.dbId);
-  const keep = new Set(teams.map((t) => t.id).filter(Boolean));
-  const remove = (existing ?? []).map((t) => t.id).filter((id) => !keep.has(id));
-  if (remove.length) {
-    const { error } = await sb.from("teams").delete().in("id", remove);
-    if (error) return { error: "Týmy se nepodařilo uložit." };
-  }
-  // Členství nejdřív smazat, aby šlo studenty přesouvat mezi týmy.
-  const del = await sb.from("team_members").delete().eq("activity_id", activity.dbId);
-  if (del.error) return { error: "Týmy se nepodařilo uložit." };
-
-  for (const t of teams) {
-    let id = t.id;
-    if (id) {
-      const { error } = await sb.from("teams").update({ name: t.name }).eq("id", id);
-      if (error) return { error: "Týmy se nepodařilo uložit." };
-    } else {
-      const { data, error } = await sb.from("teams").insert({ activity_id: activity.dbId, name: t.name }).select("id").single();
-      if (error || !data) return { error: "Týmy se nepodařilo uložit." };
-      id = data.id;
-    }
-    if (t.memberIds.length) {
-      const { error } = await sb.from("team_members").insert(t.memberIds.map((sid) => ({ team_id: id, student_id: sid })));
-      if (error) return { error: "Členy týmu se nepodařilo uložit." };
-    }
-  }
+  const { error } = await sb.rpc("create_own_team", { assignment: assignmentId, team_name: teamName });
+  if (error) return { error: explain(error.message, "Tým se nepodařilo založit.") };
   refresh();
-  return { info: "Týmy jsou uložené." };
+  return {};
+}
+
+export async function joinTeam(teamId: string): Promise<{ error?: string; info?: string }> {
+  await requireUser();
+  if (!isSupabase) return { info: DEMO };
+  const sb = await createClient();
+  const { error } = await sb.rpc("join_team", { team: teamId });
+  if (error) return { error: explain(error.message, "Do týmu se nepodařilo přidat.") };
+  refresh();
+  return {};
+}
+
+export async function leaveTeam(teamId: string): Promise<{ error?: string; info?: string }> {
+  await requireUser();
+  if (!isSupabase) return { info: DEMO };
+  const sb = await createClient();
+  const { error } = await sb.rpc("leave_team", { team: teamId });
+  if (error) return { error: explain(error.message, "Z týmu se nepodařilo odejít.") };
+  refresh();
+  return {};
 }
