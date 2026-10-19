@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { requireTeacher } from "../auth";
 import { isSupabase } from "../config";
 import { getActivity, getUserById, getUsersByIds, listActivities, listPeriods, listTerms, teachesActivity } from "../data";
-import { atelierConflicts, formatDateRange } from "../periods";
+import { atelierConflicts } from "../periods";
 import { normalizeMeetUrl } from "../meet";
 import { isAdmin, canTeach } from "../roles";
 import { createClient } from "../supabase/server";
@@ -102,6 +102,10 @@ function parseForm(formData: FormData) {
     if (kind === "ostatni" && !startsOn && !periodId && slots.length === 0) {
       fieldErrors.startsOn = "Vyplň datum akce, nebo rozvrh.";
     }
+    if (kind === "atelier") {
+      if (!startsOn) fieldErrors.startsOn = fieldErrors.startsOn ?? "Vyplň, kdy ateliér začíná.";
+      if (!endsOn) fieldErrors.endsOn = fieldErrors.endsOn ?? "Vyplň, kdy ateliér končí.";
+    }
     if (kind === "expedice") {
       if (!startsOn) fieldErrors.startsOn = fieldErrors.startsOn ?? "Vyplň, kdy expedice začíná.";
       if (!endsOn) fieldErrors.endsOn = fieldErrors.endsOn ?? "Vyplň, kdy expedice končí.";
@@ -163,6 +167,14 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
   }
   if (Object.keys(fieldErrors).length) return { error: "Zkontroluj zvýrazněná pole.", fieldErrors };
 
+  // Období vybírá jen kurz. Ateliér, expedice a událost ho mají podle data
+  // (u termínu ho doplní databáze); bez dat si ponechají dosavadní.
+  const allPeriods = await listPeriods();
+  if (values.kind !== "kurz" && !values.term_id) {
+    const day = values.starts_on;
+    values.block_id = day ? (allPeriods.find((p) => p.startsOn <= day && day <= p.endsOn)?.id ?? null) : values.block_id;
+  }
+
   // Termín od admina: musí existovat a sedět druhem; data a období doplní databáze.
   if (values.term_id) {
     const term = (await listTerms()).find((t) => t.id === values.term_id);
@@ -177,15 +189,8 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
   const periods = await listPeriods();
   const period = periods.find((p) => p.id === values.block_id) ?? null;
   if (values.block_id && !period) return { error: "Vybrané období neexistuje.", fieldErrors: { periodId: "Vyber období." } };
-  if (!period && !values.term_id && periods.length > 0 && (values.kind === "kurz" || values.kind === "atelier")) {
+  if (!period && periods.length > 0 && values.kind === "kurz") {
     return { error: "Zkontroluj zvýrazněná pole.", fieldErrors: { periodId: "Vyber kurzové období." } };
-  }
-  if (period && values.kind === "atelier" && !values.term_id) {
-    const outside = (d: string | null) => d && (d < period.startsOn || d > period.endsOn);
-    if (outside(values.starts_on) || outside(values.ends_on)) {
-      const range = formatDateRange(period.startsOn, period.endsOn);
-      return { error: "Zkontroluj zvýrazněná pole.", fieldErrors: { startsOn: `Ateliér musí být v rámci období (${range}).` } };
-    }
   }
 
   const existing = editingSlug ? await getActivity(editingSlug) : null;

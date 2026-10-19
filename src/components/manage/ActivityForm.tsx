@@ -71,7 +71,6 @@ export function ActivityForm({
   );
   const [nextUid, setNextUid] = useState(100);
   const [periodId, setPeriodId] = useState(initial.periodId);
-  const period = periods.find((p) => p.id === periodId) ?? null;
   const [hasProject, setHasProject] = useState(!!initial.projectName);
   const [leadId, setLeadId] = useState(initial.teacherId);
   const [coTeachers, setCoTeachers] = useState<string[]>(initial.coTeacherIds);
@@ -177,20 +176,19 @@ export function ActivityForm({
               </select>
             </Field>
           )}
-          {!(usesTerms && (termId || !allowCustomDates)) && (
+          {kind !== "kurz" && <input type="hidden" name="periodId" value={initial.periodId} />}
+          {kind === "kurz" && (
           <Field
-            label={kind === "ostatni" || kind === "expedice" ? "Kurzové období (nepovinné)" : "Kurzové období"}
+            label="Kurzové období"
             error={fe.periodId}
             hint={
               periods.length === 0
                 ? "Admin zatím nezaložil kurzová období (Správa → Kurzová období)."
-                : kind === "kurz"
-                  ? "Kurz trvá celé období a na jeho konci se uzavře. V dalším období se zakládají nové kurzy."
-                  : undefined
+                : "Kurz trvá celé období a na jeho konci se uzavře. V dalším období se zakládají nové kurzy."
             }
           >
             <select name="periodId" value={periodId} onChange={(e) => setPeriodId(e.target.value)} className={styles.input}>
-              <option value="">{periods.length === 0 ? "Žádné období" : kind === "ostatni" || kind === "expedice" ? "Mimo období" : "Vyber období…"}</option>
+              <option value="">{periods.length === 0 ? "Žádné období" : "Vyber období…"}</option>
               {periods.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({formatDateRange(p.startsOn, p.endsOn)})
@@ -201,10 +199,10 @@ export function ActivityForm({
           )}
           {kind !== "kurz" && !(usesTerms && (termId || !allowCustomDates)) && (
             <>
-              <Field label={kind === "atelier" || kind === "ostatni" ? "Od (nepovinné)" : "Od"} error={fe.startsOn}>
+              <Field label={kind === "ostatni" ? "Od (nepovinné)" : "Od"} error={fe.startsOn}>
                 <DateInput name="startsOn" defaultValue={initial.startsOn} ariaLabel="Začátek" />
               </Field>
-              <Field label={kind === "atelier" || kind === "ostatni" ? "Do (nepovinné)" : "Do"} error={fe.endsOn}>
+              <Field label={kind === "ostatni" ? "Do (nepovinné)" : "Do"} error={fe.endsOn}>
                 <DateInput name="endsOn" defaultValue={initial.endsOn} ariaLabel="Konec" />
               </Field>
             </>
@@ -214,12 +212,12 @@ export function ActivityForm({
           {(kind === "atelier" || kind === "expedice") && kindTerms.length === 0
             ? "Admin zatím nezadal termíny (Správa → Kurzová období → Termíny ateliérů a expedic), proto vyplň data ručně. "
             : null}
-          {usesTerms && termId
+          {usesTerms && (termId || !allowCustomDates)
             ? kind === "atelier"
               ? "Souběžné ateliéry ve stejném termínu si student vybírá mezi sebou — může být jen v jednom."
               : "V týdnu expedic se ostatní výuka v rozvrhu nezobrazuje. Student může být jen na jedné expedici naráz."
             : kind === "atelier"
-            ? `Ateliér trvá jen část období${period ? ` (${formatDateRange(period.startsOn, period.endsOn)})` : ""}; bez data platí celé období. Student může být v jednu dobu jen v jednom ateliéru.`
+            ? "Vyplň, od kdy do kdy ateliér běží. Student může být v jednu dobu jen v jednom ateliéru."
             : kind === "ostatni"
               ? "Pravidelná událost (např. každý pátek): nech data prázdná a vyplň rozvrh. Jednorázová: stejné datum Od i Do."
               : kind === "expedice"
