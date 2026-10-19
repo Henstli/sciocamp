@@ -35,7 +35,7 @@ export function TeamPicker({
   return (
     <section className={`card ${styles.panel}`} aria-label="Týmy">
       <div className={styles.panelHead}>
-        <h2 className={styles.h2}>{mine ? `Tvůj tým: ${mine.name}` : "Vyber si tým"}</h2>
+        <h2 className={styles.h2}>{mine ? "Týmy v úkolu" : "Vyber si tým"}</h2>
         {maxSize && <span className="chip chip-info">nejvýš {maxSize} v týmu</span>}
       </div>
       {!mine && (

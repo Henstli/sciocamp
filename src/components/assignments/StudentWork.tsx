@@ -91,9 +91,8 @@ export function StudentWork({
 
       {team && (
         <p className={styles.teamNote}>
-          <strong>{team.name}</strong>
-          {team.members.length ? ` s ${team.members.join(", ")}` : ""}. Odevzdáváte jednu společnou práci, kdokoli z týmu ji může
-          doplnit nebo odevzdat. Domluvit se můžete v chatu týmu.
+          Odevzdáváte jednu společnou práci za celý tým, kdokoli z týmu ji může doplnit nebo odevzdat. Domluvit se můžete v
+          týmovém chatu.
         </p>
       )}
       {review && <ReviewSummary review={review} maxPoints={maxPoints} forStudent />}

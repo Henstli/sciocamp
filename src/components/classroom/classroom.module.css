@@ -716,3 +716,15 @@ a.attachment:hover {
   font-size: 16px;
   font-weight: 800;
 }
+.chatMembers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 20px 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.chatMembersLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}

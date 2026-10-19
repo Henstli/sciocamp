@@ -47,7 +47,7 @@ export function ReviewForm({
           <div className={styles.scope}>
             <label>
               <input type="radio" name="scope" value="team" checked={scope === "team"} onChange={() => setScope("team")} />
-              Celý {team.name}
+              Celý tým ({team.members.length})
             </label>
             <label>
               <input type="radio" name="scope" value="individual" checked={scope === "individual"} onChange={() => setScope("individual")} />
@@ -56,7 +56,7 @@ export function ReviewForm({
           </div>
           <span className={styles.small}>
             {scope === "team"
-              ? `Hodnocení dostanou všichni: ${team.members.join(", ")}. Kdo má individuální hodnocení, tomu zůstane.`
+              ? `Stejné hodnocení dostanou všichni v týmu: ${team.members.join(", ")}. Kdo má individuální hodnocení, tomu zůstane.`
               : `Jen ${studentName.split(" ")[0]} (např. když v týmu nepracoval). Pozdější hodnocení týmu mu ho nepřepíše.`}
           </span>
         </fieldset>

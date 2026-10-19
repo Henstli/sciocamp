@@ -400,3 +400,71 @@ a.itemName:hover {
   font-weight: 700;
   color: var(--atelier-text);
 }
+
+/* Členové týmu (TeamMembers) */
+.members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 12px;
+}
+.member[data-me] {
+  background: var(--atelier-bg);
+}
+.member[data-current] {
+  background: var(--primary-tint);
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+.members[data-compact] {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.members[data-compact] .member {
+  min-height: 36px;
+  padding: 3px 12px 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface, #fff);
+}
+.members[data-compact] .member[data-me] {
+  background: var(--atelier-bg);
+  border-color: transparent;
+}
+.memberText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.memberName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+.memberName:hover {
+  text-decoration: underline;
+}
+.members[data-compact] .memberName {
+  font-size: 13px;
+  font-weight: 600;
+}
+.memberMe {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.memberNote {
+  font-size: 12px;
+  color: var(--text-muted);
+}

@@ -259,3 +259,43 @@
   border-radius: 10px;
   margin: 0;
 }
+
+/* Týmový úkol: nadpis skupiny v seznamu prací */
+.teamGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  background: var(--atelier-bg);
+  color: var(--atelier-text);
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13px;
+  font-weight: 800;
+}
+.teamGroup[data-none] {
+  background: var(--border-soft);
+  color: var(--text-2);
+}
+.teamGroupMeta {
+  font-weight: 500;
+}
+.teamBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+}
+.teamBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--atelier-bg);
+  color: var(--atelier-text);
+  font-size: 12px;
+  font-weight: 700;
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { TeamMembers, type TeamMember } from "../assignments/TeamMembers";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../Icon";
 import { Avatar, profileHref } from "../PageHeader";
@@ -50,7 +51,10 @@ export function ClassChat({
   kind = "class",
   label = "Chat třídy",
   title,
+  members,
 }: {
+  /** Týmový chat: členové týmu pod nadpisem */
+  members?: TeamMember[];
   /** Viditelný nadpis nad zprávami (např. u týmového chatu v úkolu) */
   title?: string;
   initial: ChatLine[];
@@ -167,6 +171,12 @@ export function ClassChat({
   return (
     <section aria-label={label} className={`card ${styles.chat}`}>
       {title && <h2 className={styles.chatTitle}>{title}</h2>}
+      {members && members.length > 0 && (
+        <div className={styles.chatMembers}>
+          <span className={styles.chatMembersLabel}>V týmu ({members.length}):</span>
+          <TeamMembers members={members} compact />
+        </div>
+      )}
       <div className={styles.chatList} ref={list} aria-live="polite">
         {messages.length === 0 && <div className={styles.meta}>Zatím tu nikdo nic nenapsal. Začni ty!</div>}
         {messages.map((m) => {

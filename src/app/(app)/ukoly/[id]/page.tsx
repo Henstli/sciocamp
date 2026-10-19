@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { PrivateComments, type CommentView } from "@/components/assignments/PrivateComments";
 import { ReviewForm } from "@/components/assignments/ReviewForm";
@@ -14,6 +15,7 @@ import { canOpenActivity, getActivity, getUsersByIds, teachesActivity } from "@/
 import { teamChat, teamsForAssignment } from "@/lib/data-teams";
 import { ClassChat, type ChatLine } from "@/components/classroom/ClassChat";
 import { TeamPicker } from "@/components/assignments/TeamPicker";
+import { TeamMembers, type TeamMember } from "@/components/assignments/TeamMembers";
 import type { Person } from "@/components/classroom/people";
 import { assignmentFiles, commentCounts, getAssignment, getComments, getWork, workMap } from "@/lib/data-assignments";
 import { plural } from "@/lib/format";
@@ -61,6 +63,14 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       };
     });
 
+  // Členové týmu pro zobrazení (jména a avatary).
+  const memberViews = (ids: string[], extra?: (id: string) => Partial<TeamMember>): TeamMember[] =>
+    ids
+      .map((m) => people.get(m))
+      .filter((u): u is User => !!u)
+      .sort((x, y) => x.name.localeCompare(y.name, "cs"))
+      .map((u) => ({ id: u.id, name: u.name, initials: initials(u.name), me: u.id === user.id, ...extra?.(u.id) }));
+
   // Týmový chat úkolu (tým studenta, u vyučujícího tým vybraného studenta).
   async function teamChatBlock(teamId: string, teamName: string, canModerate: boolean) {
     const team = teams.find((t) => t.id === teamId);
@@ -74,8 +84,9 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       <ClassChat
         key={teamId}
         kind="team"
-        label={`Chat: ${teamName}`}
-        title={`Chat: ${teamName}`}
+        label={`Týmový chat: ${teamName}`}
+        title={`Týmový chat · ${teamName}`}
+        members={memberViews(team?.memberIds ?? [])}
         initial={lines}
         me={me}
         people={personMap}
@@ -224,9 +235,23 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                 </div>
               </div>
               {rows.length === 0 && <p className={styles.emptyRow}>Ve třídě zatím nejsou zapsaní žádní studenti.</p>}
-              {rows.map(({ s, work, state, late }) => {
+              {rows.map(({ s, work, state, late }, i) => {
                 const n = counts.get(s.id) ?? 0;
+                const team = a.teamWork ? teamOfStudent(s.id) : null;
+                const newGroup = a.teamWork && (i === 0 || teamOfStudent(rows[i - 1].s.id)?.id !== team?.id);
                 return (
+                  <Fragment key={s.id}>
+                  {newGroup && (
+                    <div className={styles.teamGroup} data-none={team ? undefined : true}>
+                      <Icon name="users" size={16} />
+                      {team ? team.name : "Bez týmu"}
+                      <span className={styles.teamGroupMeta}>
+                        {team
+                          ? `· ${team.memberIds.length} ${plural(team.memberIds.length, "člen", "členové", "členů")}`
+                          : "· odevzdávají sami"}
+                      </span>
+                    </div>
+                  )}
                   <Link
                     key={s.id}
                     href={`/ukoly/${a.id}?student=${s.id}`}
@@ -238,7 +263,6 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                     <span className={styles.studentMain}>
                       <span className={styles.studentName}>{s.name}</span>
                       <span className={styles.studentMeta}>
-                        {a.teamWork && <strong>{teamOfStudent(s.id)?.name ?? "bez týmu"} · </strong>}
                         {work?.submission?.submittedAt && (isHandedIn(state) || state === "vraceno")
                           ? `odevzdáno ${formatStamp(work.submission.submittedAt)}`
                           : "nic neodevzdal(a)"}
@@ -254,6 +278,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                     )}
                     <span className={`chip ${STATE_CHIP[state]}`}>{STATE_LABEL[state]}</span>
                   </Link>
+                  </Fragment>
                 );
               })}
             </section>
@@ -267,6 +292,25 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                     <h2 className={styles.h2}>{selected.name}</h2>
                     <span className={`chip ${STATE_CHIP[selectedState]}`}>{STATE_LABEL[selectedState]}</span>
                   </div>
+                  {selectedTeam && (
+                    <div className={styles.teamBlock}>
+                      <div className={styles.metaLabel}>
+                        Tým: {selectedTeam.name} · odevzdávají společně
+                      </div>
+                      <TeamMembers
+                        members={memberViews(selectedTeam.memberIds, (id) => {
+                          const r = rows.find((x) => x.s.id === id);
+                          return {
+                            me: false,
+                            current: id === selectedId,
+                            href: `/ukoly/${a.id}?student=${id}`,
+                            chip: r ? { label: STATE_LABEL[r.state], className: STATE_CHIP[r.state] } : undefined,
+                            note: r?.work?.review?.individual ? "hodnoceno jednotlivě" : undefined,
+                          };
+                        })}
+                      />
+                    </div>
+                  )}
                   {selectedLate !== null && selectedWork.submission?.submittedAt && (
                     <p className={styles.lateNote}>
                       Odevzdáno po termínu ({formatLate(selectedLate)}) — {formatStamp(selectedWork.submission.submittedAt)}, termín byl{" "}
@@ -296,7 +340,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                       selectedTeam
                         ? {
                             name: selectedTeam.name,
-                            members: selectedTeam.memberIds.map((m) => people.get(m)?.name.split(" ")[0] ?? "?"),
+                            members: memberViews(selectedTeam.memberIds).map((m) => m.name),
                           }
                         : null
                     }
@@ -344,6 +388,21 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
           {myTeam && (await teamChatBlock(myTeam.id, myTeam.name, false))}
         </div>
         <div className={styles.sideCol}>
+          {myTeam && (
+            <section aria-label="Tvůj tým" className={`card ${styles.panel}`}>
+              <div className={styles.panelHead}>
+                <h2 className={styles.h2}>Tvůj tým</h2>
+                <span className={styles.teamBadge}>
+                  <Icon name="users" size={14} />
+                  {myTeam.name}
+                </span>
+              </div>
+              <TeamMembers members={memberViews(myTeam.memberIds)} />
+            </section>
+          )}
+          {a.teamWork && !myTeam && a.teamMode === "teacher" && (
+            <p className={styles.small}>Do žádného týmu tě vyučující nezařadil, úkol odevzdáváš sám.</p>
+          )}
           {a.teamWork && a.teamMode === "students" && (
             <TeamPicker
               assignmentId={a.id}
