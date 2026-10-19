@@ -329,8 +329,8 @@ export async function getPhone(viewer: User, personId: string): Promise<string |
 export type Socials = { instagram: string | null; discord: string | null };
 
 const DEMO_SOCIALS: Record<string, Socials> = {
-  "u-liska": { instagram: "simon.liska", discord: "simonl" },
-  "u-jakubcova": { instagram: null, discord: "anezka.j" },
+  "u-liska": { instagram: "simon.liska", discord: null },
+  "u-jakubcova": { instagram: "anezka.jakubcova", discord: null },
 };
 
 export async function getSocials(personId: string): Promise<Socials | null> {

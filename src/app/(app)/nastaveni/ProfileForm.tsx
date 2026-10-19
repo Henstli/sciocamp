@@ -12,10 +12,8 @@ export function ProfileForm({
   bio,
   isStudent,
   instagram,
-  discord,
 }: {
   instagram: string;
-  discord: string;
   name: string;
   email: string;
   phone: string;
@@ -66,16 +64,7 @@ export function ProfileForm({
           {fe.instagram ? (
             <span className={styles.fieldError}>{fe.instagram}</span>
           ) : (
-            <span className={styles.hint}>Stačí jméno bez @, nebo vlož odkaz na profil.</span>
-          )}
-        </label>
-        <label className={styles.field} data-invalid={!!fe.discord}>
-          <span className={styles.label}>Discord (nepovinné)</span>
-          <input name="discord" defaultValue={discord} placeholder="uživatelské jméno" autoComplete="off" className={styles.input} />
-          {fe.discord ? (
-            <span className={styles.fieldError}>{fe.discord}</span>
-          ) : (
-            <span className={styles.hint}>Instagram a Discord uvidí v tvém profilu všichni ve škole.</span>
+            <span className={styles.hint}>Stačí jméno bez @, nebo vlož odkaz na profil. Uvidí ho v tvém profilu všichni ve škole.</span>
           )}
         </label>
         <label className={styles.field} data-wide="true">

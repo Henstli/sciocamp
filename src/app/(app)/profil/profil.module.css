@@ -217,25 +217,46 @@
   color: var(--primary-text);
   font-weight: 600;
 }
-.copyRow {
+/* Instagram v kartě Kontakt */
+.instagram {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid #f3d3e2;
+  border-radius: 14px;
+  background: #fdf2f7;
+  color: var(--text);
+  text-decoration: none;
+  align-self: flex-start;
+}
+.instagram:hover {
+  border-color: #e7a9c6;
+  background: #fbe8f1;
+}
+.instagramIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(135deg, #f58529 0%, #dd2a7b 50%, #8134af 100%);
 }
-.copyBtn {
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--text-2);
-  font: inherit;
+.instagramText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.instagramLabel {
   font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-muted);
 }
-.copyBtn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+.instagramHandle {
+  font-size: 15px;
+  font-weight: 800;
+  color: #b0216b;
 }

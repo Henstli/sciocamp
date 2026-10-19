@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CopyText } from "./CopyText";
+import { Icon } from "./Icon";
 import { activityHref } from "@/lib/links";
 import { hasEnded } from "@/lib/periods";
 import { ROLE_LABEL, initials } from "@/lib/roles";
@@ -20,7 +20,7 @@ export function ProfileView({
   activities,
   todayIso,
 }: {
-  /** Instagram a Discord (vidí všichni ve škole) */
+  /** Instagram (vidí všichni ve škole) */
   socials?: { instagram: string | null; discord: string | null } | null;
   person: User;
   isMe: boolean;
@@ -88,20 +88,25 @@ export function ProfileView({
           ) : isMe ? (
             <Field label="Telefon" value={<Link href="/nastaveni">Doplnit telefon</Link>} />
           ) : null}
-          {socials?.instagram && (
-            <Field
-              label="Instagram"
-              value={
-                <a href={`https://www.instagram.com/${socials.instagram}/`} target="_blank" rel="noopener noreferrer">
-                  @{socials.instagram}
-                </a>
-              }
-            />
-          )}
-          {socials?.discord && <Field label="Discord" value={<CopyText text={socials.discord} label="jméno na Discordu" />} />}
-          {isMe && !socials?.instagram && !socials?.discord && (
-            <Field label="Sociální sítě" value={<Link href="/nastaveni">Přidat Instagram nebo Discord</Link>} />
-          )}
+          {socials?.instagram ? (
+            <a
+              href={`https://www.instagram.com/${socials.instagram}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.instagram}
+              aria-label={`Instagram: @${socials.instagram} (otevře se v nové kartě)`}
+            >
+              <span className={styles.instagramIcon} aria-hidden>
+                <Icon name="camera" size={18} strokeWidth={2} />
+              </span>
+              <span className={styles.instagramText}>
+                <span className={styles.instagramLabel}>Instagram</span>
+                <span className={styles.instagramHandle}>@{socials.instagram}</span>
+              </span>
+            </a>
+          ) : isMe ? (
+            <Field label="Instagram" value={<Link href="/nastaveni">Přidat Instagram</Link>} />
+          ) : null}
           {!isMe && (
             <Link href={`/zpravy?s=${person.id}`} className="btn btn-soft">
               Napsat zprávu

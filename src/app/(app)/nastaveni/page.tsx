@@ -16,7 +16,6 @@ export default async function SettingsPage() {
       <div style={{ maxWidth: 860 }}>
         <ProfileForm name={user.name} email={user.email} phone={phone ?? ""} bio={user.bio ?? ""} isStudent={user.role === "student"}
           instagram={socials?.instagram ?? ""}
-          discord={socials?.discord ?? ""}
         />
       </div>
     </>

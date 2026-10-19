@@ -29,14 +29,7 @@ function normalizeInstagram(raw: string): string | null {
   return /^[A-Za-z0-9._]{1,30}$/.test(v) ? v : null;
 }
 
-/** Discord: uživatelské jméno malými písmeny, bez @. */
-function normalizeDiscord(raw: string): string | null {
-  const v = raw.trim().replace(/^@/, "").toLowerCase();
-  if (!v) return "";
-  return /^[a-z0-9._]{2,32}$/.test(v) ? v : null;
-}
-
-/** Uloží „O mně“, telefon a sociální sítě přihlášeného uživatele. */
+/** Uloží „O mně“, telefon a Instagram přihlášeného uživatele. */
 export async function saveProfile(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
   const user = await requireUser();
   const bio = String(formData.get("bio") ?? "").trim().slice(0, 600) || null;
@@ -45,9 +38,7 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
   const fieldErrors: Record<string, string> = {};
   if (phoneRaw && !phone) fieldErrors.phone = "Napiš telefon jako 777 123 456 nebo +420 777 123 456.";
   const instagram = normalizeInstagram(String(formData.get("instagram") ?? ""));
-  const discord = normalizeDiscord(String(formData.get("discord") ?? ""));
   if (instagram === null) fieldErrors.instagram = "Napiš uživatelské jméno z Instagramu, např. jana.novakova.";
-  if (discord === null) fieldErrors.discord = "Napiš uživatelské jméno z Discordu, např. jana.novakova (2–32 znaků).";
   if (Object.keys(fieldErrors).length) return { error: "Zkontroluj zvýrazněná pole.", fieldErrors };
   if (!isSupabase) return { info: "Ukázkový režim: změny se neukládají." };
 
@@ -59,12 +50,10 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
     : await sb.from("profile_contacts").delete().eq("user_id", user.id);
   if (res.error) return { error: "Telefon se nepodařilo uložit." };
   const socials =
-    instagram || discord
-      ? await sb
-          .from("profile_socials")
-          .upsert({ user_id: user.id, instagram: instagram || null, discord: discord || null, updated_at: new Date().toISOString() })
+    instagram
+      ? await sb.from("profile_socials").upsert({ user_id: user.id, instagram, discord: null, updated_at: new Date().toISOString() })
       : await sb.from("profile_socials").delete().eq("user_id", user.id);
-  if (socials.error) return { error: "Sociální sítě se nepodařilo uložit." };
+  if (socials.error) return { error: "Instagram se nepodařilo uložit." };
   refresh();
   return { info: "Uloženo." };
 }
