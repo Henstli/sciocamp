@@ -209,11 +209,15 @@ export async function workMap(assignmentIds: string[], studentIds?: string[]): P
  * ve společné složce týmu (plus případně starší ve vlastní složce studenta).
  */
 export async function getWork(assignmentId: string, studentId: string, teamId?: string | null): Promise<Work> {
-  const base = (await workMap([assignmentId], [studentId])).get(`${assignmentId}:${studentId}`) ?? { submission: null, review: null };
+  // Záznam a soubory naráz (každé volání je cesta do databáze / úložiště).
+  const [map, teamFiles, ownFiles] = await Promise.all([
+    workMap([assignmentId], [studentId]),
+    isSupabase && teamId ? listFiles(assignmentId, teamId) : Promise.resolve([]),
+    isSupabase ? listFiles(assignmentId, studentId) : Promise.resolve([]),
+  ]);
+  const base = map.get(`${assignmentId}:${studentId}`) ?? { submission: null, review: null };
   if (!isSupabase) return base;
-  const files = teamId
-    ? [...(await listFiles(assignmentId, teamId)), ...(await listFiles(assignmentId, studentId))]
-    : await listFiles(assignmentId, studentId);
+  const files = [...teamFiles, ...ownFiles];
   if (!base.submission && files.length === 0) return base;
   return {
     review: base.review,

@@ -14,6 +14,7 @@ import { isSupabase } from "@/lib/config";
 import { canOpenActivity, getActivity, getUsersByIds, teachesActivity } from "@/lib/data";
 import { teamChat, teamsForAssignment } from "@/lib/data-teams";
 import { ClassChat, type ChatLine } from "@/components/classroom/ClassChat";
+import { PendingHint } from "@/components/assignments/PendingHint";
 import { TeamPicker } from "@/components/assignments/TeamPicker";
 import { TeamMembers, type TeamMember } from "@/components/assignments/TeamMembers";
 import type { Person } from "@/components/classroom/people";
@@ -22,7 +23,7 @@ import { plural } from "@/lib/format";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { canTeach, initials } from "@/lib/roles";
 import { formatDue, formatStamp } from "@/lib/time";
-import type { Comment, User } from "@/lib/types";
+import type { ClassMessage, Comment, User } from "@/lib/types";
 import styles from "../ukol.module.css";
 
 export async function generateMetadata({ params }: PageProps<"/ukoly/[id]">): Promise<Metadata> {
@@ -39,16 +40,20 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
   if (!a || !activity || !canOpenActivity(user, activity)) notFound();
 
   const teaching = teachesActivity(user, activity);
-  const [teacher] = await getUsersByIds([activity.teacherId]);
   const isTask = a.kind === "ukol";
-  const files = await assignmentFiles(a.id);
-  // Týmový úkol: týmy třídy (kdo v týmu není, odevzdává sám).
-  const teams = a.teamWork ? await teamsForAssignment(a.id) : [];
+  // Vše nezávislé načíst naráz (každý dotaz je cesta do databáze).
+  const [staff, files, teams] = await Promise.all([
+    getUsersByIds([activity.teacherId, ...(activity.coTeacherIds ?? [])]),
+    assignmentFiles(a.id),
+    // Týmový úkol: týmy úkolu (kdo v týmu není, odevzdává sám).
+    a.teamWork ? teamsForAssignment(a.id) : Promise.resolve([]),
+  ]);
+  const teacher = staff.find((u) => u.id === activity.teacherId);
   const teamOfStudent = (sid: string) => teams.find((t) => t.memberIds.includes(sid)) ?? null;
 
   const people = new Map<string, User>();
   const remember = (list: User[]) => list.forEach((u) => people.set(u.id, u));
-  remember([user, ...(teacher ? [teacher] : [])]);
+  remember([user, ...staff]);
   const toView = (list: Comment[]): CommentView[] =>
     list.map((c) => {
       const author = people.get(c.authorId);
@@ -72,13 +77,13 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       .map((u) => ({ id: u.id, name: u.name, initials: initials(u.name), me: u.id === user.id, ...extra?.(u.id) }));
 
   // Týmový chat úkolu (tým studenta, u vyučujícího tým vybraného studenta).
-  async function teamChatBlock(teamId: string, teamName: string, canModerate: boolean) {
+  // Členové týmu musí být v `people` (načtení zajistí volající).
+  function teamChatBlock(teamId: string, teamName: string, canModerate: boolean, chat: ClassMessage[]) {
     const team = teams.find((t) => t.id === teamId);
-    remember(await getUsersByIds([...(team?.memberIds ?? []), activity!.teacherId, ...(activity!.coTeacherIds ?? [])]));
     const personMap: Record<string, Person> = {};
     for (const u of people.values()) personMap[u.id] = { id: u.id, name: u.name, initials: initials(u.name), role: u.role };
     const stampNow = new Date();
-    const lines: ChatLine[] = (await teamChat(teamId)).map((m) => ({ ...m, when: formatStamp(m.createdAt, stampNow) }));
+    const lines: ChatLine[] = chat.map((m) => ({ ...m, when: formatStamp(m.createdAt, stampNow) }));
     const me = personMap[user.id];
     return (
       <ClassChat
@@ -86,7 +91,8 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
         kind="team"
         label={`Týmový chat: ${teamName}`}
         title={`Týmový chat · ${teamName}`}
-        members={memberViews(team?.memberIds ?? [])}
+        // Student vidí svůj tým v kartě „Tvůj tým“, nad chatem by se opakoval.
+        members={canModerate ? memberViews(team?.memberIds ?? []) : undefined}
         initial={lines}
         me={me}
         people={personMap}
@@ -188,10 +194,17 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
 
   // --- Pohled vyučujícího ---
   if (teaching) {
-    const students = await getUsersByIds(activity.studentIds);
+    const selectedId = typeof student === "string" && activity.studentIds.includes(student) ? student : null;
+    const selectedTeam = selectedId ? teamOfStudent(selectedId) : null;
+    const [students, works, counts, selectedWork, comments, chat] = await Promise.all([
+      getUsersByIds(activity.studentIds),
+      workMap([a.id]),
+      commentCounts(a.id),
+      selectedId ? getWork(a.id, selectedId, selectedTeam?.id) : Promise.resolve(null),
+      selectedId ? getComments(a.id, selectedId) : Promise.resolve([]),
+      selectedTeam ? teamChat(selectedTeam.id) : Promise.resolve([]),
+    ]);
     remember(students);
-    const works = await workMap([a.id]);
-    const counts = await commentCounts(a.id);
     const rows = students.map((s) => {
       const work = works.get(`${a.id}:${s.id}`) ?? null;
       return { s, work, state: workState(a, work), late: lateBy(a, work) };
@@ -208,13 +221,10 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
     const submitted = rows.filter((r) => isHandedIn(r.state)).length;
     const lateCount = rows.filter((r) => r.late !== null).length;
 
-    const selectedId = typeof student === "string" && activity.studentIds.includes(student) ? student : null;
     const selected = selectedId ? people.get(selectedId)! : null;
-    const selectedTeam = selectedId ? teamOfStudent(selectedId) : null;
-    const selectedWork = selectedId ? await getWork(a.id, selectedId, selectedTeam?.id) : null;
     const selectedState = selectedId ? workState(a, selectedWork) : null;
     const selectedLate = selectedWork ? lateBy(a, selectedWork) : null;
-    const thread = selectedId ? toView(await getComments(a.id, selectedId)) : [];
+    const thread = toView(comments);
 
     return (
       <>
@@ -256,6 +266,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                     key={s.id}
                     href={`/ukoly/${a.id}?student=${s.id}`}
                     scroll={false}
+                    prefetch={false}
                     className={styles.studentRow}
                     aria-current={s.id === selectedId ? "true" : undefined}
                   >
@@ -277,6 +288,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                       </span>
                     )}
                     <span className={`chip ${STATE_CHIP[state]}`}>{STATE_LABEL[state]}</span>
+                    <PendingHint className={styles.spinner} />
                   </Link>
                   </Fragment>
                 );
@@ -354,7 +366,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                   hint={`Vidíš jen ty a ${selected.name.split(" ")[0]}.`}
                   placeholder={`Napiš: ${selected.name.split(" ")[0]}…`}
                 />
-                {selectedTeam && (await teamChatBlock(selectedTeam.id, selectedTeam.name, true))}
+                {selectedTeam && teamChatBlock(selectedTeam.id, selectedTeam.name, true, chat)}
               </>
             ) : (
               <section className={`card ${styles.panel}`}>
@@ -373,10 +385,15 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
 
   // --- Pohled studenta ---
   const myTeam = teamOfStudent(user.id);
-  if (a.teamWork) remember(await getUsersByIds(teams.flatMap((t) => t.memberIds)));
-  const work = await getWork(a.id, user.id, myTeam?.id);
+  const [members, work, comments, chat] = await Promise.all([
+    a.teamWork ? getUsersByIds(teams.flatMap((t) => t.memberIds)) : Promise.resolve([]),
+    getWork(a.id, user.id, myTeam?.id),
+    getComments(a.id, user.id),
+    myTeam ? teamChat(myTeam.id) : Promise.resolve([]),
+  ]);
+  remember(members);
   const state = workState(a, work);
-  const thread = toView(await getComments(a.id, user.id));
+  const thread = toView(comments);
 
   return (
     <>
@@ -385,7 +402,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       <div className={styles.columns}>
         <div className={styles.mainCol}>
           {article}
-          {myTeam && (await teamChatBlock(myTeam.id, myTeam.name, false))}
+          {myTeam && teamChatBlock(myTeam.id, myTeam.name, false, chat)}
         </div>
         <div className={styles.sideCol}>
           {myTeam && (

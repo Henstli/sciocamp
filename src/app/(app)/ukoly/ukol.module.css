@@ -299,3 +299,37 @@
   font-size: 12px;
   font-weight: 700;
 }
+
+/* Přepínání studentů: okamžitá odezva, než dorazí data */
+.spinner {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  border: 2.5px solid var(--primary-light, #c9d8fa);
+  border-top-color: var(--primary);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.spinner[data-pending] {
+  opacity: 1;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.studentRow:has(.spinner[data-pending]) {
+  background: var(--primary-tint);
+}
+.columns:has(.spinner[data-pending]) .sideCol {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.15s 0.1s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner[data-pending] {
+    animation-duration: 2s;
+  }
+}
