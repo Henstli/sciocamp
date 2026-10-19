@@ -42,7 +42,7 @@ export async function ClassroomPage({
   const now = pragueNow();
   const stamp = new Date();
   const [content, posts, chat, staff] = await Promise.all([getClassroom(activity), classPosts(activity), classChat(activity), listStaff()]);
-  const [teacher] = await getUsersByIds([activity.teacherId]);
+  const [teacher, ...coTeachers] = await getUsersByIds([activity.teacherId, ...(activity.coTeacherIds ?? [])]);
   const students = await getUsersByIds(activity.studentIds);
   const person = (u: User | undefined): Person =>
     u ? { id: u.id, name: u.name, initials: initials(u.name), role: u.role } : { id: "?", name: "Neznámý uživatel", initials: "?", role: "student" };
@@ -88,7 +88,17 @@ export async function ClassroomPage({
   const view: ClassView = {
     me: person(user),
     teacher: person(teacher),
-    teacherLabel: activity.kind === "atelier" ? (feminine ? "Lektorka ateliéru" : "Lektor ateliéru") : "Vyučující kurzu",
+    teacherLabel:
+      activity.kind === "atelier"
+        ? feminine
+          ? "Lektorka ateliéru"
+          : "Lektor ateliéru"
+        : activity.kind === "kurz"
+          ? "Vyučující kurzu"
+          : activity.kind === "expedice"
+            ? "Vede expedici"
+            : "Vede událost",
+    coTeachers: coTeachers.sort((a, b) => a.name.localeCompare(b.name, "cs")).map(person),
     stream,
     canManage: isTeacher,
     work: { topics: work.topics, newHref: isTeacher ? `/ukoly/novy?trida=${activity.id}` : null },

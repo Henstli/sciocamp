@@ -14,6 +14,8 @@ export type ClassView = {
   me: Person;
   teacher: Person;
   teacherLabel: string;
+  /** Další vyučující (spoluvyučující, u událostí třeba všichni učitelé) */
+  coTeachers: Person[];
   stream: StreamEntry[];
   /** Smí psát příspěvky a mazat cizí zprávy (vyučující třídy a admin) */
   canManage: boolean;
@@ -189,7 +191,7 @@ function People({ view }: { view: ClassView }) {
   return (
     <div className={styles.columns}>
       <section aria-label="Vyučující" className={`card ${styles.peopleSide}`}>
-        <h2 className={styles.h2}>Vyučující</h2>
+        <h2 className={styles.h2}>Vyučující{view.coTeachers.length > 0 ? ` · ${view.coTeachers.length + 1}` : ""}</h2>
         <div className={styles.teacherRow}>
           <Avatar initials={view.teacher.initials} size={44} tone="late" href={profileHref(view.teacher.id)} title={view.teacher.name} />
           <div className={styles.grow}>
@@ -204,6 +206,20 @@ function People({ view }: { view: ClassView }) {
             </Link>
           )}
         </div>
+        {view.coTeachers.map((t) => (
+          <div key={t.id} className={styles.teacherRow}>
+            <Avatar initials={t.initials} size={36} tone="ucitel" href={profileHref(t.id)} title={t.name} />
+            <div className={styles.grow}>
+              <div className={styles.strong}>{t.name}</div>
+              <div className={styles.meta}>Další vyučující</div>
+            </div>
+            {t.id !== view.me.id && (
+              <Link href={`/zpravy?s=${t.id}`} aria-label={`Napsat: ${t.name}`} className={styles.msgBtn}>
+                <Icon name="chat" size={18} />
+              </Link>
+            )}
+          </div>
+        ))}
       </section>
       <section aria-label="Studenti" className={`card ${styles.students}`}>
         <h2 className={styles.h2}>Studenti · {view.students.length}</h2>
