@@ -322,6 +322,24 @@ export async function getPhone(viewer: User, personId: string): Promise<string |
   return data?.phone ?? null;
 }
 
+// ---------------------------------------------------------------------------
+// Sociální sítě (vidí všichni ve škole)
+// ---------------------------------------------------------------------------
+
+export type Socials = { instagram: string | null; discord: string | null };
+
+const DEMO_SOCIALS: Record<string, Socials> = {
+  "u-liska": { instagram: "simon.liska", discord: "simonl" },
+  "u-jakubcova": { instagram: null, discord: "anezka.j" },
+};
+
+export async function getSocials(personId: string): Promise<Socials | null> {
+  if (!isSupabase) return DEMO_SOCIALS[personId] ?? null;
+  const sb = await createClient();
+  const { data } = await sb.from("profile_socials").select("instagram, discord").eq("user_id", personId).maybeSingle();
+  return data ? { instagram: data.instagram ?? null, discord: data.discord ?? null } : null;
+}
+
 // Výsledky se v rámci jednoho požadavku sdílí (React cache) — stránka, menu
 // i pomocné funkce se ptají na stejná data a do databáze se jde jen jednou.
 export const listUsers = cache(listUsersUncached);

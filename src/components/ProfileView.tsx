@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CopyText } from "./CopyText";
 import { activityHref } from "@/lib/links";
 import { hasEnded } from "@/lib/periods";
 import { ROLE_LABEL, initials } from "@/lib/roles";
@@ -15,9 +16,12 @@ export function ProfileView({
   person,
   isMe,
   phone,
+  socials = null,
   activities,
   todayIso,
 }: {
+  /** Instagram a Discord (vidí všichni ve škole) */
+  socials?: { instagram: string | null; discord: string | null } | null;
   person: User;
   isMe: boolean;
   /** Telefon, pokud ho divák smí vidět */
@@ -84,6 +88,20 @@ export function ProfileView({
           ) : isMe ? (
             <Field label="Telefon" value={<Link href="/nastaveni">Doplnit telefon</Link>} />
           ) : null}
+          {socials?.instagram && (
+            <Field
+              label="Instagram"
+              value={
+                <a href={`https://www.instagram.com/${socials.instagram}/`} target="_blank" rel="noopener noreferrer">
+                  @{socials.instagram}
+                </a>
+              }
+            />
+          )}
+          {socials?.discord && <Field label="Discord" value={<CopyText text={socials.discord} label="jméno na Discordu" />} />}
+          {isMe && !socials?.instagram && !socials?.discord && (
+            <Field label="Sociální sítě" value={<Link href="/nastaveni">Přidat Instagram nebo Discord</Link>} />
+          )}
           {!isMe && (
             <Link href={`/zpravy?s=${person.id}`} className="btn btn-soft">
               Napsat zprávu

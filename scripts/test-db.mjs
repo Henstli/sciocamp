@@ -851,4 +851,14 @@ await test("události pro všechny: zapíšou se všichni studenti i vyučujíc�
   assert.equal((await db.query(`select 1 from public.enrollments where activity_id = $1 and student_id = $2`, [m.id, fresh])).rows.length, 0);
 });
 
+await test("sociální sítě: každý vyplní své, vidí je všichni ve škole", async () => {
+  await as(student, `insert into public.profile_socials (user_id, instagram, discord) values ($1, 'simon.liska', 'simonl')`, [student]);
+  await assert.rejects(() => as(student, `insert into public.profile_socials (user_id, instagram) values ($1, 'cizi')`, [teacher]));
+  await assert.rejects(() => as(student, `update public.profile_socials set instagram = 'x y' where user_id = $1`, [student]));
+  assert.equal((await as(teacher2, `select instagram from public.profile_socials where user_id = $1`, [student]))[0].instagram, "simon.liska");
+  await assert.rejects(() => as(null, `select * from public.profile_socials`));
+  await as(teacher, `update public.profile_socials set instagram = 'hack' where user_id = $1`, [student]);
+  assert.equal((await db.query(`select instagram from public.profile_socials where user_id = $1`, [student])).rows[0].instagram, "simon.liska");
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

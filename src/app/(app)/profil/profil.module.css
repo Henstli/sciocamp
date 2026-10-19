@@ -217,3 +217,25 @@
   color: var(--primary-text);
   font-weight: 600;
 }
+.copyRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.copyBtn {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.copyBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}

@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { BackButton } from "@/components/BackButton";
 import { ProfileView } from "@/components/ProfileView";
 import { requireUser } from "@/lib/auth";
-import { activitiesForUser, getPhone, getUserById } from "@/lib/data";
+import { activitiesForUser, getPhone, getSocials, getUserById } from "@/lib/data";
 import { pragueNow, toIso } from "@/lib/time";
 
 export async function generateMetadata({ params }: PageProps<"/lide/[id]">): Promise<Metadata> {
@@ -19,11 +19,15 @@ export default async function PersonPage({ params }: PageProps<"/lide/[id]">) {
   const person = await getUserById(id);
   if (!person) notFound();
   // Aktivity, které divák smí vidět (u studentů jen společné třídy — hlídá RLS u zápisů).
-  const [activities, phone] = await Promise.all([activitiesForUser(person), getPhone(viewer, person.id)]);
+  const [activities, phone, socials] = await Promise.all([
+    activitiesForUser(person),
+    getPhone(viewer, person.id),
+    getSocials(person.id),
+  ]);
   return (
     <>
       <BackButton />
-      <ProfileView person={person} isMe={false} phone={phone} activities={activities} todayIso={toIso(pragueNow())} />
+      <ProfileView person={person} isMe={false} phone={phone} socials={socials} activities={activities} todayIso={toIso(pragueNow())} />
     </>
   );
 }
