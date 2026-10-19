@@ -418,3 +418,12 @@
 .more:hover {
   text-decoration: underline;
 }
+
+/* Dlouhá slova (třeba „dddd…“ nebo odkazy) se zalomí a nevyjedou z karty. */
+.card {
+  min-width: 0;
+}
+.desc,
+.title {
+  overflow-wrap: anywhere;
+}
