@@ -1,5 +1,6 @@
 // Nahrávání souborů do Supabase Storage přímo z prohlížeče (soubor nejde přes server).
 
+import { compressImage } from "./image-compress";
 import { createClient } from "./supabase/client";
 
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
@@ -29,12 +30,14 @@ export async function uploadFilesDetailed(
   const sb = createClient();
   let problem: string | null = null;
   const uploaded: UploadedFile[] = [];
-  for (const file of files) {
+  for (const original of files) {
+    onProgress?.(original.name);
+    // Fotky se před nahráním zmenší (viz image-compress.ts).
+    const file = await compressImage(original);
     if (file.size > MAX_UPLOAD_BYTES) {
       problem = `Soubor „${file.name}“ je větší než 25 MB. Nahraj ho na Google Disk a přidej odkaz.`;
       continue;
     }
-    onProgress?.(file.name);
     const path = `${folder}/${Date.now()}-${safeName(file.name)}`;
     const { error } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type || undefined, upsert: false });
     if (error) {

@@ -7,6 +7,7 @@ import { Avatar, profileHref } from "../PageHeader";
 import { createClient } from "@/lib/supabase/client";
 import { formatStamp } from "@/lib/time";
 import type { SubmissionFile } from "@/lib/types";
+import { isCompressibleImage } from "@/lib/image-compress";
 import { MAX_UPLOAD_BYTES, uploadFilesDetailed } from "@/lib/upload";
 import { Attachment } from "../Attachment";
 import { ComposerPlus, GifImage, insertAtCursor } from "../composer/ComposerPlus";
@@ -139,7 +140,7 @@ export function ClassChat({
       clear();
       return;
     }
-    if (file_ && file_.size > MAX_UPLOAD_BYTES) return setError("Soubor je větší než 25 MB. Nahraj ho na Google Disk a pošli odkaz.");
+    if (file_ && file_.size > MAX_UPLOAD_BYTES && !isCompressibleImage(file_)) return setError("Soubor je větší než 25 MB. Nahraj ho na Google Disk a pošli odkaz.");
     setSending(true);
     let attached: { path: string; name: string; size: number } | null = null;
     if (file_) {
