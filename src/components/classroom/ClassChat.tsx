@@ -9,6 +9,8 @@ import { formatStamp } from "@/lib/time";
 import type { SubmissionFile } from "@/lib/types";
 import { MAX_UPLOAD_BYTES, uploadFilesDetailed } from "@/lib/upload";
 import { Attachment } from "../Attachment";
+import { ComposerPlus, GifImage, insertAtCursor } from "../composer/ComposerPlus";
+import { isGifUrl } from "../composer/gif";
 import { UNKNOWN_PERSON, toneFor, type Person } from "./people";
 import styles from "./classroom.module.css";
 
@@ -74,7 +76,7 @@ export function ClassChat({
   const [sending, setSending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const list = useRef<HTMLDivElement>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const draftInput = useRef<HTMLInputElement>(null);
   const realtime = live && !!activityDbId;
   const cfg = KINDS[kind];
   const BUCKET = cfg.bucket;
@@ -111,9 +113,16 @@ export function ClassChat({
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length]);
 
-  async function send() {
-    const body = draft.trim();
-    if (!body && !file) return;
+  /** Odešle rozepsanou zprávu, nebo rovnou GIF (`gif` = odkaz). */
+  async function send(gif?: string) {
+    const body = gif ?? draft.trim();
+    const file_ = gif ? null : file;
+    const clear = () => {
+      if (gif) return;
+      setDraft("");
+      setFile(null);
+    };
+    if (!body && !file_) return;
     setError(null);
     if (!realtime) {
       setMessages((m) => [
@@ -124,18 +133,17 @@ export function ClassChat({
           body,
           createdAt: new Date().toISOString(),
           when: "teď",
-          file: file ? { path: "", name: file.name, size: file.size } : null,
+          file: file_ ? { path: "", name: file_.name, size: file_.size } : null,
         },
       ]);
-      setDraft("");
-      setFile(null);
+      clear();
       return;
     }
-    if (file && file.size > MAX_UPLOAD_BYTES) return setError("Soubor je větší než 25 MB. Nahraj ho na Google Disk a pošli odkaz.");
+    if (file_ && file_.size > MAX_UPLOAD_BYTES) return setError("Soubor je větší než 25 MB. Nahraj ho na Google Disk a pošli odkaz.");
     setSending(true);
     let attached: { path: string; name: string; size: number } | null = null;
-    if (file) {
-      const { problem, uploaded } = await uploadFilesDetailed(BUCKET, activityDbId!, [file]);
+    if (file_) {
+      const { problem, uploaded } = await uploadFilesDetailed(BUCKET, activityDbId!, [file_]);
       if (problem || !uploaded[0]) {
         setSending(false);
         return setError(problem ?? "Přílohu se nepodařilo nahrát.");
@@ -155,8 +163,7 @@ export function ClassChat({
       .single();
     setSending(false);
     if (err || !data) return setError("Zprávu se nepodařilo odeslat. Zkus to znovu.");
-    setDraft("");
-    setFile(null);
+    clear();
     const line = toLine(data as Row);
     setMessages((m) => (m.some((x) => x.id === line.id) ? m : [...m, line]));
   }
@@ -189,7 +196,7 @@ export function ClassChat({
                   <span className={styles.strong}>{author.name}</span>
                   <span className={styles.meta}>{m.when}</span>
                 </div>
-                {m.body && <div className={styles.msgText}>{m.body}</div>}
+                {m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.msgText}>{m.body}</div>)}
                 {m.file && (
                   <div className={styles.msgFile}>
                     <Attachment bucket={BUCKET} file={m.file} live={realtime} />
@@ -221,19 +228,12 @@ export function ClassChat({
           void send();
         }}
       >
-        <input
-          ref={fileInput}
-          type="file"
-          id={`chat-priloha-${kind}-${activityDbId ?? "demo"}`}
-          className="sr-only"
-          onChange={(e) => {
-            setFile(e.target.files?.[0] ?? null);
-            if (fileInput.current) fileInput.current.value = "";
-          }}
+        <ComposerPlus
+          idPrefix={`chat-${kind}-${activityDbId ?? "demo"}`}
+          onFile={setFile}
+          onEmoji={(e) => setDraft((d) => insertAtCursor(draftInput.current, d, e))}
+          onGif={(url) => void send(url)}
         />
-        <label htmlFor={`chat-priloha-${kind}-${activityDbId ?? "demo"}`} className={styles.chatAttach} aria-label="Přiložit soubor nebo obrázek">
-          <Icon name="paperclip" size={20} />
-        </label>
         <label className={styles.grow}>
           <span className="sr-only">{cfg.placeholder}</span>
           <input
@@ -242,6 +242,7 @@ export function ClassChat({
             value={draft}
             maxLength={2000}
             onChange={(e) => setDraft(e.target.value)}
+            ref={draftInput}
             className={styles.composerInput}
           />
         </label>

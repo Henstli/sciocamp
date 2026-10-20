@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { isGifUrl } from "@/components/composer/gif";
 import { Messenger, type ContactView, type ThreadMessage } from "@/components/messages/Messenger";
 import { PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
@@ -31,7 +32,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
     .map((c) => {
       const other = byId.get(c.otherId);
       if (!other) return null;
-      const preview = c.lastBody || (c.lastHasFile ? "Příloha" : "");
+      const preview = isGifUrl(c.lastBody) ? "GIF" : c.lastBody || (c.lastHasFile ? "Příloha" : "");
       return {
         id: c.id,
         person: contact(other),

@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../Icon";
 import { Attachment } from "../Attachment";
+import { ComposerPlus, GifImage, insertAtCursor } from "../composer/ComposerPlus";
+import { isGifUrl } from "../composer/gif";
 import { Avatar, profileHref } from "../PageHeader";
 import { markConversationRead, startConversation } from "@/lib/actions/communication";
 import { createClient } from "@/lib/supabase/client";
@@ -91,7 +93,7 @@ export function Messenger({
   const typingSentAt = useRef(0);
   const typingChannel = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
   const listEnd = useRef<HTMLDivElement>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const draftInput = useRef<HTMLInputElement>(null);
 
   const unreadHere = conversations.find((c) => c.id === activeId)?.unread ?? 0;
 
@@ -209,9 +211,16 @@ export function Messenger({
     return people.filter((p) => strip(p.name).includes(nq)).slice(0, 12);
   }, [query, people]);
 
-  async function send() {
-    const body = draft.trim();
-    if ((!body && !file) || !activePerson) return;
+  /** Odešle rozepsanou zprávu, nebo rovnou GIF (`gif` = odkaz). */
+  async function send(gif?: string) {
+    const body = gif ?? draft.trim();
+    const file_ = gif ? null : file;
+    const clear = () => {
+      if (gif) return;
+      setDraft("");
+      setFile(null);
+    };
+    if ((!body && !file_) || !activePerson) return;
     setError(null);
     if (!live) {
       setMessages((m) => [
@@ -220,24 +229,23 @@ export function Messenger({
           id: `local-${m.length}`,
           mine: true,
           body,
-          file: file ? { path: "", name: file.name, size: file.size } : null,
+          file: file_ ? { path: "", name: file_.name, size: file_.size } : null,
           time: "teď",
           day: "Dnes",
           createdAt: new Date().toISOString(),
         },
       ]);
-      setDraft("");
-      setFile(null);
+      clear();
       return;
     }
-    if (file && file.size > MAX_UPLOAD_BYTES) return setError("Soubor je větší než 25 MB. Nahraj ho na Google Disk a pošli odkaz.");
+    if (file_ && file_.size > MAX_UPLOAD_BYTES) return setError("Soubor je větší než 25 MB. Nahraj ho na Google Disk a pošli odkaz.");
     setSending(true);
     signalTyping(true);
     // Zpráva se ukáže hned se stavem „Odesílá se…“.
     const tempId = `odesila-${Date.now()}`;
     setMessages((m) => [
       ...m,
-      { id: tempId, mine: true, body, file: file ? { path: "", name: file.name, size: file.size } : null, time: "", day: "Dnes", createdAt: new Date().toISOString(), pending: true },
+      { id: tempId, mine: true, body, file: file_ ? { path: "", name: file_.name, size: file_.size } : null, time: "", day: "Dnes", createdAt: new Date().toISOString(), pending: true },
     ]);
     const dropPending = () => setMessages((m) => m.filter((x) => x.id !== tempId));
     try {
@@ -252,8 +260,8 @@ export function Messenger({
         setConvId(id);
       }
       let attached: { path: string; name: string; size: number } | null = null;
-      if (file) {
-        const { problem, uploaded } = await uploadFilesDetailed(BUCKET, id, [file]);
+      if (file_) {
+        const { problem, uploaded } = await uploadFilesDetailed(BUCKET, id, [file_]);
         if (problem || !uploaded[0]) {
           dropPending();
           return setError(problem ?? "Přílohu se nepodařilo nahrát.");
@@ -290,8 +298,7 @@ export function Messenger({
             : x,
         ),
       );
-      setDraft("");
-      setFile(null);
+      clear();
       if (!activeId) router.replace(`/zpravy?k=${id}`, { scroll: false });
       else router.refresh();
     } finally {
@@ -405,7 +412,7 @@ export function Messenger({
                 ) : (
                   <div key={r.m.id} className={styles.msgWrap} data-mine={r.m.mine}>
                     {r.m.file && <Attachment bucket={BUCKET} file={r.m.file} live={live} />}
-                    {r.m.body && <div className={styles.bubble}>{r.m.body}</div>}
+                    {r.m.body && (isGifUrl(r.m.body) ? <GifImage url={r.m.body} /> : <div className={styles.bubble}>{r.m.body}</div>)}
                     <div className={styles.time}>
                       {/* U přečtené poslední zprávy stačí „Přečteno hh:mm“, čas odeslání se skryje. */}
                       {r.m.id === last?.id && status ? (
@@ -452,22 +459,16 @@ export function Messenger({
                 void send();
               }}
             >
-              <input
-                ref={fileInput}
-                type="file"
-                id="priloha-zpravy"
-                className="sr-only"
-                onChange={(e) => {
-                  setFile(e.target.files?.[0] ?? null);
-                  if (fileInput.current) fileInput.current.value = "";
-                }}
+              <ComposerPlus
+                idPrefix="zpravy"
+                onFile={setFile}
+                onEmoji={(e) => setDraft((d) => insertAtCursor(draftInput.current, d, e))}
+                onGif={(url) => void send(url)}
               />
-              <label htmlFor="priloha-zpravy" className={styles.attach} aria-label="Přiložit soubor">
-                <Icon name="paperclip" size={20} />
-              </label>
               <label className={styles.grow}>
                 <span className="sr-only">Zpráva</span>
                 <input
+                  ref={draftInput}
                   value={draft}
                   onChange={(e) => {
                     setDraft(e.target.value);
