@@ -66,8 +66,9 @@ export function ProposalForm({ members }: { members: number }) {
             name="needPercent"
             type="number"
             inputMode="numeric"
-            min={1}
+            min={5}
             max={100}
+            step={5}
             value={percent}
             onChange={(e) => setPercent(e.target.value)}
             className={`${f.input} ${styles.number}`}

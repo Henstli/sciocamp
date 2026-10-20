@@ -81,8 +81,9 @@ export function StaffPanel({
             <input
               type="number"
               inputMode="numeric"
-              min={1}
+              min={5}
               max={100}
+              step={5}
               value={count}
               onChange={(e) => setCount(e.target.value)}
               className={`${f.input} ${styles.number}`}
