@@ -22,6 +22,8 @@ export type HelpShotData = {
     background: string;
     multiline: boolean;
   };
+  /** Výběr: možnosti rozbaleného seznamu (písmo v podílech šířky, řádek v podílech výšky výřezu) */
+  choices?: { options: string[]; chosen: number; before: number; fontSize: number; row: number };
 };
 
 const SHOTS = data as unknown as Record<string, (HelpShotData | null)[]>;

@@ -31,6 +31,9 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
   const [typed, setTyped] = useState<number | null>(null);
   const last = shot.frames.length - 1;
   const typing = shot.action === "type" ? shot.typing : undefined;
+  const choices = shot.action === "select" ? shot.choices : undefined;
+  /** Výběr ze seznamu: rozbalený seznam, kurzor na možnosti, kliknutí na ni */
+  const [pick, setPick] = useState<null | "open" | "move" | "hover" | "press">(null);
 
   // Přehrává se jen krok, který je vidět.
   useEffect(() => {
@@ -68,6 +71,7 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
     at(0, () => {
       setFrame(0);
       setTyped(null);
+      setPick(null);
       setPhase("start");
     });
     at(T.show, () => setPhase("show"));
@@ -76,7 +80,20 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
     if (shot.target && shot.action !== "none") {
       // Kliknutí (vlnka) u každého kroku s cílem — i u „ukázat“, kde se obrazovka nemění.
       at(T.press, () => setPhase("press"));
-      at(T.result, () => setPhase("result"));
+      if (choices) {
+        // Klik do pole rozbalí seznam, kurzor dojede na možnost a klikne na ni.
+        const p = T.press;
+        at(p + 300, () => setPick("open"));
+        at(p + 650, () => setPick("move"));
+        at(p + 1600, () => setPick("hover"));
+        at(p + 1850, () => setPick("press"));
+        end = p + 2200;
+        at(end, () => {
+          setPick(null);
+          setFrame(last);
+          setPhase("result");
+        });
+      } else at(T.result, () => setPhase("result"));
       if (typing) {
         // Hotový snímek (pole s fokusem a celým textem) + překryv, ve kterém se
         // text píše po písmenech; nakonec překryv zmizí a zůstane skutečný text.
@@ -89,7 +106,7 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
         for (let i = 1; i <= len; i++) at(T.result + 250 + i * step, () => setTyped(i));
         end = T.result + 250 + len * step + 500;
         at(end, () => setTyped(null));
-      } else if (last > 0) {
+      } else if (last > 0 && !choices) {
         at(T.result, () => setFrame(last));
       }
     }
@@ -97,7 +114,7 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
     at(end + T.hold - 400, () => setPhase("end"));
     at(end + T.hold, () => setRun((r) => r + 1));
     return () => timers.forEach(clearTimeout);
-  }, [visible, ready, run, shot, last, typing]);
+  }, [visible, ready, run, shot, last, typing, choices]);
 
   const t = shot.target;
   const cx = t ? (t.x + t.w / 2) * 100 : 50;
@@ -106,11 +123,16 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
   const away = phase === "start" || phase === "show";
   // Po kliknutí se změní obrazovka (rozbalení) → zvýraznění zmizí. Při psaní
   // kurzor uhne, ať nezakrývá text.
-  const changed = (phase === "result" || phase === "hold") && shot.action === "click" && last > 0;
+  const changed = (phase === "result" || phase === "hold") && (shot.action === "click" || shot.action === "select") && last > 0;
+  // Rozbalený seznam pod polem (nativní seznam nejde vyfotit, kreslí se tady).
+  const listTop = t ? t.y + t.h + 0.01 : 0;
+  const onOption = pick === "move" || pick === "hover" || pick === "press";
+  const optX = t ? (t.x + Math.min(t.w * 0.25, 0.12)) * 100 : 0;
+  const optY = choices ? (listTop + (choices.chosen + 0.5) * choices.row) * 100 + 0.4 : 0;
   const aside = (phase === "result" || phase === "hold") && shot.action === "type" && t;
   const cursor = {
-    left: `${away ? Math.min(cx + 18, 92) : aside ? Math.min((t.x + t.w) * 100 + 2, 96) : cx}%`,
-    top: `${away ? Math.min(cy + 22, 92) : aside ? Math.min((t.y + t.h) * 100 + 4, 96) : cy}%`,
+    left: `${onOption ? optX : away ? Math.min(cx + 18, 92) : aside ? Math.min((t.x + t.w) * 100 + 2, 96) : cx}%`,
+    top: `${onOption ? optY : away ? Math.min(cy + 22, 92) : aside ? Math.min((t.y + t.h) * 100 + 4, 96) : cy}%`,
     opacity: phase === "start" || phase === "end" ? 0 : 1,
     // Na začátku kurzor skočí na výchozí místo neviditelně (bez přejezdu).
     ...(phase === "start" ? { transition: "none" } : {}),
@@ -177,9 +199,32 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
             aria-hidden="true"
           />
         )}
+        {choices && t && pick && (
+          <span
+            className={styles.choices}
+            aria-hidden="true"
+            style={{
+              left: `${t.x * 100}%`,
+              top: `${listTop * 100}%`,
+              width: `${t.w * 100}%`,
+              fontSize: `${choices.fontSize * 100}cqw`,
+            }}
+          >
+            {choices.options.map((o, i) => (
+              <span
+                key={i}
+                className={styles.choice}
+                style={{ height: `${choices.row * 100 * (shot.h / shot.w)}cqw` }}
+                data-on={i === (pick === "open" || pick === "move" ? choices.before : choices.chosen) || undefined}
+              >
+                {o}
+              </span>
+            ))}
+          </span>
+        )}
         {t && !still && shot.action !== "none" && (
           <span className={styles.cursor} style={cursor} aria-hidden="true">
-            {phase === "press" && <span className={styles.ripple} />}
+            {(phase === "press" || pick === "press") && <span key={pick ?? "pole"} className={styles.ripple} />}
             <svg viewBox="0 0 24 24" width="26" height="26">
               <path d="M5 3l14 8.5-6.2 1.4L9.6 19z" fill="#111A33" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round" />
             </svg>

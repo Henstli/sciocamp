@@ -346,6 +346,38 @@
     opacity: 0;
   }
 }
+/* Rozbalený seznam u výběru (jako nativní seznam prohlížeče) */
+.choices {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid #c4cad6;
+  border-radius: 6px;
+  box-shadow: 0 8px 22px rgba(17, 26, 51, 0.18);
+  font-family: var(--font);
+  color: #111a33;
+  animation: choicesIn 0.14s ease-out both;
+  pointer-events: none;
+  z-index: 1;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  padding: 0 0.8em;
+  white-space: nowrap;
+}
+.choice[data-on] {
+  background: #3b6fe0;
+  color: #fff;
+}
+@keyframes choicesIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
 /* Zvýraznění přesně na okraji prvku (nezakrývá okolní text), venku jen
    jemná pulzující záře. */
 .ring {
@@ -377,6 +409,7 @@
 }
 .cursor {
   position: absolute;
+  z-index: 2;
   width: 26px;
   height: 26px;
   margin: -3px 0 0 -5px;

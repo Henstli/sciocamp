@@ -33,6 +33,17 @@ export type ShotFrames = {
   action: "click" | "point" | "type" | "select" | "none";
   /** Psaní: text a vzhled obsahu pole, prohlížeč ho pak dopisuje po písmenech */
   typing?: HelpTyping;
+  /** Výběr: rozbalený seznam možností, který přehrávač nakreslí (nativní seznam nejde vyfotit) */
+  choices?: HelpChoices;
+};
+export type HelpChoices = {
+  options: string[];
+  /** Vybraná možnost a ta, která byla vybraná předtím */
+  chosen: number;
+  before: number;
+  /** Písmo v podílech šířky výřezu, výška řádku v podílech výšky výřezu */
+  fontSize: number;
+  row: number;
 };
 type RawTyping = { text: string; box: Box; fontSize: number; lineHeight: number; fontWeight: string; color: string; background: string; multiline: boolean };
 export type HelpTyping = {
@@ -163,6 +174,7 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
   const action = shot.action ?? (target ? "point" : "none");
   let kind: ShotFrames["action"] = "none";
   let rawTyping: RawTyping | null = null;
+  let rawChoices: { options: string[]; chosen: number; before: number; fontSize: number } | null = null;
   const grow = async () => {
     const box = await area.boundingBox().catch(() => null);
     areaBox = union(areaBox, box);
@@ -211,9 +223,24 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
     await grow();
   } else if (target && typeof action === "object" && "select" in action) {
     kind = "select";
+    rawChoices = await target.evaluate((el, want) => {
+      const sel = el as HTMLSelectElement;
+      const opts = Array.from(sel.options);
+      return {
+        options: opts.map((o) => o.text),
+        chosen: Math.max(0, opts.findIndex((o) => o.value === want || o.text === want)),
+        before: sel.selectedIndex,
+        fontSize: parseFloat(getComputedStyle(sel).fontSize) || 14,
+      };
+    }, action.select);
     await target.selectOption(action.select);
     await page.waitForTimeout(300);
     await grow();
+    // Místo pro rozbalený seznam pod polem, ať se vejde do výřezu.
+    if (tBox) {
+      const listH = Math.round(rawChoices.fontSize * 2) * rawChoices.options.length + 10;
+      areaBox = union(areaBox, { x: tBox.x, y: tBox.y + tBox.height, width: tBox.width, height: listH + 8 });
+    }
     shots.push(await grab(page));
   }
 
@@ -254,7 +281,19 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
         multiline: rawTyping.multiline,
       }
     : undefined;
-  return { w: clip.width, h: clip.height, frames, target: rel, action: kind, ...(typing ? { typing } : {}) };
+  const ROW = rawChoices ? Math.round(rawChoices.fontSize * 2) : 0;
+  const choices: HelpChoices | undefined = rawChoices
+    ? { options: rawChoices.options, chosen: rawChoices.chosen, before: rawChoices.before, fontSize: rawChoices.fontSize / clip.width, row: ROW / clip.height }
+    : undefined;
+  return {
+    w: clip.width,
+    h: clip.height,
+    frames,
+    target: rel,
+    action: kind,
+    ...(typing ? { typing } : {}),
+    ...(choices ? { choices } : {}),
+  };
 }
 
 async function main() {
