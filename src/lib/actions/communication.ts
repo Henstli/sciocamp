@@ -109,6 +109,99 @@ export async function startConversation(otherId: string): Promise<ActionResult> 
   return { id: data as string };
 }
 
+// ---------------------------------------------------------------------------
+// Skupinové chaty (oprávnění hlídají RPC v databázi: správce = is_admin)
+// ---------------------------------------------------------------------------
+
+const UUID = /^[0-9a-f-]{36}$/i;
+
+/** Chybová hláška z databáze (naše RAISE jsou česky), jinak obecná. */
+function groupError(error: { code?: string; message?: string } | null, fallback: string): ActionResult {
+  if (!error) return {};
+  if ((error.code === "42501" || error.code === "22023") && error.message) return { error: error.message };
+  return { error: fallback };
+}
+
+function cleanIds(ids: string[]): string[] {
+  return [...new Set(ids.filter((id) => typeof id === "string" && UUID.test(id)))].slice(0, 200);
+}
+
+/** Založí skupinu (zakladatel je správce) a vrátí její id. */
+export async function createGroup(title: string, memberIds: string[]): Promise<ActionResult> {
+  await requireUser();
+  const name = title.trim();
+  if (!name) return { error: "Napiš název skupiny." };
+  if (name.length > 60) return { error: "Název je moc dlouhý (nejvýš 60 znaků)." };
+  if (memberIds.length < 2) return { error: "Vyber aspoň dva další lidi." };
+  if (!isSupabase) return { error: DEMO };
+  const sb = await createClient();
+  const { data, error } = await sb.rpc("create_group", { title: name, members: cleanIds(memberIds) });
+  if (error || !data) return groupError(error, "Skupinu se nepodařilo založit.");
+  return { id: data as string };
+}
+
+export async function renameGroup(conversationId: string, title: string): Promise<ActionResult> {
+  await requireUser();
+  const name = title.trim();
+  if (!name) return { error: "Napiš název skupiny." };
+  if (name.length > 60) return { error: "Název je moc dlouhý (nejvýš 60 znaků)." };
+  if (!isSupabase) return { error: DEMO };
+  const sb = await createClient();
+  const { error } = await sb.rpc("rename_group", { conversation: conversationId, title: name });
+  if (error) return groupError(error, "Skupinu se nepodařilo přejmenovat.");
+  refresh();
+  return {};
+}
+
+export async function addGroupMembers(conversationId: string, memberIds: string[]): Promise<ActionResult> {
+  await requireUser();
+  if (memberIds.length === 0) return { error: "Vyber, koho přidat." };
+  if (!isSupabase) return { error: DEMO };
+  const sb = await createClient();
+  const { error } = await sb.rpc("add_group_members", { conversation: conversationId, members: cleanIds(memberIds) });
+  if (error) return groupError(error, "Členy se nepodařilo přidat.");
+  refresh();
+  return {};
+}
+
+export async function removeGroupMember(conversationId: string, memberId: string): Promise<ActionResult> {
+  await requireUser();
+  if (!isSupabase) return { error: DEMO };
+  const sb = await createClient();
+  const { error } = await sb.rpc("remove_group_member", { conversation: conversationId, member: memberId });
+  if (error) return groupError(error, "Člena se nepodařilo odebrat.");
+  refresh();
+  return {};
+}
+
+export async function setGroupAdmin(conversationId: string, memberId: string, admin: boolean): Promise<ActionResult> {
+  await requireUser();
+  if (!isSupabase) return { error: DEMO };
+  const sb = await createClient();
+  const { error } = await sb.rpc("set_group_admin", { conversation: conversationId, member: memberId, admin });
+  if (error) return groupError(error, "Správce se nepodařilo změnit.");
+  refresh();
+  return {};
+}
+
+export async function leaveGroup(conversationId: string): Promise<ActionResult> {
+  await requireUser();
+  if (!isSupabase) return { error: DEMO };
+  const sb = await createClient();
+  const { error } = await sb.rpc("leave_group", { conversation: conversationId });
+  if (error) return groupError(error, "Skupinu se nepodařilo opustit.");
+  return {};
+}
+
+export async function deleteGroup(conversationId: string): Promise<ActionResult> {
+  await requireUser();
+  if (!isSupabase) return { error: DEMO };
+  const sb = await createClient();
+  const { error } = await sb.rpc("delete_group", { conversation: conversationId });
+  if (error) return groupError(error, "Skupinu se nepodařilo smazat.");
+  return {};
+}
+
 /** Označí konverzaci jako přečtenou. */
 export async function markConversationRead(conversationId: string, refreshAfter = true): Promise<void> {
   const user = await requireUser();

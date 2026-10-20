@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import { isGifUrl } from "@/components/composer/gif";
-import { Messenger, type ContactView, type ThreadMessage } from "@/components/messages/Messenger";
+import { Messenger, type ContactView, type ConversationView, type GroupView, type ThreadMessage } from "@/components/messages/Messenger";
 import { PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
 import { listUsers } from "@/lib/data";
-import { conversationMessages, conversationsFor, otherMemberState } from "@/lib/data-communication";
+import { conversationMembers, conversationMessages, conversationsFor } from "@/lib/data-communication";
 import { plural } from "@/lib/format";
 import { initials, roleCaption } from "@/lib/roles";
 import { formatClock, formatDayLabel, formatListTime } from "@/lib/time";
 import type { User } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Zprávy" };
+
+const FORMER: ContactView = { id: "", name: "Bývalý člen školy", initials: "?", role: "student", caption: "" };
 
 export default async function MessagesPage({ searchParams }: PageProps<"/zpravy">) {
   const user = await requireUser();
@@ -27,44 +29,78 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
     role: u.role,
     caption: roleCaption(u),
   });
+  const contactOf = (id: string): ContactView => {
+    const u = byId.get(id);
+    return u ? contact(u) : { ...FORMER, id };
+  };
+  const firstName = (id: string | null) => (id ? (byId.get(id)?.name.split(" ")[0] ?? "Někdo") : "");
 
-  const list = conversations
-    .map((c) => {
-      const other = byId.get(c.otherId);
+  const list: ConversationView[] = conversations
+    .map((c): ConversationView | null => {
+      const text = isGifUrl(c.lastBody) ? "GIF" : c.lastBody || (c.lastHasFile ? "Příloha" : "");
+      const time = formatListTime(c.lastAt, now);
+      if (c.isGroup) {
+        const preview = c.lastSystem || !c.lastAuthor ? text : `${c.lastMine ? "Ty" : firstName(c.lastAuthor)}: ${text}`;
+        return {
+          id: c.id,
+          person: null,
+          group: { title: c.title ?? "Skupina", initials: groupInitials(c.title ?? "Skupina"), memberCount: c.memberCount },
+          time,
+          preview,
+          unread: c.unread,
+        };
+      }
+      const other = c.otherId ? byId.get(c.otherId) : undefined;
       if (!other) return null;
-      const preview = isGifUrl(c.lastBody) ? "GIF" : c.lastBody || (c.lastHasFile ? "Příloha" : "");
-      return {
-        id: c.id,
-        person: contact(other),
-        time: formatListTime(c.lastAt, now),
-        preview: c.lastMine ? `Ty: ${preview}` : preview,
-        unread: c.unread,
-      };
+      return { id: c.id, person: contact(other), group: null, time, preview: c.lastMine ? `Ty: ${text}` : text, unread: c.unread };
     })
-    .filter((c): c is NonNullable<typeof c> => !!c);
+    .filter((c): c is ConversationView => !!c);
 
   // Která konverzace je otevřená: ?k=<id>, nebo ?s=<id člověka> (i nová, zatím bez zpráv).
   const wanted = typeof k === "string" ? list.find((c) => c.id === k) : undefined;
   const withPerson = typeof s === "string" && s !== user.id ? byId.get(s) : undefined;
-  const existing = withPerson ? list.find((c) => c.person.id === withPerson.id) : undefined;
+  const existing = withPerson ? list.find((c) => c.person?.id === withPerson.id) : undefined;
   const active = wanted ?? existing ?? null;
-  const activePerson = active?.person ?? (withPerson ? contact(withPerson) : null);
   const explicit = !!(wanted || withPerson);
-  const fallback = !explicit ? list[0] ?? null : null;
+  const fallback = !explicit ? (list[0] ?? null) : null;
   const open = active ?? fallback;
+  const activePerson = open ? open.person : withPerson ? contact(withPerson) : null;
+
+  const members = open ? await conversationMembers(open.id) : [];
+  const activeGroup: GroupView | null =
+    open?.group
+      ? {
+          id: open.id,
+          title: open.group.title,
+          initials: open.group.initials,
+          meAdmin: members.some((m) => m.userId === user.id && m.isAdmin),
+          members: members
+            .map((m) => ({ ...contactOf(m.userId), isAdmin: m.isAdmin, me: m.userId === user.id }))
+            .sort((a, b) => Number(b.me) - Number(a.me) || Number(b.isAdmin) - Number(a.isAdmin) || a.name.localeCompare(b.name, "cs")),
+        }
+      : null;
 
   const messages: ThreadMessage[] = open
-    ? (await conversationMessages(open.id)).map((m) => ({
-        id: m.id,
-        mine: m.authorId === user.id,
-        body: m.body,
-        file: m.file,
-        time: formatClock(m.createdAt),
-        day: formatDayLabel(m.createdAt, now),
-        createdAt: m.createdAt,
-      }))
+    ? (await conversationMessages(open.id)).map((m) => {
+        const author = contactOf(m.authorId);
+        return {
+          id: m.id,
+          mine: m.authorId === user.id,
+          authorId: m.authorId,
+          authorName: author.name,
+          authorInitials: author.initials,
+          authorRole: author.role,
+          system: !!m.system,
+          body: m.body,
+          file: m.file,
+          time: formatClock(m.createdAt),
+          day: formatDayLabel(m.createdAt, now),
+          createdAt: m.createdAt,
+        };
+      })
     : [];
-  const otherState = open ? await otherMemberState(open.id, user) : null;
+  // Stav ostatních členů (Doručeno / Přečteno).
+  const memberStates = members.filter((m) => m.userId !== user.id).map((m) => ({ userId: m.userId, deliveredAt: m.deliveredAt, readAt: m.readAt }));
 
   const unread = list.reduce((n, c) => n + c.unread, 0);
   const people = users
@@ -76,7 +112,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
     <>
       <PageHeader
         title="Zprávy"
-        subtitle={unread > 0 ? `${unread} ${plural(unread, "nepřečtená", "nepřečtené", "nepřečtených")}` : "Soukromé zprávy se spolužáky a vyučujícími"}
+        subtitle={unread > 0 ? `${unread} ${plural(unread, "nepřečtená", "nepřečtené", "nepřečtených")}` : "Soukromé zprávy a skupiny se spolužáky a vyučujícími"}
         avatar={{ initials: initials(user.name), name: user.name }}
       />
       <Messenger
@@ -85,12 +121,20 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
         conversations={list}
         people={people}
         activeId={open?.id ?? null}
-        activePerson={open?.person ?? activePerson}
+        activePerson={activePerson}
+        activeGroup={activeGroup}
         showThreadOnMobile={explicit}
         initialMessages={messages}
         live={isSupabase}
-        otherState={otherState}
+        memberStates={memberStates}
       />
     </>
   );
+}
+
+/** „Projekt Cestománie“ → „PC“ */
+function groupInitials(title: string): string {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  const letters = (words.length > 1 ? [words[0][0], words[1][0]] : [...(words[0] ?? "S").slice(0, 2)]).join("");
+  return letters.toLocaleUpperCase("cs");
 }

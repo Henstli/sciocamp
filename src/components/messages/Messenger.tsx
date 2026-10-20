@@ -12,21 +12,40 @@ import { ComposerPlus, GifImage, insertAtCursor } from "../composer/ComposerPlus
 import { isGifUrl } from "../composer/gif";
 import { Avatar, profileHref } from "../PageHeader";
 import { markConversationRead, startConversation } from "@/lib/actions/communication";
+import { plural } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { formatClock, formatDayLabel } from "@/lib/time";
 import type { Role, SubmissionFile } from "@/lib/types";
 import { useStickToBottom } from "@/lib/use-stick-to-bottom";
 import { isCompressibleImage } from "@/lib/image-compress";
 import { tooBigMessage, uploadFilesDetailed, uploadLimit } from "@/lib/upload";
+import { GroupPanel, NewGroupForm } from "./GroupPanel";
 import styles from "./messages.module.css";
 
 const BUCKET = "zpravy";
 
 export type ContactView = { id: string; name: string; initials: string; role: Role; caption: string };
-export type ConversationView = { id: string; person: ContactView; time: string; preview: string; unread: number };
+export type ConversationView = {
+  id: string;
+  /** Druhý člověk (u skupiny null) */
+  person: ContactView | null;
+  group: { title: string; initials: string; memberCount: number } | null;
+  time: string;
+  preview: string;
+  unread: number;
+};
+export type GroupMemberView = ContactView & { isAdmin: boolean; me: boolean };
+export type GroupView = { id: string; title: string; initials: string; meAdmin: boolean; members: GroupMemberView[] };
+export type MemberState = { userId: string; deliveredAt: string; readAt: string };
 export type ThreadMessage = {
   id: string;
   mine: boolean;
+  authorId: string;
+  authorName: string;
+  authorInitials: string;
+  authorRole: Role;
+  /** Systémová zpráva skupiny („X opustil(a) skupinu“) */
+  system?: boolean;
   body: string;
   file: SubmissionFile | null;
   time: string;
@@ -36,8 +55,6 @@ export type ThreadMessage = {
   /** Ještě se odesílá */
   pending?: boolean;
 };
-/** Kdy měl druhý člen zprávy doručené a přečtené */
-export type OtherState = { deliveredAt: string; readAt: string } | null;
 
 /** Jak dlouho po posledním signálu ukazovat, že druhý píše (ms). */
 const TYPING_SHOW_MS = 4000;
@@ -53,6 +70,7 @@ type Row = {
   file_name: string | null;
   file_size: number | null;
   created_at: string;
+  system?: boolean;
 };
 
 function tone(role: Role) {
@@ -65,17 +83,22 @@ export function Messenger({
   people,
   activeId,
   activePerson,
+  activeGroup = null,
   showThreadOnMobile,
   initialMessages,
   live,
-  otherState = null,
+  memberStates = [],
 }: {
-  otherState?: OtherState;
+  /** Stav ostatních členů (Doručeno / Přečteno) */
+  memberStates?: MemberState[];
   me: { id: string; initials: string };
   conversations: ConversationView[];
   people: ContactView[];
   activeId: string | null;
+  /** Otevřená konverzace s jedním člověkem */
   activePerson: ContactView | null;
+  /** Otevřená skupina */
+  activeGroup?: GroupView | null;
   /** Na mobilu ukázat rovnou konverzaci (uživatel ji vybral), jinak seznam */
   showThreadOnMobile: boolean;
   initialMessages: ThreadMessage[];
@@ -89,13 +112,23 @@ export function Messenger({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [convId, setConvId] = useState(activeId);
-  const [other, setOther] = useState<OtherState>(otherState);
-  const [typing, setTyping] = useState(false);
+  const [states, setStates] = useState<MemberState[]>(memberStates);
+  /** Kdo právě píše (id), nebo null */
+  const [typing, setTyping] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [panel, setPanel] = useState(false);
+  const isOpen = !!(activePerson || activeGroup);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingSentAt = useRef(0);
   const typingChannel = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
   const thread = useRef<HTMLDivElement>(null);
   const stickToBottom = useStickToBottom(thread, activeId ?? activePerson?.id ?? null);
+
+  /** Jméno a iniciály autora zprávy, která přišla živě. */
+  const authorOf = (id: string) => {
+    const p = activeGroup?.members.find((x) => x.id === id) ?? people.find((x) => x.id === id) ?? (activePerson?.id === id ? activePerson : null);
+    return { authorName: p?.name ?? "Člen skupiny", authorInitials: p?.initials ?? "?", authorRole: p?.role ?? ("student" as Role) };
+  };
   const draftInput = useRef<HTMLInputElement>(null);
 
   const unreadHere = conversations.find((c) => c.id === activeId)?.unread ?? 0;
@@ -116,8 +149,13 @@ export function Messenger({
       (payload) => {
         const r = payload.new as Row;
         if (r.conversation_id === convId) {
+          // Změna ve skupině (přidání, odchod, nový název) → načíst znovu členy a název.
+          if (r.system) {
+            router.refresh();
+            return;
+          }
           if (r.author_id === me.id) return;
-          setTyping(false);
+          setTyping(null);
           setMessages((m) =>
             m.some((x) => x.id === r.id)
               ? m
@@ -126,6 +164,8 @@ export function Messenger({
                   {
                     id: r.id,
                     mine: false,
+                    authorId: r.author_id,
+                    ...authorOf(r.author_id),
                     body: r.body,
                     // Odkaz ke stažení dostane příloha po obnovení stránky.
                     file: r.file_path ? { path: r.file_path, name: r.file_name ?? "soubor", size: r.file_size } : null,
@@ -150,6 +190,8 @@ export function Messenger({
       cancelled = true;
       void sb.removeChannel(channel);
     };
+    // authorOf se mění s každým vykreslením; kanál stačí navázat podle konverzace.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live, convId, me.id, router]);
 
   // Stav druhého (Doručeno / Přečteno) naživo a signál „píše“ přes Realtime broadcast.
@@ -162,18 +204,21 @@ export function Messenger({
       { event: "UPDATE", schema: "public", table: "conversation_members", filter: `conversation_id=eq.${convId}` },
       (payload) => {
         const r = payload.new as { user_id: string; delivered_at: string; last_read_at: string };
-        if (r.user_id !== me.id) setOther({ deliveredAt: r.delivered_at, readAt: r.last_read_at });
+        if (r.user_id === me.id) return;
+        const next = { userId: r.user_id, deliveredAt: r.delivered_at, readAt: r.last_read_at };
+        setStates((list) => (list.some((x) => x.userId === r.user_id) ? list.map((x) => (x.userId === r.user_id ? next : x)) : [...list, next]));
       },
     );
     const typingCh = sb.channel(`psani-${convId}`, { config: { broadcast: { self: false } } }).on(
       "broadcast",
       { event: "typing" },
       ({ payload }) => {
-        if ((payload as { userId?: string })?.userId === me.id) return;
+        const who = (payload as { userId?: string })?.userId;
+        if (!who || who === me.id) return;
         const stop = (payload as { stop?: boolean })?.stop;
         if (typingTimer.current) clearTimeout(typingTimer.current);
-        setTyping(!stop);
-        if (!stop) typingTimer.current = setTimeout(() => setTyping(false), TYPING_SHOW_MS);
+        setTyping(stop ? null : who);
+        if (!stop) typingTimer.current = setTimeout(() => setTyping(null), TYPING_SHOW_MS);
       },
     );
     typingChannel.current = typingCh;
@@ -220,7 +265,7 @@ export function Messenger({
       setDraft("");
       setFile(null);
     };
-    if ((!body && !file_) || !activePerson) return;
+    if ((!body && !file_) || !isOpen) return;
     setError(null);
     if (!live) {
       setMessages((m) => [
@@ -228,6 +273,10 @@ export function Messenger({
         {
           id: `local-${m.length}`,
           mine: true,
+          authorId: me.id,
+          authorName: "Ty",
+          authorInitials: me.initials,
+          authorRole: "student",
           body,
           file: file_ ? { path: "", name: file_.name, size: file_.size } : null,
           time: "teď",
@@ -245,12 +294,26 @@ export function Messenger({
     const tempId = `odesila-${Date.now()}`;
     setMessages((m) => [
       ...m,
-      { id: tempId, mine: true, body, file: file_ ? { path: "", name: file_.name, size: file_.size } : null, time: "", day: "Dnes", createdAt: new Date().toISOString(), pending: true },
+      {
+        id: tempId,
+        mine: true,
+        authorId: me.id,
+        authorName: "Ty",
+        authorInitials: me.initials,
+        authorRole: "student",
+        body,
+        file: file_ ? { path: "", name: file_.name, size: file_.size } : null,
+        time: "",
+        day: "Dnes",
+        createdAt: new Date().toISOString(),
+        pending: true,
+      },
     ]);
     const dropPending = () => setMessages((m) => m.filter((x) => x.id !== tempId));
     try {
       let id = convId;
       if (!id) {
+        if (!activePerson) return dropPending();
         const res = await startConversation(activePerson.id);
         if (res.error || !res.id) {
           dropPending();
@@ -281,14 +344,17 @@ export function Messenger({
         .single();
       if (err || !data) {
         dropPending();
+        // Třeba tě mezitím někdo ze skupiny odebral — obnovit seznam.
+        if (activeGroup) router.refresh();
         return setError("Zprávu se nepodařilo odeslat. Zkus to znovu.");
       }
       setMessages((m) =>
         m.map((x) =>
           x.id === tempId
             ? {
+                ...x,
                 id: data.id,
-                mine: true,
+                pending: undefined,
                 body,
                 file: attached ? { ...attached } : null,
                 time: formatClock(data.created_at),
@@ -307,18 +373,8 @@ export function Messenger({
   }
 
   // Stav poslední zprávy, pokud je moje: Odesílá se / Odesláno / Doručeno / Přečteno.
-  const last = messages.at(-1);
-  const status = !last?.mine
-    ? null
-    : last.pending
-      ? "Odesílá se…"
-      : !live && !other
-        ? null
-        : other && last.createdAt <= other.readAt
-          ? `Přečteno ${formatClock(other.readAt)}`
-          : other && last.createdAt <= other.deliveredAt
-            ? "Doručeno"
-            : "Odesláno";
+  const last = messages.filter((m) => !m.system).at(-1);
+  const status = !last?.mine ? null : last.pending ? "Odesílá se…" : readStatus(last.createdAt, states, live, !!activeGroup);
 
   // Zprávy s oddělovači dnů
   const rows: ({ kind: "day"; label: string } | { kind: "msg"; m: ThreadMessage })[] = [];
@@ -327,14 +383,22 @@ export function Messenger({
     rows.push({ kind: "msg", m });
   });
 
+  const typingName = typing ? (authorOf(typing).authorName.split(" ")[0] ?? "") : "";
+  const threadLabel = activeGroup ? activeGroup.title : activePerson?.name;
+
   return (
-    <div className={`card ${styles.shell}`} data-thread={showThreadOnMobile && !!activePerson}>
+    <div className={`card ${styles.shell}`} data-thread={(showThreadOnMobile && isOpen) || creating}>
       <aside className={styles.side} aria-label="Konverzace">
-        <label className={styles.search}>
-          <Icon name="search" size={18} />
-          <span className="sr-only">Hledat lidi</span>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Hledat lidi…" type="search" />
-        </label>
+        <div className={styles.sideTop}>
+          <label className={styles.search}>
+            <Icon name="search" size={18} />
+            <span className="sr-only">Hledat lidi</span>
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Hledat lidi…" type="search" />
+          </label>
+          <button type="button" className={styles.newGroup} onClick={() => setCreating(true)} aria-label="Nová skupina" title="Nová skupina">
+            <Icon name="users" size={20} />
+          </button>
+        </div>
 
         {query.trim() ? (
           <ul className={styles.list}>
@@ -354,20 +418,25 @@ export function Messenger({
         ) : (
           <ul className={styles.list}>
             {conversations.length === 0 && (
-              <li className={styles.empty}>Zatím tu nic není. Najdi spolužáka nebo vyučujícího v hledání nahoře a napiš mu.</li>
+              <li className={styles.empty}>Zatím tu nic není. Najdi spolužáka nebo vyučujícího v hledání nahoře a napiš mu, nebo založ skupinu.</li>
             )}
             {conversations.map((c) => (
               <li key={c.id}>
                 <Link
                   href={`/zpravy?k=${c.id}`}
                   className={styles.row}
-                  aria-current={c.id === activeId ? "true" : undefined}
+                  aria-current={c.id === activeId && !creating ? "true" : undefined}
+                  onClick={() => setCreating(false)}
                   scroll={false}
                 >
-                  <Avatar initials={c.person.initials} userId={c.person.id} size={42} tone={tone(c.person.role)} />
+                  {c.group ? (
+                    <GroupAvatar initials={c.group.initials} size={42} />
+                  ) : (
+                    <Avatar initials={c.person!.initials} userId={c.person!.id} size={42} tone={tone(c.person!.role)} />
+                  )}
                   <span className={styles.rowMain}>
                     <span className={styles.rowTop}>
-                      <span className={styles.rowName}>{c.person.name}</span>
+                      <span className={styles.rowName}>{c.group ? c.group.title : c.person!.name}</span>
                       <span className={styles.rowTime}>{c.time}</span>
                     </span>
                     <span className={styles.rowBottom}>
@@ -388,50 +457,106 @@ export function Messenger({
         )}
       </aside>
 
-      <section className={styles.thread} aria-label={activePerson ? `Konverzace: ${activePerson.name}` : "Konverzace"}>
-        {activePerson ? (
+      <section className={styles.thread} aria-label={creating ? "Nová skupina" : threadLabel ? `Konverzace: ${threadLabel}` : "Konverzace"}>
+        {creating ? (
+          <NewGroupForm people={people} live={live} onCancel={() => setCreating(false)} />
+        ) : isOpen ? (
           <>
             <header className={styles.threadHead}>
               <Link href="/zpravy" className={styles.back} aria-label="Zpět na seznam">
                 <Icon name="chevronLeft" size={20} />
               </Link>
-              <Avatar initials={activePerson.initials} size={42} tone={tone(activePerson.role)} href={profileHref(activePerson.id)} title={activePerson.name} />
-              <div>
-                <div className={styles.headName}>{activePerson.name}</div>
-                <div className={styles.headCaption}>{activePerson.caption}</div>
-              </div>
+              {activeGroup ? (
+                <>
+                  <GroupAvatar initials={activeGroup.initials} size={42} />
+                  <button type="button" className={styles.headButton} onClick={() => setPanel((v) => !v)} aria-expanded={panel}>
+                    <span className={styles.headName}>{activeGroup.title}</span>
+                    <span className={styles.headCaption}>
+                      {activeGroup.members.length} {plural(activeGroup.members.length, "člen", "členové", "členů")} · {panel ? "zpět do chatu" : "zobrazit členy"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.headIcon}
+                    onClick={() => setPanel((v) => !v)}
+                    aria-label={panel ? "Zpět do chatu" : "Členové skupiny"}
+                    title={panel ? "Zpět do chatu" : "Členové skupiny"}
+                    aria-expanded={panel}
+                  >
+                    <Icon name={panel ? "close" : "users"} size={20} />
+                  </button>
+                </>
+              ) : (
+                activePerson && (
+                  <>
+                    <Avatar initials={activePerson.initials} size={42} tone={tone(activePerson.role)} href={profileHref(activePerson.id)} title={activePerson.name} />
+                    <div>
+                      <div className={styles.headName}>{activePerson.name}</div>
+                      <div className={styles.headCaption}>{activePerson.caption}</div>
+                    </div>
+                  </>
+                )
+              )}
             </header>
 
-            <div className={styles.messages} aria-live="polite" ref={thread}>
+            {activeGroup && panel && <GroupPanel group={activeGroup} people={people} live={live} />}
+
+            <div className={styles.messages} aria-live="polite" ref={thread} hidden={!!activeGroup && panel}>
               {rows.length === 0 && <p className={styles.emptyThread}>Napiš první zprávu.</p>}
-              {rows.map((r, i) =>
-                r.kind === "day" ? (
-                  <div key={`d-${i}`} className={styles.day}>
-                    <span>{r.label}</span>
-                  </div>
-                ) : (
-                  <div key={r.m.id} className={styles.msgWrap} data-mine={r.m.mine}>
+              {rows.map((r, i) => {
+                if (r.kind === "day") {
+                  return (
+                    <div key={`d-${i}`} className={styles.day}>
+                      <span>{r.label}</span>
+                    </div>
+                  );
+                }
+                if (r.m.system) {
+                  return (
+                    <p key={r.m.id} className={styles.system}>
+                      {r.m.body}
+                    </p>
+                  );
+                }
+                const prev = rows[i - 1];
+                // Ve skupině u cizích zpráv jméno a avatar, když se změní autor.
+                const showAuthor = !!activeGroup && !r.m.mine && !(prev?.kind === "msg" && !prev.m.system && prev.m.authorId === r.m.authorId);
+                const content = (
+                  <div className={styles.msgWrap} data-mine={r.m.mine}>
+                    {showAuthor && <span className={styles.author}>{r.m.authorName}</span>}
                     {r.m.file && <Attachment bucket={BUCKET} file={r.m.file} live={live} />}
                     {r.m.body && (isGifUrl(r.m.body) ? <GifImage url={r.m.body} /> : <div className={styles.bubble}>{r.m.body}</div>)}
                     <div className={styles.time}>
-                      {/* U přečtené poslední zprávy stačí „Přečteno hh:mm“, čas odeslání se skryje. */}
+                      {/* U přečtené poslední zprávy stačí „Přečteno …“, čas odeslání se skryje. */}
                       {r.m.id === last?.id && status ? (
-                        <span className={styles.status} data-seen={status.startsWith("Přečteno")}>
-                          {status.startsWith("Přečteno") || r.m.pending ? status : `${r.m.time} · ${status}`}
+                        <span className={styles.status} data-seen={status.startsWith("Přečet")}>
+                          {status.startsWith("Přečet") || r.m.pending ? status : `${r.m.time} · ${status}`}
                         </span>
                       ) : (
                         !r.m.pending && r.m.time
                       )}
                     </div>
                   </div>
-                ),
-              )}
+                );
+                if (!activeGroup || r.m.mine) return <div key={r.m.id} className={styles.msgLine} data-mine={r.m.mine}>{content}</div>;
+                return (
+                  <div key={r.m.id} className={styles.msgLine}>
+                    <span className={styles.authorAvatar}>
+                      {showAuthor && <Avatar initials={r.m.authorInitials} size={32} tone={tone(r.m.authorRole)} href={profileHref(r.m.authorId)} title={r.m.authorName} />}
+                    </span>
+                    {content}
+                  </div>
+                );
+              })}
               {typing && (
-                <div className={styles.msgWrap} data-mine="false">
-                  <div className={`${styles.bubble} ${styles.typing}`} aria-label={`${activePerson.name} píše`}>
-                    <span />
-                    <span />
-                    <span />
+                <div className={styles.msgLine}>
+                  <div className={styles.msgWrap} data-mine="false">
+                    {activeGroup && <span className={styles.author}>{typingName} píše…</span>}
+                    <div className={`${styles.bubble} ${styles.typing}`} aria-label={`${typingName || threadLabel} píše`}>
+                      <span />
+                      <span />
+                      <span />
+                    </div>
                   </div>
                 </div>
               )}
@@ -453,6 +578,7 @@ export function Messenger({
             )}
             <form
               className={styles.composer}
+              hidden={!!activeGroup && panel}
               onSubmit={(e) => {
                 e.preventDefault();
                 void send();
@@ -482,15 +608,41 @@ export function Messenger({
                 <Icon name="send" size={20} />
               </button>
             </form>
-            {!live && <p className={styles.note}>Ukázkový režim: zprávy se neukládají.</p>}
+            {!live && !(activeGroup && panel) && <p className={styles.note}>Ukázkový režim: zprávy se neukládají.</p>}
           </>
         ) : (
           <div className={styles.placeholder}>
             <Icon name="chat" size={32} />
-            <p>Vyber konverzaci vlevo, nebo najdi člověka v hledání a napiš mu.</p>
+            <p>Vyber konverzaci vlevo, najdi člověka v hledání a napiš mu, nebo založ skupinu.</p>
           </div>
         )}
       </section>
     </div>
   );
+}
+
+/** Kulaté logo skupiny s iniciálami názvu. */
+export function GroupAvatar({ initials, size = 42 }: { initials: string; size?: number }) {
+  return (
+    <span className={styles.groupAvatar} style={{ width: size, height: size, fontSize: size >= 40 ? 13 : 11 }} aria-hidden="true">
+      {initials}
+    </span>
+  );
+}
+
+/**
+ * Stav mojí poslední zprávy. U dvojice Odesláno / Doručeno / Přečteno hh:mm,
+ * ve skupině „Přečetli všichni“ nebo „Přečetl(o) 2 z 5“.
+ */
+function readStatus(sentAt: string, states: MemberState[], live: boolean, group: boolean): string | null {
+  if (states.length === 0) return live ? "Odesláno" : null;
+  const read = states.filter((x) => sentAt <= x.readAt);
+  if (!group) {
+    const o = states[0];
+    if (sentAt <= o.readAt) return `Přečteno ${formatClock(o.readAt)}`;
+    return sentAt <= o.deliveredAt ? "Doručeno" : "Odesláno";
+  }
+  if (read.length === states.length) return "Přečetli všichni";
+  if (read.length > 0) return `Přečetlo ${read.length} z ${states.length}`;
+  return states.every((x) => sentAt <= x.deliveredAt) ? "Doručeno" : "Odesláno";
 }

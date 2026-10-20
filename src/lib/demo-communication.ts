@@ -1,7 +1,7 @@
 // Ukázková data pro etapu 3 (nástěnka, chat třídy, zprávy, notifikace).
 // Časy jsou pevné (kolem 18.–19. 10. 2026), aby ukázka vypadala stále stejně.
 
-import type { ClassMessage, ConversationSummary, DirectMessage, NotificationItem, Post } from "./types";
+import type { ClassMessage, ConversationMember, ConversationSummary, DirectMessage, NotificationItem, Post } from "./types";
 
 export const DEMO_POSTS: Record<string, Post[]> = {
   "prezentacni-schopnosti": [
@@ -42,14 +42,34 @@ export const DEMO_CLASS_CHAT: Record<string, ClassMessage[]> = {
 
 /** Konverzace ukázkového studenta (u-liska) podle návrhu design/Zpravy.dc.html. */
 export const DEMO_CONVERSATIONS: ConversationSummary[] = [
-  { id: "k-lukes", otherId: "u-lukes", lastAt: "2026-10-19T08:12:00Z", lastBody: "Ve čtvrtek začínáme o půl hodiny dřív.", lastMine: false, lastHasFile: false, unread: 0 },
-  { id: "k-jaukner", otherId: "u-jaukner", lastAt: "2026-10-19T07:40:00Z", lastBody: "Nevíš, jestli zítra platí sraz u vchodu?", lastMine: false, lastHasFile: false, unread: 1 },
-  { id: "k-jakubcova", otherId: "u-jakubcova", lastAt: "2026-10-18T12:06:00Z", lastBody: "Děkuju za odevzdaný seznam povinné literatury. Vypadá to v pořádku :)", lastMine: false, lastHasFile: false, unread: 0 },
-  { id: "k-cerny", otherId: "u-cerny", lastAt: "2026-10-12T15:00:00Z", lastBody: "Díky, mám to.", lastMine: false, lastHasFile: false, unread: 0 },
-  { id: "k-komarek", otherId: "u-komarek", lastAt: "2026-10-11T18:00:00Z", lastBody: "Půjdeš se mnou odevzdat ten projekt?", lastMine: false, lastHasFile: false, unread: 2 },
+  {
+    id: "k-skupina",
+    isGroup: true,
+    title: "Projekt Cestománie",
+    otherId: null,
+    memberCount: 4,
+    lastAt: "2026-10-19T09:05:00Z",
+    lastBody: "Já můžu ve čtvrtek odpoledne.",
+    lastAuthor: "u-komarek",
+    lastMine: false,
+    lastHasFile: false,
+    lastSystem: false,
+    unread: 2,
+  },
+  { isGroup: false, title: null, memberCount: 2, lastAuthor: null, lastSystem: false, id: "k-lukes", otherId: "u-lukes", lastAt: "2026-10-19T08:12:00Z", lastBody: "Ve čtvrtek začínáme o půl hodiny dřív.", lastMine: false, lastHasFile: false, unread: 0 },
+  { isGroup: false, title: null, memberCount: 2, lastAuthor: null, lastSystem: false, id: "k-jaukner", otherId: "u-jaukner", lastAt: "2026-10-19T07:40:00Z", lastBody: "Nevíš, jestli zítra platí sraz u vchodu?", lastMine: false, lastHasFile: false, unread: 1 },
+  { isGroup: false, title: null, memberCount: 2, lastAuthor: null, lastSystem: false, id: "k-jakubcova", otherId: "u-jakubcova", lastAt: "2026-10-18T12:06:00Z", lastBody: "Děkuju za odevzdaný seznam povinné literatury. Vypadá to v pořádku :)", lastMine: false, lastHasFile: false, unread: 0 },
+  { isGroup: false, title: null, memberCount: 2, lastAuthor: null, lastSystem: false, id: "k-cerny", otherId: "u-cerny", lastAt: "2026-10-12T15:00:00Z", lastBody: "Díky, mám to.", lastMine: false, lastHasFile: false, unread: 0 },
+  { isGroup: false, title: null, memberCount: 2, lastAuthor: null, lastSystem: false, id: "k-komarek", otherId: "u-komarek", lastAt: "2026-10-11T18:00:00Z", lastBody: "Půjdeš se mnou odevzdat ten projekt?", lastMine: false, lastHasFile: false, unread: 2 },
 ];
 
 export const DEMO_MESSAGES: Record<string, DirectMessage[]> = {
+  "k-skupina": [
+    { id: "g0", authorId: "u-liska", body: "Šimon Samuel Liška založil(a) skupinu „Projekt Cestománie“", file: null, createdAt: "2026-10-19T08:30:00Z", system: true },
+    { id: "g1", authorId: "u-liska", body: "Ahoj, kdy se sejdeme kvůli prezentaci?", file: null, createdAt: "2026-10-19T08:31:00Z" },
+    { id: "g2", authorId: "u-kolarova", body: "Mně se hodí středa nebo čtvrtek.", file: null, createdAt: "2026-10-19T08:50:00Z" },
+    { id: "g3", authorId: "u-komarek", body: "Já můžu ve čtvrtek odpoledne.", file: null, createdAt: "2026-10-19T09:05:00Z" },
+  ],
   "k-jakubcova": [
     { id: "dm1", authorId: "u-jakubcova", body: "Ahoj Šimone, nezapomeň prosím na seznam povinné literatury, potřebuju ho do zítřka.", file: null, createdAt: "2026-10-18T11:20:00Z" },
     { id: "dm2", authorId: "u-liska", body: "Tady je, snad je kompletní.", file: { path: "demo/seznam.pdf", name: "Seznam_literatury.pdf", size: 1_200_000 }, createdAt: "2026-10-18T11:58:00Z" },
@@ -77,4 +97,14 @@ export const DEMO_NOTIFICATIONS: NotificationItem[] = [
 /** Kdy měl druhý člen konverzace zprávy doručené / přečtené (ukázkový stav). */
 export const DEMO_MEMBER_STATE: Record<string, { deliveredAt: string; readAt: string }> = {
   "k-cerny": { deliveredAt: "2026-10-12T15:05:00Z", readAt: "2026-10-12T15:09:00Z" },
+};
+
+/** Členové ukázkové skupiny (u-liska je správce). */
+export const DEMO_GROUP_MEMBERS: Record<string, ConversationMember[]> = {
+  "k-skupina": [
+    { userId: "u-liska", isAdmin: true, deliveredAt: "2026-10-19T09:05:00Z", readAt: "2026-10-19T08:31:00Z" },
+    { userId: "u-komarek", isAdmin: false, deliveredAt: "2026-10-19T09:05:00Z", readAt: "2026-10-19T09:05:00Z" },
+    { userId: "u-kolarova", isAdmin: false, deliveredAt: "2026-10-19T09:00:00Z", readAt: "2026-10-19T08:50:00Z" },
+    { userId: "u-jaukner", isAdmin: false, deliveredAt: "2026-10-19T08:40:00Z", readAt: "2026-10-19T08:40:00Z" },
+  ],
 };

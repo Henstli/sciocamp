@@ -423,3 +423,388 @@
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Skupinové chaty                                                     */
+/* ------------------------------------------------------------------ */
+.sideTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px;
+}
+.sideTop .search {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.newGroup,
+.headIcon {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.newGroup:hover,
+.headIcon:hover {
+  border-color: var(--primary-line);
+  color: var(--primary-text);
+  background: var(--primary-tint);
+}
+.headIcon {
+  margin-left: auto;
+}
+.panelHead .headIcon {
+  margin-left: 0;
+}
+.groupAvatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 30%;
+  background: var(--atelier-bg);
+  color: var(--atelier);
+  font-weight: 800;
+}
+.headButton {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.headButton:hover .headCaption {
+  color: var(--primary-text);
+  text-decoration: underline;
+}
+.headButton .headName {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Zprávy ve skupině: avatar a jméno autora, systémové zprávy */
+.msgLine {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.msgLine[data-mine="true"] {
+  justify-content: flex-end;
+}
+.authorAvatar {
+  flex: none;
+  width: 32px;
+  align-self: flex-start;
+  margin-top: 20px;
+}
+.author {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  margin-left: 4px;
+}
+.system {
+  align-self: center;
+  max-width: 90%;
+  margin: 6px 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Panel skupiny a nová skupina */
+.groupPanel,
+.groupForm {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+}
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.panelTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+.panelBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.panelFoot {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.panelActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.panelActions :global(.btn) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.formError {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--late);
+}
+.formNote {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: right;
+}
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.picker .search {
+  margin: 0;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+.chip button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.chip button:hover {
+  background: var(--primary-line);
+}
+.pickList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.pickRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text);
+}
+.pickRow:hover {
+  background: var(--primary-tint);
+}
+.pickRow input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+.groupName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: 18px;
+}
+.inlineForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-text);
+  cursor: pointer;
+}
+.membersHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.membersHead h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+.membersHead :global(.btn) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.addBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--primary-line);
+  border-radius: 14px;
+}
+.memberList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.memberRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-soft);
+}
+.memberRow .rowMain {
+  flex: 1 1 160px;
+}
+.muted {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.adminChip {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--atelier-bg);
+  color: var(--atelier);
+}
+.memberActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.smallBtn,
+.smallDanger {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.smallBtn:hover {
+  border-color: var(--primary-line);
+  color: var(--primary-text);
+}
+.smallDanger {
+  border-color: var(--late);
+  background: var(--late);
+  color: #fff;
+}
+.confirmBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--late-bg);
+}
+.confirmBox p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--late);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.dangerBtn {
+  background: var(--late);
+  border-color: var(--late);
+  color: #fff;
+}
+.dangerBtn:hover {
+  filter: brightness(0.95);
+  color: #fff;
+}
+.dangerOutline {
+  border: 1px solid #e7b4b4;
+  background: var(--card);
+  color: var(--late);
+}
+.dangerOutline:hover {
+  background: var(--late-bg);
+  color: var(--late);
+}
+.messages[hidden],
+.composer[hidden] {
+  display: none;
+}
+.addBox .pickList {
+  max-height: 240px;
+}

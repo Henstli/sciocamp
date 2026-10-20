@@ -12,11 +12,13 @@ import {
   DEMO_NOTIFICATIONS,
   DEMO_POSTS,
   DEMO_MEMBER_STATE,
+  DEMO_GROUP_MEMBERS,
 } from "./demo-communication";
 import { createClient } from "./supabase/server";
 import type {
   Activity,
   ClassMessage,
+  ConversationMember,
   ConversationSummary,
   DirectMessage,
   LinkItem,
@@ -116,25 +118,34 @@ async function classChatUncached(activity: Activity): Promise<ClassMessage[]> {
 async function conversationsForUncached(user: User): Promise<ConversationSummary[]> {
   if (!isSupabase) return user.id === "u-liska" ? DEMO_CONVERSATIONS : [];
   const sb = await createClient();
-  const { data, error } = await sb.rpc("my_conversations");
+  const { data, error } = await sb.rpc("my_chats");
   if (error || !data) return [];
   return (
     data as {
       conversation_id: string;
-      other_id: string;
+      is_group: boolean;
+      title: string | null;
+      other_id: string | null;
+      member_count: number;
       last_message_at: string;
       last_body: string | null;
       last_author: string | null;
       last_has_file: boolean;
+      last_system: boolean;
       unread: number;
     }[]
   ).map((r) => ({
     id: r.conversation_id,
+    isGroup: r.is_group,
+    title: r.title,
     otherId: r.other_id,
+    memberCount: r.member_count,
     lastAt: r.last_message_at,
     lastBody: r.last_body ?? "",
+    lastAuthor: r.last_author,
     lastMine: r.last_author === user.id,
     lastHasFile: r.last_has_file,
+    lastSystem: r.last_system,
     unread: r.unread,
   }));
 }
@@ -144,7 +155,7 @@ export async function conversationMessages(conversationId: string): Promise<Dire
   const sb = await createClient();
   const { data, error } = await sb
     .from("messages")
-    .select("id, author_id, body, file_path, file_name, file_size, created_at")
+    .select("id, author_id, body, file_path, file_name, file_size, created_at, system")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: false })
     .limit(200);
@@ -157,26 +168,38 @@ export async function conversationMessages(conversationId: string): Promise<Dire
     body: m.body,
     file: m.file_path ? { path: m.file_path, name: m.file_name ?? "soubor", size: m.file_size, url: urls.get(m.file_path) } : null,
     createdAt: m.created_at,
+    system: !!m.system,
   }));
 }
 
-/** Kdy měl druhý člen konverzace zprávy doručené a přečtené (pro „Doručeno“ / „Přečteno“). */
-export async function otherMemberState(conversationId: string, user: User): Promise<{ deliveredAt: string; readAt: string } | null> {
-  if (!isSupabase) return DEMO_MEMBER_STATE[conversationId] ?? null;
+/** Členové konverzace: správci a kdy měli zprávy doručené a přečtené. */
+export async function conversationMembers(conversationId: string): Promise<ConversationMember[]> {
+  if (!isSupabase) {
+    const group = DEMO_GROUP_MEMBERS[conversationId];
+    if (group) return group;
+    const other = DEMO_CONVERSATIONS.find((c) => c.id === conversationId)?.otherId;
+    const state = DEMO_MEMBER_STATE[conversationId];
+    return other && state ? [{ userId: other, isAdmin: false, deliveredAt: state.deliveredAt, readAt: state.readAt }] : [];
+  }
   const sb = await createClient();
   const { data } = await sb
     .from("conversation_members")
-    .select("delivered_at, last_read_at")
+    .select("user_id, is_admin, delivered_at, last_read_at, joined_at")
     .eq("conversation_id", conversationId)
-    .neq("user_id", user.id)
-    .maybeSingle();
-  return data ? { deliveredAt: data.delivered_at as string, readAt: data.last_read_at as string } : null;
+    .order("joined_at", { ascending: true });
+  return (data ?? []).map((m) => ({
+    userId: m.user_id as string,
+    isAdmin: !!m.is_admin,
+    deliveredAt: m.delivered_at as string,
+    readAt: m.last_read_at as string,
+  }));
 }
 
 /** Kolik nepřečtených zpráv a od koho (pro menu a Domov). */
 export async function unreadMessages(user: User): Promise<{ unread: number; from: string[] }> {
   const list = (await conversationsFor(user)).filter((c) => c.unread > 0);
-  return { unread: list.reduce((n, c) => n + c.unread, 0), from: list.map((c) => c.otherId) };
+  const from = list.map((c) => c.otherId ?? c.lastAuthor).filter((id): id is string => !!id && id !== user.id);
+  return { unread: list.reduce((n, c) => n + c.unread, 0), from: [...new Set(from)] };
 }
 
 // ---------------------------------------------------------------------------

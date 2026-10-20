@@ -1167,4 +1167,64 @@ await test("úklid úložiště: najde jen soubory, na které nic neodkazuje", a
   await db.query(`delete from storage.objects where name like '%' || $1 || '%' or name like $2 || '%' or name = $3`, [ghost, `${student}/stara`, `${task.id}/zije.pdf`]);
 });
 
+await test("skupinové chaty: založení, správci, vyhození, odchod a smazání", async () => {
+  // Skupina potřebuje název a aspoň dva další lidi.
+  await assert.rejects(() => as(student, `select public.create_group('', $1)`, [[student2, teacher]]), /název/);
+  await assert.rejects(() => as(student, `select public.create_group('Dva', $1)`, [[student2]]), /aspoň dva/);
+  const [{ create_group: g }] = await as(student, `select public.create_group('Výlet', $1)`, [[student2, teacher, student]]);
+  const members = await as(student2, `select user_id, is_admin from public.conversation_members where conversation_id = $1 order by is_admin desc`, [g]);
+  assert.equal(members.length, 3);
+  assert.equal(members[0].user_id, student);
+  assert.equal(members.filter((m) => m.is_admin).length, 1);
+  // Členové dostali oznámení, outsider skupinu nevidí.
+  assert.equal((await db.query(`select 1 from public.notifications where user_id = $1 and href = $2`, [student2, `/zpravy?k=${g}`])).rows.length, 1);
+  assert.equal((await as(outsider, `select 1 from public.conversations where id = $1`, [g])).length, 0);
+  assert.equal((await as(outsider, `select 1 from public.my_chats() where conversation_id = $1`, [g])).length, 0);
+  // Zpráva do skupiny → notifikace s názvem skupiny; systémovou zprávu uživatel nepodvrhne.
+  await as(student2, `insert into public.messages (conversation_id, body) values ($1, 'Ahoj všichni')`, [g]);
+  const n = (await db.query(`select title, body from public.notifications where user_id = $1 and kind = 'zprava' and href = $2 and read_at is null`, [teacher, `/zpravy?k=${g}`])).rows;
+  assert.equal(n.length, 1);
+  assert.equal(n[0].title, "Výlet");
+  assert.match(n[0].body, /^Eliot Komárek: Ahoj všichni/);
+  const [fake] = await as(student2, `insert into public.messages (conversation_id, body, system) values ($1, 'podvrh', true) returning system`, [g]);
+  assert.equal(fake.system, false);
+  const [chat] = await as(teacher, `select * from public.my_chats() where conversation_id = $1`, [g]);
+  assert.equal(chat.is_group, true);
+  assert.equal(chat.title, "Výlet");
+  assert.equal(chat.member_count, 3);
+  assert.equal(chat.other_id, null);
+  // Jen správce přejmenuje, přidá, vyhodí a jmenuje správce.
+  await assert.rejects(() => as(student2, `select public.rename_group($1, 'Moje')`, [g]), /správce/);
+  await assert.rejects(() => as(student2, `select public.add_group_members($1, $2)`, [g, [outsider]]), /správce/);
+  await assert.rejects(() => as(student2, `select public.remove_group_member($1, $2)`, [g, teacher]), /správce/);
+  await assert.rejects(() => as(student2, `select public.set_group_admin($1, $2, true)`, [g, student2]), /správce/);
+  await assert.rejects(() => as(student2, `select public.delete_group($1)`, [g]), /správce/);
+  await as(student, `select public.rename_group($1, 'Výlet do Brna')`, [g]);
+  assert.equal((await db.query(`select title from public.conversations where id = $1`, [g])).rows[0].title, "Výlet do Brna");
+  await as(student, `select public.add_group_members($1, $2)`, [g, [outsider]]);
+  assert.equal((await as(outsider, `select 1 from public.conversations where id = $1`, [g])).length, 1);
+  await as(student, `select public.remove_group_member($1, $2)`, [g, outsider]);
+  assert.equal((await as(outsider, `select 1 from public.messages where conversation_id = $1`, [g])).length, 0);
+  await assert.rejects(() => as(outsider, `insert into public.messages (conversation_id, body) values ($1, 'zpět')`, [g]));
+  await as(student, `select public.set_group_admin($1, $2, true)`, [g, student2]);
+  await as(student2, `select public.rename_group($1, 'Brno')`, [g]);
+  // Poslední správce se nesesadí.
+  await as(student2, `select public.set_group_admin($1, $2, false)`, [g, student]);
+  await assert.rejects(() => as(student2, `select public.set_group_admin($1, $2, false)`, [g, student2]), /aspoň jednoho/);
+  // Odchod posledního správce → správcem je nejdéle přítomný člen.
+  await as(student2, `select public.leave_group($1)`, [g]);
+  const admins = (await db.query(`select user_id from public.conversation_members where conversation_id = $1 and is_admin`, [g])).rows;
+  assert.equal(admins.length, 1);
+  assert.ok([student, teacher].includes(admins[0].user_id));
+  assert.equal((await db.query(`select count(*)::int c from public.messages where conversation_id = $1 and system`, [g])).rows[0].c >= 6, true);
+  // Smazání správcem odstraní skupinu, zprávy i notifikace.
+  await as(admins[0].user_id, `select public.delete_group($1)`, [g]);
+  assert.equal((await db.query(`select 1 from public.conversations where id = $1`, [g])).rows.length, 0);
+  assert.equal((await db.query(`select 1 from public.notifications where href = $1`, [`/zpravy?k=${g}`])).rows.length, 0);
+  // Dvojice konverzace zůstávají beze změny (skupinové funkce na ni nejdou).
+  const [{ start_conversation: pair }] = await as(student, `select public.start_conversation($1)`, [student2]);
+  await assert.rejects(() => as(student, `select public.leave_group($1)`, [pair]));
+  await assert.rejects(() => as(student, `select public.delete_group($1)`, [pair]));
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

@@ -217,12 +217,29 @@ export type ClassMessage = { id: string; authorId: string; body: string; created
 /** Řádek v seznamu konverzací. */
 export type ConversationSummary = {
   id: string;
-  otherId: string;
+  /** Skupinový chat (má název a správce) */
+  isGroup: boolean;
+  /** Název skupiny (u dvojice null) */
+  title: string | null;
+  /** Druhý člověk (u skupiny null) */
+  otherId: string | null;
+  memberCount: number;
   lastAt: string;
   lastBody: string;
+  lastAuthor: string | null;
   lastMine: boolean;
   lastHasFile: boolean;
+  /** Poslední zpráva je systémová („X přidal(a) …“) */
+  lastSystem: boolean;
   unread: number;
+};
+
+/** Člen konverzace (pro seznam členů skupiny a stav Doručeno / Přečteno). */
+export type ConversationMember = {
+  userId: string;
+  isAdmin: boolean;
+  deliveredAt: string;
+  readAt: string;
 };
 
 /** Soukromá zpráva. */
@@ -232,6 +249,8 @@ export type DirectMessage = {
   body: string;
   file: SubmissionFile | null;
   createdAt: string;
+  /** Systémová zpráva skupiny („X opustil(a) skupinu“) */
+  system?: boolean;
 };
 
 export type NotificationItem = {
