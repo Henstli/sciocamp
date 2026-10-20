@@ -275,6 +275,9 @@
 .fieldValue a {
   color: var(--primary-text);
   font-weight: 600;
+  /* Podtržení pod spodkem „@“ — jinak ho prohlížeč u zavináče přeruší a zbyde tečka */
+  text-underline-offset: 3px;
+  text-decoration-skip-ink: none;
 }
 
 /* Vystavené odznaky na kartě profilu */
