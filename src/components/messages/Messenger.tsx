@@ -407,12 +407,13 @@ export function Messenger({
                     {r.m.file && <Attachment bucket={BUCKET} file={r.m.file} live={live} />}
                     {r.m.body && <div className={styles.bubble}>{r.m.body}</div>}
                     <div className={styles.time}>
-                      {!r.m.pending && r.m.time}
-                      {r.m.id === last?.id && status && (
+                      {/* U přečtené poslední zprávy stačí „Přečteno hh:mm“, čas odeslání se skryje. */}
+                      {r.m.id === last?.id && status ? (
                         <span className={styles.status} data-seen={status.startsWith("Přečteno")}>
-                          {r.m.pending ? "" : " · "}
-                          {status}
+                          {status.startsWith("Přečteno") || r.m.pending ? status : `${r.m.time} · ${status}`}
                         </span>
+                      ) : (
+                        !r.m.pending && r.m.time
                       )}
                     </div>
                   </div>
