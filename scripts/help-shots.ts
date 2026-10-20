@@ -129,11 +129,21 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
   else await area.scrollIntoViewIfNeeded();
   await page.waitForTimeout(200);
   let areaBox = (await area.boundingBox())!;
-  const tBox = target ? await target.boundingBox() : null;
+  // Skryté pole (sr-only radio/checkbox ve „kartičce“): kurzor i zvýraznění patří
+  // na viditelný štítek, ne na 1px bod v jeho rohu.
+  let mark = target;
+  if (target) {
+    const raw = await target.boundingBox();
+    if (raw && (raw.width < 4 || raw.height < 4)) {
+      const label = target.locator("xpath=ancestor::label[1]");
+      if (await label.count()) mark = label.first();
+    }
+  }
+  const tBox = mark ? await mark.boundingBox() : null;
   // Zaoblení prvku, ať zvýraznění sedí přesně na jeho okraji.
   // Prvek bez vlastního rámečku a pozadí (textový odkaz): místo rámečku zvýrazňovač pod textem.
-  const tStyle = target
-    ? await target.evaluate((el) => {
+  const tStyle = mark
+    ? await mark.evaluate((el) => {
         const cs = getComputedStyle(el);
         const plain = !(parseFloat(cs.borderTopWidth) > 0) && /rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor);
         // Jen textový odkaz nebo tlačítko vzhledu odkazu (ne ikona, ne řádek seznamu, ne pole formuláře).
@@ -158,9 +168,9 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
     areaBox = union(areaBox, box);
   };
 
-  if (target && action === "click") {
+  if (target && mark && action === "click") {
     kind = "click";
-    await target.click();
+    await mark.click();
     if (shot.after) {
       await page.waitForTimeout(500);
       await grow();
