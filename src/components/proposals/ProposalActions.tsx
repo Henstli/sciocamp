@@ -41,7 +41,6 @@ export function StaffPanel({
   members: number;
   admin: boolean;
 }) {
-  const router = useRouter();
   const [pending, start] = useTransition();
   const [res, setRes] = useState<ActionResult>({});
   const [count, setCount] = useState(String(needPercent ?? needPercentProposed));
@@ -57,7 +56,6 @@ export function StaffPanel({
         ] as const);
   const [result, setResult] = useState<(typeof results)[number][0]>(results[0][0]);
   const [note, setNote] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const act = (fn: () => Promise<ActionResult>, after?: () => void) =>
     start(async () => {
@@ -135,27 +133,7 @@ export function StaffPanel({
           <span className={f.hint}>Pro případ, že se rozhodnutí uložilo omylem.</span>
         </div>
       )}
-      {admin &&
-        (confirmDelete ? (
-          <div className={styles.inline}>
-            <button
-              type="button"
-              className="btn btn-outline"
-              style={{ color: "var(--late)", borderColor: "#e7b4b4" }}
-              disabled={pending}
-              onClick={() => act(() => deleteProposal(id), () => router.push("/navrhy"))}
-            >
-              Opravdu smazat
-            </button>
-            <button type="button" className="btn btn-soft" onClick={() => setConfirmDelete(false)}>
-              Zpět
-            </button>
-          </div>
-        ) : (
-          <button type="button" className={styles.linkBtn} style={{ alignSelf: "flex-start" }} onClick={() => setConfirmDelete(true)}>
-            Smazat návrh (nevhodný obsah)
-          </button>
-        ))}
+      {admin && <DeleteProposal id={id} closed={!open} afterDelete="/navrhy" />}
       <Message res={res} />
     </section>
   );
@@ -188,6 +166,57 @@ export function WithdrawButton({ id }: { id: string }) {
       <button type="button" className="btn btn-soft" onClick={() => setConfirm(false)}>
         Zpět
       </button>
+      <Message res={res} />
+    </div>
+  );
+}
+
+/**
+ * Admin: smazání návrhu. Uzavřený z historie jen po zaškrtnutí, že byl
+ * uskutečněn nebo řádně zapsán; otevřený jen kvůli nevhodnému obsahu.
+ */
+export function DeleteProposal({ id, closed, afterDelete }: { id: string; closed: boolean; afterDelete?: string }) {
+  const router = useRouter();
+  const [asking, setAsking] = useState(false);
+  const [done, setDone] = useState(false);
+  const [pending, start] = useTransition();
+  const [res, setRes] = useState<ActionResult>({});
+
+  if (!asking) {
+    return (
+      <button type="button" className={styles.linkBtn} style={{ alignSelf: "flex-start" }} onClick={() => setAsking(true)}>
+        {closed ? "Smazat z historie" : "Smazat návrh (nevhodný obsah)"}
+      </button>
+    );
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {closed && (
+        <label className={f.check} style={{ minHeight: 0 }}>
+          <input type="checkbox" checked={done} onChange={(e) => setDone(e.target.checked)} />
+          <span>Návrh byl uskutečněn nebo řádně zapsán</span>
+        </label>
+      )}
+      <div className={styles.inline}>
+        <button
+          type="button"
+          className="btn btn-outline"
+          style={{ minHeight: 36, color: "var(--late)", borderColor: "#e7b4b4" }}
+          disabled={pending || (closed && !done)}
+          onClick={() =>
+            start(async () => {
+              const r = await deleteProposal(id, done);
+              setRes(r);
+              if (r.ok && afterDelete) router.push(afterDelete);
+            })
+          }
+        >
+          {closed ? "Smazat z historie" : "Opravdu smazat"}
+        </button>
+        <button type="button" className="btn btn-soft" style={{ minHeight: 36 }} onClick={() => setAsking(false)}>
+          Zpět
+        </button>
+      </div>
       <Message res={res} />
     </div>
   );

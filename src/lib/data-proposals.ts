@@ -11,7 +11,7 @@ import { nowMs } from "./time";
 import type { User } from "./types";
 
 const PROPOSAL_COLUMNS =
-  "id, author_id, title, body, category, goal, need_percent_proposed, need_percent, status, resolution, resolved_by, resolved_at, pro_count, against_count, neutral_count, reached_at, created_at";
+  "id, author_id, title, body, category, goal, need_percent_proposed, need_percent, status, resolution, resolved_by, resolved_at, pro_count, against_count, neutral_count, reached_at, created_at, voting_ends_at";
 
 type ProposalRow = {
   id: string;
@@ -31,6 +31,7 @@ type ProposalRow = {
   neutral_count: number;
   reached_at: string | null;
   created_at: string;
+  voting_ends_at: string;
 };
 
 function toProposal(r: ProposalRow, commentCount: number, myChoice: VoteChoice | null): Proposal {
@@ -52,6 +53,7 @@ function toProposal(r: ProposalRow, commentCount: number, myChoice: VoteChoice |
     neutralCount: r.neutral_count,
     reachedAt: r.reached_at,
     createdAt: r.created_at,
+    votingEndsAt: r.voting_ends_at,
     commentCount,
     myChoice,
   };
@@ -68,6 +70,13 @@ function demoProposal(p: (typeof DEMO_PROPOSALS)[number], user: User): Proposal 
     myChoice: votes[user.id] ?? null,
     commentCount: DEMO_PROPOSAL_COMMENTS[p.id]?.length ?? 0,
   };
+}
+
+/** Uzavře návrhy, kterým skončilo hlasování bez dost hlasů pro (spouští se při otevření Návrhů). */
+export async function closeExpiredProposals(): Promise<void> {
+  if (!isSupabase) return;
+  const sb = await createClient();
+  await sb.rpc("close_expired_proposals");
 }
 
 /** Kolik lidí ve škole může hlasovat (základ pro procenta). */

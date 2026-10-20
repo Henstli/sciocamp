@@ -84,7 +84,7 @@ function WishCard({ w, staff }: { w: WishView; staff: boolean }) {
           {w.status === "vypsano" && <span className="chip chip-ok">Schváleno</span>}
           {w.status === "uzavreno" && <span className="chip chip-info">Uzavřeno</span>}
           {w.daysLeft !== null && (
-            <span className={`chip ${w.daysLeft === 0 ? "chip-late" : w.daysLeft <= 2 ? "chip-wait" : "chip-info"}`}>
+            <span className={`chip ${w.daysLeft === 0 ? "chip-late" : w.daysLeft <= 3 ? "chip-wait" : "chip-info"}`}>
               {w.daysLeft === 0 ? "Poslední den" : `Ještě ${w.daysLeft} ${plural(w.daysLeft, "den", "dny", "dní")}`}
             </span>
           )}

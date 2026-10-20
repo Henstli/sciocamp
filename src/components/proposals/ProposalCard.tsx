@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { plural } from "@/lib/format";
-import { CATEGORY_LABEL, GOAL_LABEL, proposalChip, type Proposal } from "@/lib/proposals";
+import { CATEGORY_LABEL, GOAL_LABEL, proposalChip, votingDaysLeft, votingOpen, type Proposal } from "@/lib/proposals";
+import { DeleteProposal } from "./ProposalActions";
 import { formatStamp } from "@/lib/time";
 import { ProposalVote } from "./ProposalVote";
 import styles from "@/app/(app)/navrhy/navrhy.module.css";
@@ -12,7 +13,9 @@ export function ProposalCard({
   meId,
   now,
   members,
+  admin = false,
 }: {
+  admin?: boolean;
   p: Proposal;
   authorName: string;
   meId: string;
@@ -21,6 +24,7 @@ export function ProposalCard({
 }) {
   const chip = proposalChip(p, members);
   const open = p.status === "open";
+  const voting = votingOpen(p, now.getTime());
   return (
     <article className={`card ${styles.item}`} data-closed={!open}>
       <div className={styles.body}>
@@ -28,6 +32,7 @@ export function ProposalCard({
           <span className={`chip ${chip.tone}`}>{chip.label}</span>
           <span className="chip chip-info">{GOAL_LABEL[p.goal]}</span>
           <span className="chip chip-info">{CATEGORY_LABEL[p.category]}</span>
+          {voting && <DaysLeftChip days={votingDaysLeft(p.votingEndsAt, now.getTime())} />}
         </div>
         <Link href={`/navrhy/${p.id}`} className={styles.title}>
           {p.title}
@@ -55,11 +60,21 @@ export function ProposalCard({
             members={members}
             needPercent={p.needPercent ?? p.needPercentProposed}
             needConfirmed={p.needPercent !== null}
-            open={open}
+            open={voting}
             isAuthor={p.authorId === meId}
           />
         )}
+        {admin && !open && <DeleteProposal id={p.id} closed />}
       </div>
     </article>
+  );
+}
+
+/** „Ještě 3 dny“ hlasování; poslední den červeně. */
+export function DaysLeftChip({ days }: { days: number }) {
+  return (
+    <span className={`chip ${days === 0 ? "chip-late" : days <= 3 ? "chip-wait" : "chip-info"}`}>
+      {days === 0 ? "Poslední den hlasování" : `Hlasuje se ještě ${days} ${plural(days, "den", "dny", "dní")}`}
+    </span>
   );
 }

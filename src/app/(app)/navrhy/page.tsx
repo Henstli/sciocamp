@@ -5,10 +5,10 @@ import { ProposalCard } from "@/components/proposals/ProposalCard";
 import { ProposalForm } from "@/components/proposals/ProposalForm";
 import { requireUser } from "@/lib/auth";
 import { getUsersByIds } from "@/lib/data";
-import { listProposals, memberCount } from "@/lib/data-proposals";
+import { closeExpiredProposals, listProposals, memberCount } from "@/lib/data-proposals";
 import { plural } from "@/lib/format";
 import { proposalReached, type Proposal } from "@/lib/proposals";
-import { canTeach, initials } from "@/lib/roles";
+import { canTeach, initials, isAdmin } from "@/lib/roles";
 import { nowMs } from "@/lib/time";
 import styles from "./navrhy.module.css";
 
@@ -23,10 +23,12 @@ function staffTodo(p: Proposal, members: number) {
 
 export default async function ProposalsPage() {
   const user = await requireUser();
+  await closeExpiredProposals();
   const [all, members] = await Promise.all([listProposals(user), memberCount()]);
   const people = await getUsersByIds([...new Set(all.map((p) => p.authorId))]);
   const nameOf = (id: string) => people.find((u) => u.id === id)?.name ?? "Bývalý člen školy";
   const staff = canTeach(user.role);
+  const admin = isAdmin(user.role);
   const now = new Date(nowMs());
 
   // Otevřené: vyučujícím nahoru ty, které čekají na ně; jinak nejnovější.
@@ -45,7 +47,7 @@ export default async function ProposalsPage() {
         subtitle={
           staff && waiting > 0
             ? `${waiting} ${plural(waiting, "návrh čeká", "návrhy čekají", "návrhů čeká")} na potvrzení prahu nebo rozhodnutí`
-            : "Hlasuj pro, proti, nebo že je ti to jedno. Návrh s dost hlasy pro jde na shromáždění, nebo ho posoudí vyučující."
+            : "Hlasuje se 7 dní. Návrh s dost hlasy pro jde na shromáždění, nebo ho posoudí vyučující."
         }
         avatar={{ initials: initials(user.name), name: user.name }}
       >
@@ -69,11 +71,11 @@ export default async function ProposalsPage() {
           {closed.length > 0 && (
             <details className={styles.closed}>
               <summary>
-                Uzavřené návrhy <span>{closed.length}</span>
+                Historie návrhů <span>{closed.length}</span>
               </summary>
               <div className={styles.closedList}>
                 {closed.map((p) => (
-                  <ProposalCard key={p.id} p={p} authorName={nameOf(p.authorId)} meId={user.id} now={now} members={members} />
+                  <ProposalCard key={p.id} p={p} authorName={nameOf(p.authorId)} meId={user.id} now={now} members={members} admin={admin} />
                 ))}
               </div>
             </details>

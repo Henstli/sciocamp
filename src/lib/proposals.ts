@@ -1,7 +1,7 @@
 // Návrhy a přání (Hlasování): typy, popisky a pomocné funkce sdílené serverem i prohlížečem.
 
 export type ProposalGoal = "shromazdeni" | "schvaleni";
-export type ProposalStatus = "open" | "projednano" | "schvaleno" | "zamitnuto" | "stazeno";
+export type ProposalStatus = "open" | "projednano" | "schvaleno" | "zamitnuto" | "stazeno" | "neproslo";
 export type ProposalCategory = "kurzy" | "ateliery" | "rozvrh" | "online" | "expedice" | "komunita" | "pravidla" | "jine";
 export type VoteChoice = "pro" | "jedno" | "proti";
 
@@ -25,6 +25,8 @@ export type Proposal = {
   neutralCount: number;
   reachedAt: string | null;
   createdAt: string;
+  /** Do kdy se hlasuje (7 dní od podání) */
+  votingEndsAt: string;
   commentCount: number;
   /** Jak hlasoval přihlášený (null = nehlasoval) */
   myChoice: VoteChoice | null;
@@ -61,6 +63,19 @@ export const GOAL_LABEL: Record<ProposalGoal, string> = {
 
 export const CHOICE_LABEL: Record<VoteChoice, string> = { pro: "Pro", jedno: "Je mi to jedno", proti: "Proti" };
 
+/** Jak dlouho se o návrhu hlasuje. */
+export const PROPOSAL_DAYS = 7;
+
+/** Probíhá ještě hlasování? */
+export function votingOpen(p: Pick<Proposal, "status" | "votingEndsAt">, nowMs: number): boolean {
+  return p.status === "open" && Date.parse(p.votingEndsAt) > nowMs;
+}
+
+/** Kolik celých dní hlasování ještě zbývá (0 = poslední den). */
+export function votingDaysLeft(votingEndsAt: string, nowMs: number): number {
+  return Math.max(0, Math.ceil((Date.parse(votingEndsAt) - nowMs) / 86_400_000) - 1);
+}
+
 /** Podíl školy v procentech (zaokrouhleno). */
 export function percentOf(count: number, members: number): number {
   return members > 0 ? Math.round((count / members) * 100) : 0;
@@ -82,6 +97,8 @@ export function proposalChip(p: Pick<Proposal, "status" | "needPercent" | "proCo
       return { label: "Zamítnuto", tone: "chip-late" };
     case "stazeno":
       return { label: "Staženo", tone: "chip-info" };
+    case "neproslo":
+      return { label: "Neprošlo", tone: "chip-late" };
   }
   if (p.needPercent === null) return { label: "Čeká na potvrzení prahu", tone: "chip-info" };
   if (proposalReached(p, members)) {

@@ -2,6 +2,14 @@
 
 import type { Proposal, ProposalComment, VoteChoice, Wish } from "./proposals";
 
+/** Datum před `days` dny (ukázkové návrhy stárnou s časem). */
+function ago(days: number, hours = 0): string {
+  return new Date(Date.now() - (days * 24 + hours) * 3_600_000).toISOString();
+}
+function plus7(iso: string): string {
+  return new Date(Date.parse(iso) + 7 * 86_400_000).toISOString();
+}
+
 type DemoProposal = Omit<Proposal, "myChoice" | "commentCount" | "proCount" | "againstCount" | "neutralCount"> & {
   votes: Record<string, VoteChoice>;
 };
@@ -24,7 +32,8 @@ export const DEMO_PROPOSALS: DemoProposal[] = [
     resolvedBy: null,
     resolvedAt: null,
     reachedAt: null,
-    createdAt: "2026-10-17T09:12:00Z",
+    createdAt: ago(3),
+    votingEndsAt: plus7(ago(3)),
     votes: V(["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna"], ["u-maly", "u-pietraszek"], ["u-svobodova"]),
   },
   {
@@ -40,8 +49,9 @@ export const DEMO_PROPOSALS: DemoProposal[] = [
     resolution: null,
     resolvedBy: null,
     resolvedAt: null,
-    reachedAt: "2026-10-18T10:00:00Z",
-    createdAt: "2026-10-12T08:00:00Z",
+    reachedAt: ago(5),
+    createdAt: ago(8),
+    votingEndsAt: plus7(ago(8)),
     votes: V(["u-hankova", "u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jakubcova", "u-pavel"], ["u-jaukner", "u-kubicek"], ["u-maly", "u-benes"]),
   },
   {
@@ -58,7 +68,8 @@ export const DEMO_PROPOSALS: DemoProposal[] = [
     resolvedBy: null,
     resolvedAt: null,
     reachedAt: null,
-    createdAt: "2026-10-19T15:30:00Z",
+    createdAt: ago(6, 14),
+    votingEndsAt: plus7(ago(6, 14)),
     votes: V(["u-komarek", "u-cerny", "u-jaukner"]),
   },
   {
@@ -73,9 +84,10 @@ export const DEMO_PROPOSALS: DemoProposal[] = [
     status: "zamitnuto",
     resolution: "Termíny pomáhají plánovat vám i vyučujícím. Kdo potřebuje víc času, domluví se s vyučujícím — odevzdání po termínu je povolené.",
     resolvedBy: "u-pavel",
-    resolvedAt: "2026-10-08T12:00:00Z",
-    reachedAt: "2026-10-06T12:00:00Z",
-    createdAt: "2026-10-01T12:00:00Z",
+    resolvedAt: ago(11),
+    reachedAt: ago(14),
+    createdAt: ago(19),
+    votingEndsAt: plus7(ago(19)),
     votes: V(["u-jaukner", "u-maly", "u-svobodova", "u-benes", "u-dvorakova", "u-kral"], ["u-pietraszek", "u-kubesova"]),
   },
 ];

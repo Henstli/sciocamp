@@ -1002,4 +1002,26 @@ await test("hlasování: smazaná vypsaná aktivita → přání uzavřené", as
   assert.equal((await db.query(`select 1 from public.wishes where id = $1`, [w.id])).rows.length, 0);
 });
 
+await test("návrhy: hlasuje se 7 dní, pak bez dost hlasů neprošlo", async () => {
+  const [p] = await as(student, `insert into public.proposals (title, goal, need_percent_proposed) values ('Online kino každý pátek', 'shromazdeni', 90) returning id`);
+  const [q] = await as(student, `insert into public.proposals (title, goal, need_percent_proposed) values ('Pátky bez úkolů', 'shromazdeni', 1) returning id`);
+  await as(student2, `insert into public.proposal_supports (proposal_id, choice) values ($1, 'pro')`, [p.id]);
+  // Hlasování skončilo.
+  await db.query(`update public.proposals set voting_ends_at = now() - interval '1 minute' where id in ($1, $2)`, [p.id, q.id]);
+  await assert.rejects(() => as(teacher2, `insert into public.proposal_supports (proposal_id) values ($1)`, [p.id]));
+  assert.equal((await as(student2, `update public.proposal_supports set choice = 'proti' where proposal_id = $1 returning 1`, [p.id])).length, 0);
+  assert.equal((await as(student2, `delete from public.proposal_supports where proposal_id = $1 returning 1`, [p.id])).length, 0);
+  await as(teacher2, `select public.close_expired_proposals()`);
+  const rows = (await db.query(`select id, status from public.proposals where id in ($1, $2)`, [p.id, q.id])).rows;
+  assert.equal(rows.find((r) => r.id === p.id).status, "neproslo");
+  assert.equal(rows.find((r) => r.id === q.id).status, "open"); // má dost hlasů → čeká na rozhodnutí
+  assert.equal((await db.query(`select 1 from public.notifications where user_id = $1 and title = 'Návrh neprošel: Online kino každý pátek'`, [student2])).rows.length, 1);
+  // Vrácení dá nových 7 dní; mazat smí jen admin.
+  await as(teacher, `select public.reopen_proposal($1)`, [p.id]);
+  const back = (await db.query(`select status, voting_ends_at > now() as running from public.proposals where id = $1`, [p.id])).rows[0];
+  assert.deepEqual([back.status, back.running], ["open", true]);
+  assert.equal((await as(teacher, `delete from public.proposals where id = $1 returning 1`, [q.id])).length, 0);
+  assert.equal((await as(admin, `delete from public.proposals where id = $1 returning 1`, [q.id])).length, 1);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

@@ -9,7 +9,7 @@ import { requireUser } from "../auth";
 import { isSupabase } from "../config";
 import { getActivity } from "../data";
 import type { ProposalCategory, ProposalGoal, VoteChoice, WishKind } from "../proposals";
-import { canTeach } from "../roles";
+import { canTeach, isAdmin } from "../roles";
 import { createClient } from "../supabase/server";
 
 export type ActionResult = { error?: string; info?: string; ok?: boolean };
@@ -125,9 +125,22 @@ export async function reopenProposal(id: string): Promise<ActionResult> {
   return run((sb) => sb.rpc("reopen_proposal", { proposal: id }), "Návrh se nepodařilo znovu otevřít.");
 }
 
-export async function deleteProposal(id: string): Promise<ActionResult> {
-  await requireUser();
-  return run((sb) => sb.from("proposals").delete().eq("id", id), "Návrh se nepodařilo smazat.");
+/**
+ * Admin smaže návrh. Uzavřený (z historie) jen s potvrzením, že byl
+ * uskutečněn nebo řádně zapsán; otevřený jen kvůli nevhodnému obsahu.
+ */
+export async function deleteProposal(id: string, doneConfirmed: boolean): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!isAdmin(user.role)) return { error: "Návrhy maže jen admin." };
+  if (!isSupabase) return { info: DEMO };
+  const sb = await createClient();
+  const { data: p } = await sb.from("proposals").select("status").eq("id", id).maybeSingle();
+  if (!p) return { error: "Návrh už neexistuje." };
+  if (p.status !== "open" && !doneConfirmed) return { error: "Nejdřív potvrď, že byl návrh uskutečněn nebo řádně zapsán." };
+  const { data, error } = await sb.from("proposals").delete().eq("id", id).select("id");
+  if (error || !data?.length) return { error: "Návrh se nepodařilo smazat." };
+  refresh();
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------

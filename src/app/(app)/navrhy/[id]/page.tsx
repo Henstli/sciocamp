@@ -7,8 +7,9 @@ import { ProposalComments } from "@/components/proposals/ProposalComments";
 import { ProposalVote } from "@/components/proposals/ProposalVote";
 import { requireUser } from "@/lib/auth";
 import { getUsersByIds } from "@/lib/data";
-import { getProposal, memberCount } from "@/lib/data-proposals";
-import { CATEGORY_LABEL, GOAL_LABEL, proposalChip } from "@/lib/proposals";
+import { closeExpiredProposals, getProposal, memberCount } from "@/lib/data-proposals";
+import { CATEGORY_LABEL, GOAL_LABEL, proposalChip, votingDaysLeft, votingOpen } from "@/lib/proposals";
+import { DaysLeftChip } from "@/components/proposals/ProposalCard";
 import { canTeach, initials, isAdmin } from "@/lib/roles";
 import { formatStamp, nowMs } from "@/lib/time";
 import styles from "../navrhy.module.css";
@@ -20,11 +21,13 @@ const OUTCOME = {
   schvaleno: { title: "Schváleno", tone: "ok" },
   zamitnuto: { title: "Zamítnuto", tone: "late" },
   stazeno: { title: "Autor návrh stáhl", tone: "info" },
+  neproslo: { title: "Neprošlo", tone: "late" },
 } as const;
 
 export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">) {
   const user = await requireUser();
   const { id } = await params;
+  await closeExpiredProposals();
   const [data, members] = await Promise.all([getProposal(user, id), memberCount()]);
   if (!data) notFound();
   const { proposal: p, comments } = data;
@@ -52,6 +55,7 @@ export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">
               <span className={`chip ${chip.tone}`}>{chip.label}</span>
               <span className="chip chip-info">{GOAL_LABEL[p.goal]}</span>
               <span className="chip chip-info">{CATEGORY_LABEL[p.category]}</span>
+              {votingOpen(p, now.getTime()) && <DaysLeftChip days={votingDaysLeft(p.votingEndsAt, now.getTime())} />}
             </div>
             <h1 className={styles.title} style={{ fontSize: 22 }}>
               {p.title}
@@ -70,7 +74,7 @@ export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">
                 members={members}
                 needPercent={p.needPercent ?? p.needPercentProposed}
                 needConfirmed={p.needPercent !== null}
-                open={open}
+                open={votingOpen(p, now.getTime())}
                 isAuthor={p.authorId === user.id}
               />
             )}
