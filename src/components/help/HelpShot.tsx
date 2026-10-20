@@ -157,6 +157,7 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
         {t && (
           <span
             className={styles.ring}
+            data-bare={t.bare || undefined}
             data-on={showRing || undefined}
             data-press={phase === "press" || undefined}
             style={{

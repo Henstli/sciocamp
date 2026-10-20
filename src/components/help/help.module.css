@@ -361,6 +361,20 @@
   opacity: 1;
   animation: ringPulse 1.6s ease-out 0.3s infinite;
 }
+/* Textový odkaz: průsvitný zvýrazňovač pod textem, nic nepřesahuje do okolí */
+.ring[data-bare] {
+  box-shadow: none;
+  background: rgba(59, 111, 224, 0.2);
+  border-bottom: 2px solid #3b6fe0;
+}
+.ring[data-bare][data-on] {
+  animation: markPulse 1.6s ease-in-out 0.3s infinite;
+}
+@keyframes markPulse {
+  50% {
+    background: rgba(59, 111, 224, 0.32);
+  }
+}
 .cursor {
   position: absolute;
   width: 26px;

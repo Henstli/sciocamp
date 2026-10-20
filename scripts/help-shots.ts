@@ -29,7 +29,7 @@ export type ShotFrames = {
   /** 0 = před akcí, další = psaní nebo stav po kliknutí */
   frames: string[];
   /** Prvek v procentech výřezu */
-  target: { x: number; y: number; w: number; h: number; r?: number } | null;
+  target: { x: number; y: number; w: number; h: number; r?: number; bare?: boolean } | null;
   action: "click" | "point" | "type" | "select" | "none";
   /** Psaní: text a vzhled obsahu pole, prohlížeč ho pak dopisuje po písmenech */
   typing?: HelpTyping;
@@ -131,7 +131,22 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
   let areaBox = (await area.boundingBox())!;
   const tBox = target ? await target.boundingBox() : null;
   // Zaoblení prvku, ať zvýraznění sedí přesně na jeho okraji.
-  const tRadius = target ? await target.evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0) : 0;
+  // Prvek bez vlastního rámečku a pozadí (textový odkaz): místo rámečku zvýrazňovač pod textem.
+  const tStyle = target
+    ? await target.evaluate((el) => {
+        const cs = getComputedStyle(el);
+        const plain = !(parseFloat(cs.borderTopWidth) > 0) && /rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor);
+        // Jen textový odkaz nebo tlačítko vzhledu odkazu (ne ikona, ne řádek seznamu, ne pole formuláře).
+        const textual =
+          (el.textContent ?? "").trim().length > 0 &&
+          !el.querySelector("input, select, textarea, svg, img") &&
+          el.getBoundingClientRect().height < 48;
+        const bare = plain && textual;
+        return { radius: parseFloat(cs.borderTopLeftRadius) || 0, bare };
+      })
+    : { radius: 0, bare: false };
+  const tPad = tStyle.bare ? 2 : 0;
+  const tRadius = tStyle.bare ? 4 : tStyle.radius;
 
   // Snímky celé obrazovky; výřez se spočítá z oblasti před i po akci (rozbalení).
   const shots = [await grab(page)];
@@ -204,11 +219,12 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
   }
   const rel = tBox
     ? {
-        x: (tBox.x - clip.x) / clip.width,
-        y: (tBox.y - clip.y) / clip.height,
-        w: tBox.width / clip.width,
-        h: tBox.height / clip.height,
+        x: (tBox.x - tPad - clip.x) / clip.width,
+        y: (tBox.y - tPad - clip.y) / clip.height,
+        w: (tBox.width + tPad * 2) / clip.width,
+        h: (tBox.height + tPad * 2) / clip.height,
         r: tRadius / clip.width,
+        ...(tStyle.bare ? { bare: true } : {}),
       }
     : null;
   const typing: HelpTyping | undefined = rawTyping
