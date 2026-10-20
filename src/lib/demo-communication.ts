@@ -60,6 +60,7 @@ export const DEMO_MESSAGES: Record<string, DirectMessage[]> = {
   "k-cerny": [
     { id: "dm6", authorId: "u-liska", body: "Posílám ti poznámky z fyziky.", file: null, createdAt: "2026-10-12T14:40:00Z" },
     { id: "dm7", authorId: "u-cerny", body: "Díky, mám to.", file: null, createdAt: "2026-10-12T15:00:00Z" },
+    { id: "dm7b", authorId: "u-liska", body: "Super, kdyby něco, napiš.", file: null, createdAt: "2026-10-12T15:04:00Z" },
   ],
   "k-komarek": [
     { id: "dm8", authorId: "u-komarek", body: "Ahoj!", file: null, createdAt: "2026-10-11T17:58:00Z" },
@@ -72,3 +73,8 @@ export const DEMO_NOTIFICATIONS: NotificationItem[] = [
   { id: "n2", kind: "hodnoceni", title: "Úkol je vrácený k doplnění: Rozbor scény z filmu", body: "Doplň prosím rozbor střihu v závěru scény.", href: "/ukoly", createdAt: "2026-10-18T15:30:00Z", read: false },
   { id: "n3", kind: "ukol", title: "Nový úkol: Reflexe prezentace z TEDx", body: "Prezentační schopnosti", href: "/ukoly", createdAt: "2026-10-17T10:00:00Z", read: true },
 ];
+
+/** Kdy měl druhý člen konverzace zprávy doručené / přečtené (ukázkový stav). */
+export const DEMO_MEMBER_STATE: Record<string, { deliveredAt: string; readAt: string }> = {
+  "k-cerny": { deliveredAt: "2026-10-12T15:05:00Z", readAt: "2026-10-12T15:09:00Z" },
+};

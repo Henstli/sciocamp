@@ -11,6 +11,7 @@ import {
   DEMO_MESSAGES,
   DEMO_NOTIFICATIONS,
   DEMO_POSTS,
+  DEMO_MEMBER_STATE,
 } from "./demo-communication";
 import { createClient } from "./supabase/server";
 import type {
@@ -157,6 +158,19 @@ export async function conversationMessages(conversationId: string): Promise<Dire
     file: m.file_path ? { path: m.file_path, name: m.file_name ?? "soubor", size: m.file_size, url: urls.get(m.file_path) } : null,
     createdAt: m.created_at,
   }));
+}
+
+/** Kdy měl druhý člen konverzace zprávy doručené a přečtené (pro „Doručeno“ / „Přečteno“). */
+export async function otherMemberState(conversationId: string, user: User): Promise<{ deliveredAt: string; readAt: string } | null> {
+  if (!isSupabase) return DEMO_MEMBER_STATE[conversationId] ?? null;
+  const sb = await createClient();
+  const { data } = await sb
+    .from("conversation_members")
+    .select("delivered_at, last_read_at")
+    .eq("conversation_id", conversationId)
+    .neq("user_id", user.id)
+    .maybeSingle();
+  return data ? { deliveredAt: data.delivered_at as string, readAt: data.last_read_at as string } : null;
 }
 
 /** Kolik nepřečtených zpráv a od koho (pro menu a Domov). */

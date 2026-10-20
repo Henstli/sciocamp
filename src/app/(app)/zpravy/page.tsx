@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
 import { listUsers } from "@/lib/data";
-import { conversationMessages, conversationsFor } from "@/lib/data-communication";
+import { conversationMessages, conversationsFor, otherMemberState } from "@/lib/data-communication";
 import { plural } from "@/lib/format";
 import { initials, roleCaption } from "@/lib/roles";
 import { formatClock, formatDayLabel, formatListTime } from "@/lib/time";
@@ -60,8 +60,10 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
         file: m.file,
         time: formatClock(m.createdAt),
         day: formatDayLabel(m.createdAt, now),
+        createdAt: m.createdAt,
       }))
     : [];
+  const otherState = open ? await otherMemberState(open.id, user) : null;
 
   const unread = list.reduce((n, c) => n + c.unread, 0);
   const people = users
@@ -86,6 +88,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
         showThreadOnMobile={explicit}
         initialMessages={messages}
         live={isSupabase}
+        otherState={otherState}
       />
     </>
   );

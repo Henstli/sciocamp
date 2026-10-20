@@ -51,12 +51,20 @@ export function NotificationBell() {
     };
   }, []);
 
-  // Nové notifikace naživo.
+  // Nové notifikace naživo. Zároveň hlásí „doručeno“ u soukromých zpráv:
+  // při otevření aplikace a pokaždé, když přijde nová zpráva od někoho jiného.
   useEffect(() => {
     if (!session?.live) return;
     const sb = createClient();
     let cancelled = false;
+    const delivered = () => void sb.rpc("mark_messages_delivered");
     const channel = sb.channel(`notifikace-${session.userId}`).on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "messages" },
+      (payload) => {
+        if ((payload.new as { author_id?: string }).author_id !== session.userId) delivered();
+      },
+    ).on(
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${session.userId}` },
       (payload) => {
@@ -72,6 +80,7 @@ export function NotificationBell() {
       if (cancelled) return;
       if (data.session) sb.realtime.setAuth(data.session.access_token);
       channel.subscribe();
+      delivered();
     });
     return () => {
       cancelled = true;

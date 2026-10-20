@@ -20,7 +20,25 @@ const BUCKET = "zpravy";
 
 export type ContactView = { id: string; name: string; initials: string; role: Role; caption: string };
 export type ConversationView = { id: string; person: ContactView; time: string; preview: string; unread: number };
-export type ThreadMessage = { id: string; mine: boolean; body: string; file: SubmissionFile | null; time: string; day: string };
+export type ThreadMessage = {
+  id: string;
+  mine: boolean;
+  body: string;
+  file: SubmissionFile | null;
+  time: string;
+  day: string;
+  /** ISO čas odeslání (pro Doručeno / Přečteno) */
+  createdAt: string;
+  /** Ještě se odesílá */
+  pending?: boolean;
+};
+/** Kdy měl druhý člen zprávy doručené a přečtené */
+export type OtherState = { deliveredAt: string; readAt: string } | null;
+
+/** Jak dlouho po posledním signálu ukazovat, že druhý píše (ms). */
+const TYPING_SHOW_MS = 4000;
+/** Jak často posílat signál „píšu“ (ms). */
+const TYPING_SEND_MS = 2000;
 
 type Row = {
   id: string;
@@ -46,7 +64,9 @@ export function Messenger({
   showThreadOnMobile,
   initialMessages,
   live,
+  otherState = null,
 }: {
+  otherState?: OtherState;
   me: { id: string; initials: string };
   conversations: ConversationView[];
   people: ContactView[];
@@ -65,6 +85,11 @@ export function Messenger({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [convId, setConvId] = useState(activeId);
+  const [other, setOther] = useState<OtherState>(otherState);
+  const [typing, setTyping] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingSentAt = useRef(0);
+  const typingChannel = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
   const listEnd = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -87,6 +112,7 @@ export function Messenger({
         const r = payload.new as Row;
         if (r.conversation_id === convId) {
           if (r.author_id === me.id) return;
+          setTyping(false);
           setMessages((m) =>
             m.some((x) => x.id === r.id)
               ? m
@@ -100,6 +126,7 @@ export function Messenger({
                     file: r.file_path ? { path: r.file_path, name: r.file_name ?? "soubor", size: r.file_size } : null,
                     time: formatClock(r.created_at),
                     day: formatDayLabel(r.created_at, new Date()),
+                    createdAt: r.created_at,
                   },
                 ],
           );
@@ -120,9 +147,59 @@ export function Messenger({
     };
   }, [live, convId, me.id, router]);
 
+  // Stav druhého (Doručeno / Přečteno) naživo a signál „píše“ přes Realtime broadcast.
+  useEffect(() => {
+    if (!live || !convId) return;
+    const sb = createClient();
+    let cancelled = false;
+    const members = sb.channel(`clenove-${convId}`).on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "conversation_members", filter: `conversation_id=eq.${convId}` },
+      (payload) => {
+        const r = payload.new as { user_id: string; delivered_at: string; last_read_at: string };
+        if (r.user_id !== me.id) setOther({ deliveredAt: r.delivered_at, readAt: r.last_read_at });
+      },
+    );
+    const typingCh = sb.channel(`psani-${convId}`, { config: { broadcast: { self: false } } }).on(
+      "broadcast",
+      { event: "typing" },
+      ({ payload }) => {
+        if ((payload as { userId?: string })?.userId === me.id) return;
+        const stop = (payload as { stop?: boolean })?.stop;
+        if (typingTimer.current) clearTimeout(typingTimer.current);
+        setTyping(!stop);
+        if (!stop) typingTimer.current = setTimeout(() => setTyping(false), TYPING_SHOW_MS);
+      },
+    );
+    typingChannel.current = typingCh;
+    void sb.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      if (data.session) sb.realtime.setAuth(data.session.access_token);
+      members.subscribe();
+      typingCh.subscribe();
+    });
+    return () => {
+      cancelled = true;
+      typingChannel.current = null;
+      if (typingTimer.current) clearTimeout(typingTimer.current);
+      void sb.removeChannel(members);
+      void sb.removeChannel(typingCh);
+    };
+  }, [live, convId, me.id]);
+
+  /** Pošle druhému „píšu“ (nejvýš jednou za 2 s), nebo „přestal jsem“. */
+  const signalTyping = (stop = false) => {
+    const ch = typingChannel.current;
+    if (!ch) return;
+    const now = Date.now();
+    if (!stop && now - typingSentAt.current < TYPING_SEND_MS) return;
+    typingSentAt.current = stop ? 0 : now;
+    void ch.send({ type: "broadcast", event: "typing", payload: { userId: me.id, stop } });
+  };
+
   useEffect(() => {
     listEnd.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
+  }, [messages.length, typing]);
 
   const found = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("cs");
@@ -146,6 +223,7 @@ export function Messenger({
           file: file ? { path: "", name: file.name, size: file.size } : null,
           time: "teď",
           day: "Dnes",
+          createdAt: new Date().toISOString(),
         },
       ]);
       setDraft("");
@@ -154,18 +232,32 @@ export function Messenger({
     }
     if (file && file.size > MAX_UPLOAD_BYTES) return setError("Soubor je větší než 25 MB. Nahraj ho na Google Disk a pošli odkaz.");
     setSending(true);
+    signalTyping(true);
+    // Zpráva se ukáže hned se stavem „Odesílá se…“.
+    const tempId = `odesila-${Date.now()}`;
+    setMessages((m) => [
+      ...m,
+      { id: tempId, mine: true, body, file: file ? { path: "", name: file.name, size: file.size } : null, time: "", day: "Dnes", createdAt: new Date().toISOString(), pending: true },
+    ]);
+    const dropPending = () => setMessages((m) => m.filter((x) => x.id !== tempId));
     try {
       let id = convId;
       if (!id) {
         const res = await startConversation(activePerson.id);
-        if (res.error || !res.id) return setError(res.error ?? "Konverzaci se nepodařilo založit.");
+        if (res.error || !res.id) {
+          dropPending();
+          return setError(res.error ?? "Konverzaci se nepodařilo založit.");
+        }
         id = res.id;
         setConvId(id);
       }
       let attached: { path: string; name: string; size: number } | null = null;
       if (file) {
         const { problem, uploaded } = await uploadFilesDetailed(BUCKET, id, [file]);
-        if (problem || !uploaded[0]) return setError(problem ?? "Přílohu se nepodařilo nahrát.");
+        if (problem || !uploaded[0]) {
+          dropPending();
+          return setError(problem ?? "Přílohu se nepodařilo nahrát.");
+        }
         attached = uploaded[0];
       }
       const { data, error: err } = await createClient()
@@ -179,18 +271,25 @@ export function Messenger({
         })
         .select("id, created_at")
         .single();
-      if (err || !data) return setError("Zprávu se nepodařilo odeslat. Zkus to znovu.");
-      setMessages((m) => [
-        ...m,
-        {
-          id: data.id,
-          mine: true,
-          body,
-          file: attached ? { ...attached } : null,
-          time: formatClock(data.created_at),
-          day: formatDayLabel(data.created_at, new Date()),
-        },
-      ]);
+      if (err || !data) {
+        dropPending();
+        return setError("Zprávu se nepodařilo odeslat. Zkus to znovu.");
+      }
+      setMessages((m) =>
+        m.map((x) =>
+          x.id === tempId
+            ? {
+                id: data.id,
+                mine: true,
+                body,
+                file: attached ? { ...attached } : null,
+                time: formatClock(data.created_at),
+                day: formatDayLabel(data.created_at, new Date()),
+                createdAt: data.created_at,
+              }
+            : x,
+        ),
+      );
       setDraft("");
       setFile(null);
       if (!activeId) router.replace(`/zpravy?k=${id}`, { scroll: false });
@@ -199,6 +298,20 @@ export function Messenger({
       setSending(false);
     }
   }
+
+  // Stav poslední zprávy, pokud je moje: Odesílá se / Odesláno / Doručeno / Přečteno.
+  const last = messages.at(-1);
+  const status = !last?.mine
+    ? null
+    : last.pending
+      ? "Odesílá se…"
+      : !live && !other
+        ? null
+        : other && last.createdAt <= other.readAt
+          ? `Přečteno ${formatClock(other.readAt)}`
+          : other && last.createdAt <= other.deliveredAt
+            ? "Doručeno"
+            : "Odesláno";
 
   // Zprávy s oddělovači dnů
   const rows: ({ kind: "day"; label: string } | { kind: "msg"; m: ThreadMessage })[] = [];
@@ -293,9 +406,26 @@ export function Messenger({
                   <div key={r.m.id} className={styles.msgWrap} data-mine={r.m.mine}>
                     {r.m.file && <Attachment bucket={BUCKET} file={r.m.file} live={live} />}
                     {r.m.body && <div className={styles.bubble}>{r.m.body}</div>}
-                    <div className={styles.time}>{r.m.time}</div>
+                    <div className={styles.time}>
+                      {!r.m.pending && r.m.time}
+                      {r.m.id === last?.id && status && (
+                        <span className={styles.status} data-seen={status.startsWith("Přečteno")}>
+                          {r.m.pending ? "" : " · "}
+                          {status}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ),
+              )}
+              {typing && (
+                <div className={styles.msgWrap} data-mine="false">
+                  <div className={`${styles.bubble} ${styles.typing}`} aria-label={`${activePerson.name} píše`}>
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </div>
               )}
               <div ref={listEnd} />
             </div>
@@ -338,7 +468,10 @@ export function Messenger({
                 <span className="sr-only">Zpráva</span>
                 <input
                   value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
+                  onChange={(e) => {
+                    setDraft(e.target.value);
+                    signalTyping(e.target.value.trim() === "");
+                  }}
                   maxLength={4000}
                   placeholder="Napiš zprávu…"
                   className={styles.input}

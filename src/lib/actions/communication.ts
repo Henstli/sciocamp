@@ -116,7 +116,7 @@ export async function markConversationRead(conversationId: string, refreshAfter 
   const sb = await createClient();
   await sb
     .from("conversation_members")
-    .update({ last_read_at: new Date().toISOString() })
+    .update({ last_read_at: new Date().toISOString(), delivered_at: new Date().toISOString() })
     .eq("conversation_id", conversationId)
     .eq("user_id", user.id);
   // Notifikace o zprávách z téhle konverzace už nejsou potřeba.

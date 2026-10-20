@@ -1128,4 +1128,17 @@ await test("konzultace: zrušený pátek zruší zapsané konzultace a oznámí 
   await as(admin, `select public.cancel_consultation($1)`, [other]);
 });
 
+await test("zprávy: doručeno a přečteno — každý mění jen svoje", async () => {
+  const [{ start_conversation: conv }] = await as(student, `select public.start_conversation($1)`, [student2]);
+  await as(student, `insert into public.messages (conversation_id, body) values ($1, 'Ahoj')`, [conv]);
+  const before = (await db.query(`select delivered_at from public.conversation_members where conversation_id = $1 and user_id = $2`, [conv, student2])).rows[0].delivered_at;
+  await new Promise((r) => setTimeout(r, 5));
+  await as(student2, `select public.mark_messages_delivered()`);
+  const after = (await db.query(`select delivered_at from public.conversation_members where conversation_id = $1 and user_id = $2`, [conv, student2])).rows[0].delivered_at;
+  assert.ok(after > before, "doručeno se posunulo");
+  // Cizí stav nikdo nezmění; odesílatel vidí stav druhého.
+  assert.equal((await as(student, `update public.conversation_members set delivered_at = now() where conversation_id = $1 and user_id = $2 returning 1`, [conv, student2])).length, 0);
+  assert.equal((await as(student, `select delivered_at from public.conversation_members where conversation_id = $1 and user_id = $2`, [conv, student2])).length, 1);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);
