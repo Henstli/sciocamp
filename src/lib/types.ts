@@ -173,6 +173,8 @@ export type Assignment = {
   teamMode?: "teacher" | "students";
   /** Max. velikost týmu, když se studenti rozdělují sami */
   teamMaxSize?: number | null;
+  /** Naplánované zveřejnění (ISO); dokud nenastane, studenti úkol nevidí. null = zveřejněno hned */
+  publishAt?: string | null;
 };
 
 export type SubmissionFile = { path: string; name: string; size: number | null; url?: string };

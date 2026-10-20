@@ -132,3 +132,8 @@ export function parseLinks(raw: string): { links: LinkItem[]; bad: string | null
   }
   return { links: links.slice(0, 20), bad: null };
 }
+
+/** Vidí úkol studenti? (naplánované zveřejnění už nastalo) */
+export function isPublished(a: Pick<Assignment, "publishAt">, now = Date.now()): boolean {
+  return !a.publishAt || new Date(a.publishAt).getTime() <= now;
+}

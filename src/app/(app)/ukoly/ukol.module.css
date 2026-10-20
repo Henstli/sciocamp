@@ -333,3 +333,7 @@
     animation-duration: 2s;
   }
 }
+.success[data-tone="wait"] {
+  background: var(--wait-bg);
+  color: var(--wait);
+}

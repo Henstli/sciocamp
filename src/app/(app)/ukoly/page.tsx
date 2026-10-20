@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
-import { STATE_CHIP, STATE_LABEL, isOpen } from "@/lib/assignments";
+import { STATE_CHIP, STATE_LABEL, isOpen, isPublished } from "@/lib/assignments";
 import { requireUser } from "@/lib/auth";
 import { tasksForStudent, tasksForTeacher } from "@/lib/data-assignments";
 import { plural } from "@/lib/format";
@@ -32,9 +32,10 @@ export default async function TasksPage() {
             ? `termín ${formatDue(a.dueAt)}`
             : "bez termínu",
       group: a.kind === "material" ? "material" : toReview > 0 ? "opravit" : "ukol",
-      tone: a.kind === "material" ? "info" : toReview > 0 ? "primary" : submitted === students && students > 0 ? "ok" : "wait",
-      chip:
-        a.kind === "material"
+      tone: !isPublished(a) ? "info" : a.kind === "material" ? "info" : toReview > 0 ? "primary" : submitted === students && students > 0 ? "ok" : "wait",
+      chip: !isPublished(a)
+        ? `Naplánováno na ${formatDue(a.publishAt!)}`
+        : a.kind === "material"
           ? "Materiál"
           : toReview > 0
             ? `${toReview} k opravení`

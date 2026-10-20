@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { isPublished } from "@/lib/assignments";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AssignmentForm } from "@/components/assignments/AssignmentForm";
@@ -54,6 +55,8 @@ export default async function EditAssignmentPage({ params }: PageProps<"/ukoly/[
           teamMaxSize: a.teamMaxSize ? String(a.teamMaxSize) : "",
           teams: teams.map((t) => ({ id: isSupabase ? t.id : undefined, name: t.name, memberIds: t.memberIds })),
           links: a.links.map((l) => `${l.title} | ${l.url}`).join("\n"),
+          publishAt: !isPublished(a) && a.publishAt ? isoToPragueLocal(a.publishAt) : "",
+          published: isPublished(a),
         }}
       />
       <DeleteAssignment id={a.id} title={a.title} />

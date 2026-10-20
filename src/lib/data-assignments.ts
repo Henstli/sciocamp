@@ -6,7 +6,7 @@ import { cache } from "react";
 import { isSupabase } from "./config";
 import { getActivity, isTeacherOf, listActivities } from "./data";
 import { DEMO_ASSIGNMENTS, DEMO_COMMENTS, DEMO_WORK } from "./demo-assignments";
-import { isHandedIn, needsReview, workState } from "./assignments";
+import { isHandedIn, isPublished, needsReview, workState } from "./assignments";
 import { canTeach } from "./roles";
 import { createClient } from "./supabase/server";
 import type { Activity, Assignment, Comment, LinkItem, Review, Submission, SubmissionFile, User, Work, WorkState } from "./types";
@@ -27,11 +27,12 @@ type AssignmentRow = {
   team_work: boolean;
   team_mode: "teacher" | "students";
   team_max_size: number | null;
+  publish_at: string | null;
   activities: { slug: string; title: string; kind: Activity["kind"]; teacher_id: string };
 };
 
 const ASSIGNMENT_COLUMNS =
-  "id, kind, title, instructions, topic, due_at, max_points, links, created_at, team_work, team_mode, team_max_size, activity_id, activities!inner(slug, title, kind, teacher_id)";
+  "id, kind, title, instructions, topic, due_at, max_points, links, created_at, team_work, team_mode, team_max_size, publish_at, activity_id, activities!inner(slug, title, kind, teacher_id)";
 
 function toAssignment(r: AssignmentRow): Assignment {
   return {
@@ -50,6 +51,7 @@ function toAssignment(r: AssignmentRow): Assignment {
     teamWork: r.team_work,
     teamMode: r.team_mode,
     teamMaxSize: r.team_max_size,
+    publishAt: r.publish_at ? new Date(r.publish_at).toISOString() : null,
   };
 }
 
@@ -93,7 +95,9 @@ async function assignmentsForUserUncached(user: User): Promise<Assignment[]> {
     const mine = new Set(
       activities.filter((a) => (teaching ? isTeacherOf(a, user.id) : a.studentIds.includes(user.id))).map((a) => a.id),
     );
-    return (await demoAssignments()).filter((a) => mine.has(a.activityId)).sort(byDue);
+    return (await demoAssignments())
+      .filter((a) => mine.has(a.activityId) && (teaching || isPublished(a)))
+      .sort(byDue);
   }
   const sb = await createClient();
   let q = sb.from("assignments").select(ASSIGNMENT_COLUMNS);

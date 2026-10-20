@@ -1320,4 +1320,37 @@ await test("rozdělení na expedici: kapacita, limit na studenta, uzavření, jm
   await as(teacher, `delete from public.signup_boards where id = $1`, [board.id]);
 });
 
+await test("naplánované úkoly: student je nevidí ani neodevzdá, oznámení až při zveřejnění", async () => {
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2) on conflict do nothing`, [course.id, student]);
+  const [plan] = await as(teacher, `insert into public.assignments (activity_id, title, publish_at) values ($1, 'Naplánovaný', now() + interval '2 days') returning id`, [course.id]);
+  const seen = async (who) => (await as(who, `select id from public.assignments where id = $1`, [plan.id])).length;
+  assert.equal(await seen(student), 0);
+  assert.equal(await seen(teacher), 1, "teacher");
+  assert.equal(await seen(admin), 1, "admin");
+  await assert.rejects(() => as(student, `insert into public.submissions (assignment_id, student_id) values ($1, $2)`, [plan.id, student]));
+  const note = async () => (await db.query(`select 1 from public.notifications where user_id = $1 and href = $2`, [student, `/ukoly/${plan.id}`])).rows.length;
+  assert.equal(await note(), 0, "oznámení ještě ne");
+  // Nastal čas → cron zveřejní a pošle oznámení (jen jednou).
+  await db.query(`update public.assignments set publish_at = now() - interval '1 minute' where id = $1`, [plan.id]);
+  assert.equal(await seen(student), 1, "po zveřejnění");
+  // Cron běží bez přihlášeného uživatele.
+  await db.query(`select set_config('request.jwt.claim.sub', '', false)`);
+  await db.query(`select public.publish_scheduled_assignments()`);
+  await db.query(`select public.publish_scheduled_assignments()`);
+  assert.equal(await note(), 1, "oznámení jednou");
+  await as(student, `insert into public.submissions (assignment_id, student_id) values ($1, $2)`, [plan.id, student]);
+  // Úkol bez plánu se oznámí hned a cron ho znovu neoznámí.
+  const [now_] = await as(teacher, `insert into public.assignments (activity_id, title) values ($1, 'Hned') returning id`, [course.id]);
+  await db.query(`select public.publish_scheduled_assignments()`);
+  assert.equal((await db.query(`select 1 from public.notifications where user_id = $1 and href = $2`, [student, `/ukoly/${now_.id}`])).rows.length, 1, "hned");
+  await assert.rejects(() => as(student, `select public.publish_scheduled_assignments()`));
+  // Vyučující může naplánovaný úkol zveřejnit hned.
+  const [later] = await as(teacher, `insert into public.assignments (activity_id, title, publish_at) values ($1, 'Později', now() + interval '3 days') returning id`, [course.id]);
+  await assert.rejects(() => as(student, `select public.publish_assignment_now($1)`, [later.id]));
+  await as(teacher, `select public.publish_assignment_now($1)`, [later.id]);
+  assert.equal((await as(student, `select 1 from public.assignments where id = $1`, [later.id])).length, 1, "zveřejněno hned");
+  assert.equal((await db.query(`select 1 from public.notifications where user_id = $1 and href = $2`, [student, `/ukoly/${later.id}`])).rows.length, 1, "oznámení hned");
+  await db.query(`delete from public.assignments where id = any($1)`, [[plan.id, now_.id, later.id]]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

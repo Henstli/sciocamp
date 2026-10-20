@@ -6,6 +6,12 @@ type DemoAssignment = Omit<Assignment, "activityTitle" | "activityKind">;
 
 export const DEMO_ASSIGNMENTS: DemoAssignment[] = [
   {
+    id: "a-planovany", activityId: "literatura-ve-filmu", kind: "ukol", title: "Srovnání knihy a filmu",
+    instructions: "Vyber si jednu scénu, která je v knize a ve filmu jinak, a napiš, proč to tvůrci podle tebe změnili.",
+    topic: null, dueAt: "2026-11-06T22:59:00Z", maxPoints: 20, links: [], createdAt: "2026-10-20T06:00:00Z",
+    publishAt: "2026-10-30T07:00:00Z",
+  },
+  {
     id: "a-osnova", activityId: "prezentacni-schopnosti", kind: "ukol", title: "Osnova vlastní prezentace",
     instructions: "Napiš osnovu desetiminutové prezentace: úvod, tři hlavní body a závěr. Ke každému bodu jednu větu.",
     topic: "Téma 1 · Struktura a příběh", dueAt: "2026-10-05T21:59:00Z", maxPoints: 20, links: [], createdAt: "2026-09-28T08:00:00Z",

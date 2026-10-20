@@ -14,7 +14,7 @@ import { initials } from "@/lib/roles";
 import { currentOrNext, expeditionBlocker } from "@/lib/schedule";
 import { describeWhen } from "@/lib/periods";
 import { DAYS_SHORT, formatRange, isoWeekdayOf, pragueNow } from "@/lib/time";
-import { STATE_CHIP, STATE_LABEL, isHandedIn, isOpen, needsReview, workState } from "@/lib/assignments";
+import { STATE_CHIP, STATE_LABEL, isHandedIn, isOpen, isPublished, needsReview, workState } from "@/lib/assignments";
 import { assignmentsForActivity, workMap } from "@/lib/data-assignments";
 import { formatDue, formatStamp } from "@/lib/time";
 import type { Activity, ActivityKind, User } from "@/lib/types";
@@ -176,7 +176,8 @@ export async function ClassroomPage({
 
 /** Úkoly a materiály třídy pro záložku, nástěnku a „Nadcházející“. */
 async function classWork(activity: Activity, user: User, isTeacher: boolean, teacherName: string) {
-  const list = await assignmentsForActivity(activity);
+  // Naplánované úkoly vidí jen vyučující (naostro je studentům schová i RLS).
+  const list = (await assignmentsForActivity(activity)).filter((a) => isTeacher || isPublished(a));
   const tasks = list.filter((a) => a.kind === "ukol");
   const works = await workMap(
     tasks.map((a) => a.id),
@@ -194,6 +195,9 @@ async function classWork(activity: Activity, user: User, isTeacher: boolean, tea
           : ["Úkol", a.dueAt ? `termín ${formatDue(a.dueAt)}` : "bez termínu", a.maxPoints ? `${a.maxPoints} b.` : null].filter(Boolean).join(" · "),
     };
     if (a.kind === "material") return { ...base, chip: "Materiál", chipClass: "chip-info", open: false };
+    if (isTeacher && !isPublished(a)) {
+      return { ...base, chip: `Naplánováno na ${formatDue(a.publishAt!)}`, chipClass: "chip-info", open: false };
+    }
     if (isTeacher) {
       const states = activity.studentIds.map((sid) => workState(a, works.get(`${a.id}:${sid}`) ?? null));
       const toReview = states.filter(needsReview).length;
@@ -241,7 +245,12 @@ async function classWork(activity: Activity, user: User, isTeacher: boolean, tea
         type: a.kind === "ukol" ? ("task" as const) : ("material" as const),
         id: `zadani-${a.id}`,
         title: a.kind === "ukol" ? `${teacherName} zadal(a) nový úkol: ${a.title}` : `Nový materiál: ${a.title}`,
-        meta: [formatStamp(a.createdAt), a.dueAt ? `termín ${formatDue(a.dueAt)}` : null].filter(Boolean).join(" · "),
+        meta: [
+          isPublished(a) ? formatStamp(a.createdAt) : `naplánováno na ${formatDue(a.publishAt!)} (studenti zatím nevidí)`,
+          a.dueAt ? `termín ${formatDue(a.dueAt)}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
         href: `/ukoly/${a.id}`,
       },
     }));

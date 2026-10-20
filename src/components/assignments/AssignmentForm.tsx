@@ -30,6 +30,10 @@ export type AssignmentFormValues = {
   teamMode?: "teacher" | "students";
   teamMaxSize?: string;
   teams?: TeamDraft[];
+  /** Naplánované zveřejnění „rrrr-mm-ddThh:mm“ (pražský čas), prázdné = hned / už zveřejněno */
+  publishAt?: string;
+  /** Úkol už studenti vidí (pak se zveřejnění neplánuje) */
+  published?: boolean;
 };
 
 const KIND_OPTIONS: { value: AssignmentKind; label: string; hint: string }[] = [
@@ -74,6 +78,7 @@ export function AssignmentForm({
   const [teamWork, setTeamWork] = useState(!!initial.teamWork);
   const [teamMode, setTeamMode] = useState<"teacher" | "students">(initial.teamMode ?? "teacher");
   const [teams, setTeams] = useState<TeamDraft[]>(initial.teams ?? []);
+  const [scheduled, setScheduled] = useState(!!initial.publishAt);
   const fe = state.fieldErrors ?? {};
   const editing = !!initial.id;
 
@@ -180,6 +185,33 @@ export function AssignmentForm({
             placeholder={kind === "ukol" ? "Co mají studenti udělat, co odevzdat a podle čeho budeš hodnotit." : "K čemu materiál je."}
           />
         </Field>
+
+        {!initial.published && (
+          <div className={styles.field} data-wide="true" style={{ gridColumn: "1 / -1" }}>
+            <span className={styles.label}>Zveřejnit studentům</span>
+            <div className={styles.modes} role="radiogroup" aria-label="Kdy zveřejnit">
+              {(
+                [
+                  [false, "Hned", "Studenti ho uvidí a dostanou oznámení hned po uložení."],
+                  [true, "Naplánovat", "Připrav si ho dopředu — studenti ho uvidí až ve zvolený čas."],
+                ] as const
+              ).map(([value, label, hint]) => (
+                <label key={label} className={styles.kind} data-checked={scheduled === value}>
+                  <input type="radio" name="publishMode" checked={scheduled === value} onChange={() => setScheduled(value)} className="sr-only" />
+                  <span className={styles.kindLabel}>{label}</span>
+                  <span className={styles.hint}>{hint}</span>
+                </label>
+              ))}
+            </div>
+            {scheduled && (
+              <>
+                <DueInput name="publishAt" defaultValue={initial.publishAt ?? ""} defaultTime="08:00" label="zveřejnění" />
+                <span className={styles.hint}>Do té doby úkol vidíš jen ty (a další vyučující třídy) s označením „Naplánováno“.</span>
+              </>
+            )}
+            {fe.publishAt && <span className={styles.fieldError}>{fe.publishAt}</span>}
+          </div>
+        )}
 
         <Field label="Téma (nepovinné)" hint="Úkoly se stejným tématem se v třídě zobrazí pohromadě.">
           <input name="topic" defaultValue={initial.topic} list="topics" maxLength={120} className={styles.input} placeholder="Např. Téma 1 · Struktura" />
@@ -316,7 +348,7 @@ export function AssignmentForm({
 
       <div className={styles.actions}>
         <button type="submit" className="btn btn-primary" disabled={pending || !!uploading || classes.length === 0}>
-          {uploading ? "Nahrávám soubory…" : pending ? "Ukládám…" : editing ? "Uložit změny" : kind === "ukol" ? "Zadat úkol" : "Přidat materiál"}
+          {uploading ? "Nahrávám soubory…" : pending ? "Ukládám…" : editing ? "Uložit změny" : scheduled ? "Naplánovat" : kind === "ukol" ? "Zadat úkol" : "Přidat materiál"}
         </button>
       </div>
     </form>

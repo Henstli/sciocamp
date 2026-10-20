@@ -8,7 +8,8 @@ import { StudentWork } from "@/components/assignments/StudentWork";
 import { ReviewSummary, WorkFiles } from "@/components/assignments/WorkFiles";
 import { Icon } from "@/components/Icon";
 import { Avatar } from "@/components/PageHeader";
-import { STATE_CHIP, STATE_LABEL, formatLate, isHandedIn, lateBy, linkTitle, workState } from "@/lib/assignments";
+import { PublishNow } from "@/components/assignments/PublishNow";
+import { STATE_CHIP, STATE_LABEL, formatLate, isHandedIn, isPublished, lateBy, linkTitle, workState } from "@/lib/assignments";
 import { requireUser } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
 import { canOpenActivity, getActivity, getUsersByIds, teachesActivity } from "@/lib/data";
@@ -40,6 +41,8 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
   if (!a || !activity || !canOpenActivity(user, activity)) notFound();
 
   const teaching = teachesActivity(user, activity);
+  // Naplánovaný úkol student nevidí (naostro to hlídá i RLS).
+  if (!teaching && !isPublished(a)) notFound();
   const isTask = a.kind === "ukol";
   // Vše nezávislé načíst naráz (každý dotaz je cesta do databáze).
   const [staff, files, teams] = await Promise.all([
@@ -112,6 +115,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
           {a.topic ? ` · ${a.topic}` : ""}
         </span>
         {a.teamWork && <span className="chip chip-info">Týmový úkol</span>}
+        {teaching && !isPublished(a) && a.publishAt && <span className="chip chip-info">Naplánováno na {formatDue(a.publishAt)}</span>}
         {a.dueAt && <span className="chip chip-wait">Termín {formatDue(a.dueAt)}</span>}
         {a.maxPoints !== null && (
           <span className="chip chip-info">
@@ -170,6 +174,16 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
     </div>
   );
 
+  const scheduledNote =
+    teaching && !isPublished(a) && a.publishAt ? (
+      <div role="status" className={styles.success} data-tone="wait" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 14px" }}>
+        <span style={{ flex: "1 1 240px" }}>
+          Naplánováno: studenti {isTask ? "úkol" : "materiál"} uvidí a dostanou oznámení {formatDue(a.publishAt)}.
+        </span>
+        <PublishNow id={a.id} />
+      </div>
+    ) : null;
+
   const notice =
     soubory === "chyba" ? (
       <p role="alert" className={styles.success} data-tone="error">
@@ -177,7 +191,13 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       </p>
     ) : nove || ulozeno ? (
       <p role="status" className={styles.success}>
-        {nove ? (isTask ? "Úkol je zadaný. Studenti ho uvidí ve třídě i v Úkolech." : "Materiál je přidaný do třídy.") : "Změny jsou uložené."}
+        {nove
+          ? !isPublished(a)
+            ? "Uloženo jako naplánované."
+            : isTask
+              ? "Úkol je zadaný. Studenti ho uvidí ve třídě i v Úkolech."
+              : "Materiál je přidaný do třídy."
+          : "Změny jsou uložené."}
       </p>
     ) : null;
 
@@ -187,6 +207,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       <>
         {header}
         {notice}
+        {scheduledNote}
         <div className={styles.narrow}>{article}</div>
       </>
     );
@@ -230,6 +251,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       <>
         {header}
         {notice}
+        {scheduledNote}
         <div className={styles.columns}>
           <div className={styles.mainCol}>
             {article}

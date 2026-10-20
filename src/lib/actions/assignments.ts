@@ -123,6 +123,16 @@ export async function saveAssignment(_prev: FormState, formData: FormData): Prom
       fieldErrors.teams = "Týmy se nepodařilo přečíst.";
     }
   }
+  // Naplánované zveřejnění (jen u úkolu, který studenti ještě nevidí).
+  const publishRaw = String(formData.get("publishAt") ?? "").trim();
+  let publishAt: string | null = null;
+  if (publishRaw === "neplatne") fieldErrors.publishAt = "Napiš datum jako 21. 10. 2026 a čas jako 8:00.";
+  else if (publishRaw) {
+    publishAt = pragueLocalToIso(publishRaw);
+    if (!publishAt) fieldErrors.publishAt = "Napiš datum jako 21. 10. 2026 a čas jako 8:00.";
+    else if (new Date(publishAt).getTime() <= Date.now()) fieldErrors.publishAt = "Čas zveřejnění musí být v budoucnu (nebo zvol Hned).";
+  }
+  if (publishAt && dueAt && dueAt <= publishAt) fieldErrors.due = "Termín musí být až po zveřejnění.";
   const values = {
     kind,
     title,
@@ -151,7 +161,13 @@ export async function saveAssignment(_prev: FormState, formData: FormData): Prom
 
   const sb = await createClient();
   if (editingId) {
-    const { error } = await sb.from("assignments").update(values).eq("id", editingId);
+    // Už zveřejněný úkol se znovu neschovává; naplánovaný jde přeplánovat, nebo zveřejnit hned.
+    const wasScheduled = !!existing?.publishAt && new Date(existing.publishAt).getTime() > Date.now();
+    const { error } = await sb
+      .from("assignments")
+      .update(wasScheduled && publishAt ? { ...values, publish_at: publishAt } : values)
+      .eq("id", editingId);
+    if (!error && wasScheduled && !publishAt) await sb.rpc("publish_assignment_now", { assignment: editingId });
     if (error) return { error: `Úkol se nepodařilo uložit: ${error.message}` };
     if (teams) {
       const problem = await syncTeams(editingId, teams.list);
@@ -161,7 +177,7 @@ export async function saveAssignment(_prev: FormState, formData: FormData): Prom
   }
   const { data: row } = await sb.from("activities").select("id").eq("slug", slug).single();
   if (!row) return { error: "Třída nenalezena." };
-  const { data, error } = await sb.from("assignments").insert({ ...values, activity_id: row.id }).select("id").single();
+  const { data, error } = await sb.from("assignments").insert({ ...values, publish_at: publishAt, activity_id: row.id }).select("id").single();
   if (error || !data) return { error: `Úkol se nepodařilo zadat: ${error?.message ?? ""}` };
   if (teams) {
     const problem = await syncTeams(data.id, teams.list);
@@ -340,6 +356,17 @@ export async function addComment(assignmentId: string, studentId: string, body: 
   const sb = await createClient();
   const { error } = await sb.from("assignment_comments").insert({ assignment_id: assignmentId, student_id: studentId, author_id: user.id, body: text });
   if (error) return { error: "Komentář se nepodařilo odeslat." };
+  refresh();
+  return {};
+}
+
+/** Vyučující naplánovaný úkol zveřejní hned. */
+export async function publishAssignmentNow(id: string): Promise<{ error?: string }> {
+  await requireTeacher();
+  if (!isSupabase) return { error: DEMO };
+  const sb = await createClient();
+  const { error } = await sb.rpc("publish_assignment_now", { assignment: id });
+  if (error) return { error: "Úkol se nepodařilo zveřejnit." };
   refresh();
   return {};
 }
