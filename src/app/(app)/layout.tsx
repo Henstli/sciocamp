@@ -6,6 +6,7 @@ import { listUsers } from "@/lib/data";
 import { wishesWaiting } from "@/lib/data-proposals";
 import { AvatarState } from "@/components/AvatarState";
 import { PresenceTracker } from "@/components/PresenceTracker";
+import { LiveRefresh } from "@/components/LiveRefresh";
 import { isSupabase } from "@/lib/config";
 import { MandatoryVote } from "@/components/proposals/MandatoryVote";
 import { bannerSwatch } from "@/lib/banner";
@@ -59,6 +60,7 @@ async function UserSidebar() {
     <>
       <AvatarState map={avatars} colors={colors} meId={user.id} />
       <PresenceTracker userId={user.id} live={isSupabase} />
+      <LiveRefresh userId={user.id} live={isSupabase} />
       <Sidebar
         user={{
           name: user.name,
