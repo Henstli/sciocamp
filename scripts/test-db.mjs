@@ -956,15 +956,20 @@ await test("hlasování: anonymní hlasy, vypsání aktivitou a oznámení", asy
   assert.equal((await as(student2, `delete from public.wishes where id = $1 returning 1`, [w2.id])).length, 1);
 });
 
-await test("hlasování: nevypsaná přání po 14 dnech zmizí", async () => {
+await test("hlasování: nevypsaná přání po 14 dnech a schválená po týdnu zmizí", async () => {
   const [old] = await as(student, `insert into public.wishes (kind, title) values ('kurz', 'Staré přání') returning id`);
   const [fresh] = await as(student, `insert into public.wishes (kind, title) values ('kurz', 'Nové přání') returning id`);
   const [done] = await as(student, `insert into public.wishes (kind, title) values ('kurz', 'Vypsané přání') returning id`);
   await as(teacher, `select public.fulfil_wish($1, $2)`, [done.id, course.id]);
   await db.query(`update public.wishes set created_at = now() - interval '15 days' where id in ($1, $2)`, [old.id, done.id]);
   await as(student2, `select public.purge_expired_wishes()`);
-  const left = (await db.query(`select id from public.wishes where id in ($1, $2, $3)`, [old.id, fresh.id, done.id])).rows.map((r) => r.id);
+  let left = (await db.query(`select id from public.wishes where id in ($1, $2, $3)`, [old.id, fresh.id, done.id])).rows.map((r) => r.id);
   assert.deepEqual(left.sort(), [fresh.id, done.id].sort());
+  // Schválené zmizí týden po vypsání.
+  await db.query(`update public.wishes set closed_at = now() - interval '8 days' where id = $1`, [done.id]);
+  await as(student2, `select public.purge_expired_wishes()`);
+  left = (await db.query(`select id from public.wishes where id in ($1, $2)`, [fresh.id, done.id])).rows.map((r) => r.id);
+  assert.deepEqual(left, [fresh.id]);
 });
 
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

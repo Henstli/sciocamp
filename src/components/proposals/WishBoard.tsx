@@ -57,7 +57,7 @@ export function WishBoard({ wishes, staff }: { wishes: WishView[]; staff: boolea
       {done.length > 0 && (
         <details className={styles.closed}>
           <summary>
-            {done.some((w) => w.status === "uzavreno") ? "Vypsané a uzavřené" : "Vypsané"} <span>{done.length}</span>
+            {done.some((w) => w.status === "uzavreno") ? "Schválené a uzavřené" : "Schválené"} <span>{done.length}</span>
           </summary>
           <div className={styles.closedList}>
             {done.map((w) => (
@@ -73,17 +73,17 @@ export function WishBoard({ wishes, staff }: { wishes: WishView[]; staff: boolea
 function WishCard({ w, staff }: { w: WishView; staff: boolean }) {
   const open = w.status === "open";
   return (
-    <article className={`card ${styles.item}`} data-closed={!open} id={`prani-${w.id}`}>
+    <article className={`card ${styles.item}`} data-closed={!open} data-vote="arrow" id={`prani-${w.id}`}>
       <VoteButton id={w.id} kind="wish" count={w.voteCount} on={w.voted} disabled={!open} label="chci to" />
       <div className={styles.body}>
         <div className={styles.chips}>
           <span className="chip" style={KIND_CHIP[w.kind]}>
             {WISH_KIND_LABEL[w.kind]}
           </span>
-          {w.status === "vypsano" && <span className="chip chip-ok">Vypsáno</span>}
+          {w.status === "vypsano" && <span className="chip chip-ok">Schváleno</span>}
           {w.status === "uzavreno" && <span className="chip chip-info">Uzavřeno</span>}
           {w.daysLeft !== null && (
-            <span className={`chip ${w.daysLeft <= 2 ? "chip-wait" : "chip-info"}`}>
+            <span className={`chip ${w.daysLeft === 0 ? "chip-late" : w.daysLeft <= 2 ? "chip-wait" : "chip-info"}`}>
               {w.daysLeft === 0 ? "Poslední den" : `Ještě ${w.daysLeft} ${plural(w.daysLeft, "den", "dny", "dní")}`}
             </span>
           )}
@@ -92,7 +92,7 @@ function WishCard({ w, staff }: { w: WishView; staff: boolean }) {
         {w.body && <p className={`${styles.desc} ${styles.clamp}`}>{w.body}</p>}
         {w.status === "vypsano" && w.activity && (
           <p className={styles.desc}>
-            <strong>Vypsáno jako: </strong>
+            <strong>Připraveno jako: </strong>
             <Link href={w.activity.href}>{w.activity.title}</Link>
           </p>
         )}
@@ -107,7 +107,7 @@ function WishCard({ w, staff }: { w: WishView; staff: boolean }) {
             Přidal(a) {w.authorName} · {w.when}
           </span>
         </div>
-        {(staff || (w.mine && open && w.voteCount <= 1)) && <WishActions w={w} staff={staff} />}
+        {((staff && w.status !== "vypsano") || (w.mine && open && w.voteCount <= 1)) && <WishActions w={w} staff={staff} />}
       </div>
     </article>
   );
@@ -140,7 +140,7 @@ function WishActions({ w, staff }: { w: WishView; staff: boolean }) {
               </button>
             </>
           )}
-          {staff && !open && (
+          {staff && w.status === "uzavreno" && (
             <button type="button" className="btn btn-outline" style={{ minHeight: 36 }} disabled={pending} onClick={() => act(() => reopenWish(w.id))}>
               Vrátit do hlasování
             </button>

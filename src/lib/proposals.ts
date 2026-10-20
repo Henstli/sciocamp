@@ -95,9 +95,13 @@ export function wishDaysLeft(createdAt: string, nowMs: number): number {
   return Math.max(0, Math.ceil((end - nowMs) / 86_400_000) - 1);
 }
 
-/** Prošlé (nevypsané a starší 14 dní) se nezobrazuje. */
-export function wishExpired(w: { status: string; createdAt: string }, nowMs: number): boolean {
-  return w.status !== "vypsano" && Date.parse(w.createdAt) + WISH_DAYS * 86_400_000 <= nowMs;
+/** Schválené (vypsané) přání zůstane vidět ještě týden. */
+export const WISH_APPROVED_DAYS = 7;
+
+/** Prošlé se nezobrazuje: nevypsané po 14 dnech, schválené týden po vypsání. */
+export function wishExpired(w: { status: string; createdAt: string; closedAt: string | null }, nowMs: number): boolean {
+  if (w.status === "vypsano") return !!w.closedAt && Date.parse(w.closedAt) + WISH_APPROVED_DAYS * 86_400_000 <= nowMs;
+  return Date.parse(w.createdAt) + WISH_DAYS * 86_400_000 <= nowMs;
 }
 
 export const WISH_KIND_LABEL: Record<WishKind, string> = {

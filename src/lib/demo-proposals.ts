@@ -83,6 +83,11 @@ export const DEMO_PROPOSAL_COMMENTS: Record<string, ProposalComment[]> = {
   "navrh-fotografie": [{ id: "c3", authorId: "u-cerny", body: "Šel bych do toho!", createdAt: "2026-10-13T16:20:00Z" }],
 };
 
+/** Datum před `days` dny (ukázková přání stárnou s časem, ať nevyprší). */
+function daysAgo(days: number, hours = 0): string {
+  return new Date(Date.now() - (days * 24 + hours) * 3_600_000).toISOString();
+}
+
 type DemoWish = Omit<Wish, "voted" | "voteCount"> & { voters: string[] };
 
 export const DEMO_WISHES: DemoWish[] = [
@@ -96,7 +101,7 @@ export const DEMO_WISHES: DemoWish[] = [
     activityId: null,
     note: null,
     closedAt: null,
-    createdAt: "2026-10-14T09:00:00Z",
+    createdAt: daysAgo(6),
     voters: ["u-kolarova", "u-liska", "u-cerny", "u-novotna", "u-kubicek", "u-hankova", "u-benes"],
   },
   {
@@ -109,7 +114,7 @@ export const DEMO_WISHES: DemoWish[] = [
     activityId: null,
     note: null,
     closedAt: null,
-    createdAt: "2026-10-16T09:00:00Z",
+    createdAt: daysAgo(13, 10),
     voters: ["u-jaukner", "u-komarek", "u-maly", "u-vesely"],
   },
   {
@@ -122,7 +127,7 @@ export const DEMO_WISHES: DemoWish[] = [
     activityId: null,
     note: null,
     closedAt: null,
-    createdAt: "2026-10-18T09:00:00Z",
+    createdAt: daysAgo(2),
     voters: ["u-cerny", "u-dvorakova", "u-kral", "u-horakova", "u-svobodova", "u-pietraszek", "u-vesely", "u-benes", "u-maly"],
   },
   {
@@ -134,8 +139,8 @@ export const DEMO_WISHES: DemoWish[] = [
     status: "vypsano",
     activityId: "prezentacni-schopnosti",
     note: null,
-    closedAt: "2026-09-10T09:00:00Z",
-    createdAt: "2026-06-01T09:00:00Z",
+    closedAt: daysAgo(2),
+    createdAt: daysAgo(10),
     voters: ["u-novotna", "u-liska", "u-kolarova"],
   },
 ];
