@@ -657,12 +657,37 @@ export function Messenger({
                 const showAuthor = !!activeGroup && !r.m.mine && !(prev?.kind === "msg" && !prev.m.system && prev.m.authorId === r.m.authorId);
                 const m = r.m;
                 const align = m.mine ? "end" : "start";
+                const tools = !m.pending && (
+                  <MessageTools
+                    align={align}
+                    myReactions={(m.reactions ?? []).filter((x) => x.userIds.includes(me.id)).map((x) => x.emoji)}
+                    canEdit={m.mine && !!m.body && !isGifUrl(m.body)}
+                    canDelete={m.mine}
+                    canPin
+                    pinned={!!m.pinnedAt}
+                    onReact={(e) => {
+                      const has = (m.reactions ?? []).some((x) => x.emoji === e && x.userIds.includes(me.id));
+                      void react(m, e, !has);
+                    }}
+                    onReply={() => startReply(m)}
+                    onEdit={() => startEdit(m)}
+                    onDelete={() => void remove(m.id)}
+                    onPin={() => void pin(m)}
+                  />
+                );
                 const content = (
                   <div className={styles.msgWrap} data-mine={m.mine}>
                     {showAuthor && <span className={styles.author}>{m.authorName}</span>}
                     {m.replyTo && <ReplyQuote target={replyTarget(m.replyTo)} align={align} />}
-                    {m.file && <Attachment bucket={BUCKET} file={m.file} live={live} />}
-                    {m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.bubble}><MentionText body={m.body} meId={me.id} /></div>)}
+                    {/* Lišta akcí sedí hned vedle bubliny (u mých zpráv vlevo). */}
+                    <div className={styles.bubbleRow}>
+                      {m.mine && tools}
+                      <div className={styles.bubbleCol}>
+                        {m.file && <Attachment bucket={BUCKET} file={m.file} live={live} />}
+                        {m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.bubble}><MentionText body={m.body} meId={me.id} /></div>)}
+                      </div>
+                      {!m.mine && tools}
+                    </div>
                     <Reactions reactions={m.reactions} meId={me.id} nameOf={nameOf} align={align} onToggle={(e, add) => void react(m, e, add)} />
                     <div className={styles.time}>
                       {m.pinnedAt && (
@@ -682,29 +707,10 @@ export function Messenger({
                     </div>
                   </div>
                 );
-                const tools = !m.pending && (
-                  <MessageTools
-                    align={align}
-                    myReactions={(m.reactions ?? []).filter((x) => x.userIds.includes(me.id)).map((x) => x.emoji)}
-                    canEdit={m.mine && !!m.body && !isGifUrl(m.body)}
-                    canDelete={m.mine}
-                    canPin
-                    pinned={!!m.pinnedAt}
-                    onReact={(e) => {
-                      const has = (m.reactions ?? []).some((x) => x.emoji === e && x.userIds.includes(me.id));
-                      void react(m, e, !has);
-                    }}
-                    onReply={() => startReply(m)}
-                    onEdit={() => startEdit(m)}
-                    onDelete={() => void remove(m.id)}
-                    onPin={() => void pin(m)}
-                  />
-                );
                 const lineProps = { id: messageDomId(m.id), tabIndex: -1, className: `${styles.msgLine} ${chatStyles.line}` };
                 if (m.mine)
                   return (
                     <div key={m.id} {...lineProps} data-mine="true">
-                      {tools}
                       {content}
                     </div>
                   );
@@ -712,7 +718,6 @@ export function Messenger({
                   return (
                     <div key={m.id} {...lineProps}>
                       {content}
-                      {tools}
                     </div>
                   );
                 return (
@@ -721,7 +726,6 @@ export function Messenger({
                       {showAuthor && <Avatar presence initials={m.authorInitials} size={32} tone={tone(m.authorRole)} href={profileHref(m.authorId)} title={m.authorName} />}
                     </span>
                     {content}
-                    {tools}
                   </div>
                 );
               })}

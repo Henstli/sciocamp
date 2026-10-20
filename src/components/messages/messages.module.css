@@ -512,6 +512,9 @@
   margin-top: 20px;
 }
 .author {
+  /* Jméno nad zprávou nerozšiřuje blok zprávy (lišta akcí pak sedí hned u bubliny). */
+  width: 0;
+  white-space: nowrap;
   font-size: 12px;
   font-weight: 700;
   color: var(--text-2);
@@ -821,4 +824,39 @@
 /* Pruh „Odpovídáš / Upravuješ“ nad polem pro psaní */
 .contextWrap {
   padding: 8px 16px 0;
+}
+
+/* Bublina (příloha, text, GIF) a vedle ní lišta akcí */
+.bubbleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+.bubbleCol {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.msgWrap[data-mine="true"] .bubbleCol {
+  align-items: flex-end;
+}
+/* Na počítači lišta nezabírá místo (bublina se kvůli ní nezužuje). */
+@media (min-width: 641px) {
+  .bubbleRow {
+    position: relative;
+  }
+  .bubbleRow > :not(.bubbleCol) {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 8px);
+    transform: translateY(-50%);
+    z-index: 2;
+  }
+  .msgWrap[data-mine="true"] .bubbleRow > :not(.bubbleCol) {
+    left: auto;
+    right: calc(100% + 8px);
+  }
 }

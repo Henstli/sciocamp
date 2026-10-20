@@ -286,24 +286,22 @@
   color: var(--primary-text);
 }
 .mention {
-  /* Štítek je řádkový (inline), takže jméno sedí na stejné účaří jako okolní text. */
-  display: inline;
-  padding: 2px 8px 2px 2px;
+  /* Řádkový blok: jméno sedí na účaří okolního textu, profilovka je uvnitř
+     štítku svisle uprostřed a kolem dokola má stejný odstup. */
+  display: inline-block;
+  padding: 2px 9px 2px 2px;
   margin: 0 1px;
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary-text);
   font-weight: 700;
+  line-height: 18px;
   text-decoration: none;
   white-space: nowrap;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
 }
 .mention > :first-child {
-  margin-right: 4px;
-  vertical-align: middle;
-  position: relative;
-  top: -1px;
+  margin-right: 5px;
+  vertical-align: top;
 }
 .mention:hover {
   color: var(--primary-hover-text);
