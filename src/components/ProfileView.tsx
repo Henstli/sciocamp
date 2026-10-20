@@ -15,15 +15,12 @@ const KIND_ORDER: Activity["kind"][] = ["atelier", "kurz", "ostatni", "expedice"
 export function ProfileView({
   person,
   isMe,
-  appearance,
   phone,
   socials = null,
   activities,
   todayIso,
   canOpen,
 }: {
-  /** Volba vzhledu (jen vlastní profil) */
-  appearance?: React.ReactNode;
   /** Které aktivity smí divák otevřít (slugy); ostatní jsou jen štítek bez odkazu. Bez údaje = všechny. */
   canOpen?: string[];
   /** Instagram (vidí všichni ve škole) */
@@ -76,9 +73,6 @@ export function ProfileView({
         </div>
         {person.bio && <p className={styles.bio}>{person.bio}</p>}
       </section>
-
-      {/* Volba vzhledu hned pod hlavičkou, ať ji každý najde bez rolování. */}
-      {isMe && appearance}
 
       <div className={styles.stats}>
         {student ? (
