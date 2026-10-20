@@ -13,6 +13,9 @@ import { tooBigMessage, uploadFilesDetailed, uploadLimit } from "@/lib/upload";
 import { Attachment } from "../Attachment";
 import { ComposerPlus, GifImage, insertAtCursor } from "../composer/ComposerPlus";
 import { isGifUrl } from "../composer/gif";
+import { MentionInput } from "../composer/MentionInput";
+import { MentionText } from "../composer/MentionText";
+import { encodeMentions } from "@/lib/mentions";
 import { UNKNOWN_PERSON, toneFor, type Person } from "./people";
 import styles from "./classroom.module.css";
 
@@ -56,7 +59,10 @@ export function ClassChat({
   label = "Chat třídy",
   title,
   members,
+  mentionIds,
 }: {
+  /** Koho jde zmínit přes @ (id lidí); výchozí = všichni z `people` */
+  mentionIds?: string[];
   /** Týmový chat: členové týmu pod nadpisem */
   members?: TeamMember[];
   /** Viditelný nadpis nad zprávami (např. u týmového chatu v úkolu) */
@@ -78,6 +84,9 @@ export function ClassChat({
   const [sending, setSending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const list = useRef<HTMLDivElement>(null);
+  // Koho jde zmínit přes @ (studenti a vyučující třídy, u týmu členové týmu a vyučující).
+  const allowed = new Set(mentionIds ?? Object.keys(people));
+  const mentionable = Object.values(people).filter((p) => p.id !== me.id && p.id !== "?" && allowed.has(p.id));
   const draftInput = useRef<HTMLInputElement>(null);
   const realtime = live && !!activityDbId;
   const cfg = KINDS[kind];
@@ -115,7 +124,7 @@ export function ClassChat({
   /** Odešle rozepsanou zprávu, nebo rovnou GIF (`gif` = odkaz). */
   async function send(gif?: string) {
     stickToBottom();
-    const body = gif ?? draft.trim();
+    const body = gif ?? encodeMentions(draft.trim(), mentionable);
     const file_ = gif ? null : file;
     const clear = () => {
       if (gif) return;
@@ -196,7 +205,7 @@ export function ClassChat({
                   <span className={styles.strong}>{author.name}</span>
                   <span className={styles.meta}>{m.when}</span>
                 </div>
-                {m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.msgText}>{m.body}</div>)}
+                {m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.msgText}><MentionText body={m.body} meId={me.id} initialsOf={(id) => people[id]?.initials} /></div>)}
                 {m.file && (
                   <div className={styles.msgFile}>
                     <Attachment bucket={BUCKET} file={m.file} live={realtime} />
@@ -236,13 +245,13 @@ export function ClassChat({
         />
         <label className={styles.grow}>
           <span className="sr-only">{cfg.placeholder}</span>
-          <input
-            type="text"
-            placeholder={cfg.placeholder}
+          <MentionInput
+            placeholder={`${cfg.placeholder.replace("…", "")} (@ někoho zmíní)`}
             value={draft}
             maxLength={2000}
-            onChange={(e) => setDraft(e.target.value)}
-            ref={draftInput}
+            onChange={setDraft}
+            inputRef={draftInput}
+            people={mentionable}
             className={styles.composerInput}
           />
         </label>

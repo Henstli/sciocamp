@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { isGifUrl } from "@/components/composer/gif";
+import { mentionPlain } from "@/lib/mentions";
 import { Messenger, type ContactView, type ConversationView, type GroupView, type ThreadMessage } from "@/components/messages/Messenger";
 import { PageHeader } from "@/components/PageHeader";
 import { requireUser } from "@/lib/auth";
@@ -37,7 +38,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
 
   const list: ConversationView[] = conversations
     .map((c): ConversationView | null => {
-      const text = isGifUrl(c.lastBody) ? "GIF" : c.lastBody || (c.lastHasFile ? "Příloha" : "");
+      const text = isGifUrl(c.lastBody) ? "GIF" : mentionPlain(c.lastBody ?? "") || (c.lastHasFile ? "Příloha" : "");
       const time = formatListTime(c.lastAt, now);
       if (c.isGroup) {
         const preview = c.lastSystem || !c.lastAuthor ? text : `${c.lastMine ? "Ty" : firstName(c.lastAuthor)}: ${text}`;

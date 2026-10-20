@@ -10,6 +10,9 @@ import { Icon } from "../Icon";
 import { Attachment } from "../Attachment";
 import { ComposerPlus, GifImage, insertAtCursor } from "../composer/ComposerPlus";
 import { isGifUrl } from "../composer/gif";
+import { MentionInput } from "../composer/MentionInput";
+import { MentionText } from "../composer/MentionText";
+import { encodeMentions } from "@/lib/mentions";
 import { Avatar, profileHref } from "../PageHeader";
 import { markConversationRead, startConversation } from "@/lib/actions/communication";
 import { plural } from "@/lib/format";
@@ -124,6 +127,13 @@ export function Messenger({
   const typingChannel = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
   const thread = useRef<HTMLDivElement>(null);
   const stickToBottom = useStickToBottom(thread, activeId ?? activePerson?.id ?? null);
+
+  // Koho jde v konverzaci zmínit přes @ (členové skupiny, u dvojice ten druhý).
+  const mentionable = activeGroup
+    ? activeGroup.members.filter((m) => !m.me && m.id)
+    : activePerson
+      ? [activePerson]
+      : [];
 
   /** Jméno a iniciály autora zprávy, která přišla živě. */
   const authorOf = (id: string) => {
@@ -259,7 +269,7 @@ export function Messenger({
   /** Odešle rozepsanou zprávu, nebo rovnou GIF (`gif` = odkaz). */
   async function send(gif?: string) {
     stickToBottom();
-    const body = gif ?? draft.trim();
+    const body = gif ?? encodeMentions(draft.trim(), mentionable);
     const file_ = gif ? null : file;
     const clear = () => {
       if (gif) return;
@@ -527,7 +537,7 @@ export function Messenger({
                   <div className={styles.msgWrap} data-mine={r.m.mine}>
                     {showAuthor && <span className={styles.author}>{r.m.authorName}</span>}
                     {r.m.file && <Attachment bucket={BUCKET} file={r.m.file} live={live} />}
-                    {r.m.body && (isGifUrl(r.m.body) ? <GifImage url={r.m.body} /> : <div className={styles.bubble}>{r.m.body}</div>)}
+                    {r.m.body && (isGifUrl(r.m.body) ? <GifImage url={r.m.body} /> : <div className={styles.bubble}><MentionText body={r.m.body} meId={me.id} /></div>)}
                     <div className={styles.time}>
                       {/* U přečtené poslední zprávy stačí „Přečteno …“, čas odeslání se skryje. */}
                       {r.m.id === last?.id && status ? (
@@ -594,15 +604,16 @@ export function Messenger({
               />
               <label className={styles.grow}>
                 <span className="sr-only">Zpráva</span>
-                <input
-                  ref={draftInput}
+                <MentionInput
+                  inputRef={draftInput}
                   value={draft}
-                  onChange={(e) => {
-                    setDraft(e.target.value);
-                    signalTyping(e.target.value.trim() === "");
+                  onChange={(v) => {
+                    setDraft(v);
+                    signalTyping(v.trim() === "");
                   }}
+                  people={mentionable}
                   maxLength={4000}
-                  placeholder="Napiš zprávu…"
+                  placeholder={activeGroup ? "Napiš zprávu… (@ zmíní člena)" : "Napiš zprávu…"}
                   className={styles.input}
                 />
               </label>

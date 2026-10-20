@@ -98,6 +98,7 @@ export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: 
             initial={view.chat}
             me={view.me}
             people={view.people}
+            mentionIds={[...view.students.map((p) => p.id), view.teacher.id, ...view.coTeachers.map((p) => p.id)]}
             activityDbId={view.dbId}
             live={view.live}
             canModerate={view.canManage}

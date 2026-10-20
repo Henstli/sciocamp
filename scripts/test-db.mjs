@@ -1353,4 +1353,25 @@ await test("naplánované úkoly: student je nevidí ani neodevzdá, oznámení 
   await db.query(`delete from public.assignments where id = any($1)`, [[plan.id, now_.id, later.id]]);
 });
 
+await test("zmínky: oznámení zmíněným členům chatu třídy, ne cizím", async () => {
+  const [{ plain }] = (await db.query(`select public.mention_plain($1) as plain`, [`Ahoj @[Eliot Komárek](${student2}) a @[X](${outsider})!`])).rows;
+  assert.equal(plain, "Ahoj @Eliot Komárek a @X!");
+  const z = async (uid) => (await db.query(`select title, body from public.notifications where user_id = $1 and kind = 'zminka'`, [uid])).rows;
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2), ($1, $3) on conflict do nothing`, [course.id, student, student2]);
+  await as(student, `insert into public.class_messages (activity_id, body) values ($1, $2)`, [
+    course.id,
+    `@[Eliot Komárek](${student2}) @[Anežka Jakubcová](${teacher}) @[Cizí Student](${outsider}) @[Já](${student}) mrkněte`,
+  ]);
+  const n2 = await z(student2);
+  assert.equal(n2.length, 1, "student2");
+  assert.match(n2[0].title, /tě zmínil/);
+  assert.match(n2[0].body, /@Eliot Komárek/);
+  assert.equal((await z(teacher)).length, 1, "vyučující");
+  assert.equal((await z(outsider)).length, 0, "cizí");
+  assert.equal((await z(student)).length, 0, "autor");
+  await db.query(`delete from public.class_messages where activity_id = $1`, [course.id]);
+  await db.query(`delete from public.notifications where kind = 'zminka'`);
+  await db.query(`delete from public.enrollments where activity_id = $1 and student_id = any($2)`, [course.id, [student, student2]]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

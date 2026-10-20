@@ -812,3 +812,8 @@
   color: var(--ok);
   font-weight: 700;
 }
+/* Zmínka v mé (modré) bublině */
+.msgWrap[data-mine="true"] .bubble :global(a) {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}

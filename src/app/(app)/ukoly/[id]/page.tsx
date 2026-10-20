@@ -99,6 +99,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
         initial={lines}
         me={me}
         people={personMap}
+        mentionIds={[...(team?.memberIds ?? []), ...(activity ? [activity.teacherId, ...(activity.coTeacherIds ?? [])] : [])]}
         activityDbId={isSupabase ? teamId : undefined}
         live={isSupabase}
         canModerate={canModerate}
