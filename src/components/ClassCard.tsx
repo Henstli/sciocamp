@@ -44,6 +44,14 @@ export function ClassCard({
       <div className={styles.body}>
         {extra ?? (
           <>
+            {activity.project && (
+              <Milestones
+                label={`Projekt: ${activity.project.name}`}
+                done={activity.project.milestonesDone}
+                total={activity.project.milestonesTotal}
+                tone={activity.tone}
+              />
+            )}
             {activity.location && (
               <div className={styles.line}>
                 <Icon name="pin" size={16} />

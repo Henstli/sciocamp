@@ -743,3 +743,8 @@ a.attachment:hover {
 .chatContext {
   padding: 10px 16px 0;
 }
+
+/* Projekt ateliéru s milníky pod hlavičkou třídy */
+.project {
+  padding: 16px 20px;
+}

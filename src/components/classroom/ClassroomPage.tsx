@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Icon } from "../Icon";
 import { MeetLink } from "../MeetLink";
+import { Milestones } from "../ClassCard";
 import { ClassTabs, type ClassView } from "./ClassTabs";
 import { requireUser } from "@/lib/auth";
 import { canOpenActivity, getActivity, getClassroom, getUsersByIds, listActivities, listStaff, teachesActivity } from "@/lib/data";
@@ -168,6 +169,17 @@ export async function ClassroomPage({
           />
         </div>
       </section>
+
+      {activity.project && (
+        <section aria-label="Projekt ateliéru" className={`card ${styles.project}`}>
+          <Milestones
+            label={`Projekt: ${activity.project.name}`}
+            done={activity.project.milestonesDone}
+            total={activity.project.milestonesTotal}
+            tone={activity.tone}
+          />
+        </section>
+      )}
 
       <ClassTabs view={view} initialTab={tab} />
     </>
