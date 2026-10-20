@@ -56,7 +56,7 @@ export const DEMO_CONVERSATIONS: ConversationSummary[] = [
     id: "k-skola",
     isGroup: true,
     isSchool: true,
-    title: "Celá škola",
+    title: "Camp",
     otherId: null,
     memberCount: DEMO_USERS.length,
     lastAt: "2026-10-19T10:15:00Z",
