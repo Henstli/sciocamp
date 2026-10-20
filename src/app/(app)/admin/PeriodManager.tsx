@@ -80,8 +80,8 @@ export function PeriodManager({
         <div key={p.id} className={styles.periodRow}>
           <div className={styles.periodHead}>
             <div className={styles.courseMain}>
-              <div className={styles.name}>
-                {p.name}{" "}
+              <div className={`${styles.name} ${styles.periodTitle}`}>
+                {p.name}
                 {p.current ? (
                   <span className="chip chip-ok">Právě běží</span>
                 ) : p.ended ? (
@@ -96,13 +96,13 @@ export function PeriodManager({
                   )
                 )}
               </div>
-              <div className={styles.email}>
+              <div className={`${styles.email} ${styles.wrapLine}`}>
                 {formatDateRangeWithYear(p.startsOn, p.endsOn)} · {p.activities}{" "}
                 {plural(p.activities, "aktivita", "aktivity", "aktivit")}
                 {p.drafts > 0 && ` · ${p.drafts} ${plural(p.drafts, "nezveřejněný kurz", "nezveřejněné kurzy", "nezveřejněných kurzů")}`}
               </div>
               {!p.ended && (
-                <div className={styles.email}>
+                <div className={`${styles.email} ${styles.wrapLine}`}>
                   <Icon name="clock" size={14} />{" "}
                   {p.enrollOpensAt && p.enrollClosesAt
                     ? `Zápis ${formatDue(p.enrollOpensAt)} – ${formatDue(p.enrollClosesAt)}`

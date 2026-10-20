@@ -472,3 +472,15 @@
   background-color: #fdf1dc;
   color: #8a5300;
 }
+
+/* Název období a štítek stavu vedle sebe s mezerou */
+.periodTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  white-space: normal;
+}
+.wrapLine {
+  white-space: normal;
+}
