@@ -286,18 +286,24 @@
   color: var(--primary-text);
 }
 .mention {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1px 8px 1px 2px;
+  /* Štítek je řádkový (inline), takže jméno sedí na stejné účaří jako okolní text. */
+  display: inline;
+  padding: 2px 8px 2px 2px;
   margin: 0 1px;
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary-text);
   font-weight: 700;
   text-decoration: none;
-  vertical-align: -3px;
   white-space: nowrap;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.mention > :first-child {
+  margin-right: 4px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
 }
 .mention:hover {
   color: var(--primary-hover-text);
