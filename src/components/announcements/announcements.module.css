@@ -82,6 +82,15 @@
 .dismiss:hover {
   background: var(--late-tint);
 }
+/* Tmavý režim: místo tmavomodré karty obrys v barvě oznámení */
+:global(:root[data-theme="dark"]) .dismiss {
+  background: transparent;
+  border-color: var(--late);
+}
+:global(:root[data-theme="dark"]) .dismiss:hover {
+  background: var(--late-line);
+  color: #fff;
+}
 
 /* Správa → Oznámení */
 .form {
