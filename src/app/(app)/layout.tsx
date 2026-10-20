@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { PageSkeleton, SidebarSkeleton } from "@/components/Skeletons";
 import { requireUser } from "@/lib/auth";
-import { getHomeSummary, listUsers } from "@/lib/data";
+import { listUsers } from "@/lib/data";
+import { wishesWaiting } from "@/lib/data-proposals";
 import { AvatarState } from "@/components/AvatarState";
 import { bannerSwatch } from "@/lib/banner";
 import { homeTasks } from "@/lib/data-assignments";
@@ -32,8 +33,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 async function UserSidebar() {
   const user = await requireUser();
-  const [home, tasks, messages, users] = await Promise.all([
-    getHomeSummary(),
+  const [wishWaiting, tasks, messages, users] = await Promise.all([
+    wishesWaiting(user),
     homeTasks(user),
     unreadMessages(user),
     listUsers(),
@@ -60,7 +61,7 @@ async function UserSidebar() {
         showAdmin={isAdmin(user.role)}
         badges={{
           ukoly: tasks.headline || undefined,
-          hlasovani: home?.polls.waiting,
+          hlasovani: wishWaiting || undefined,
           zpravy: messages.unread || undefined,
           vyuka: undefined,
         }}

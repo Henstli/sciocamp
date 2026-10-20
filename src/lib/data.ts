@@ -4,7 +4,7 @@
 import "server-only";
 import { cache } from "react";
 import { isSupabase } from "./config";
-import { DEMO_ACTIVITIES, DEMO_CLASSROOMS, DEMO_HOME, DEMO_PERIODS, DEMO_TERMS, DEMO_USERS } from "./demo-data";
+import { DEMO_ACTIVITIES, DEMO_CLASSROOMS, DEMO_PERIODS, DEMO_TERMS, DEMO_USERS } from "./demo-data";
 import { canTeach, isAdmin } from "./roles";
 import { createClient } from "./supabase/server";
 import type { Activity, ActivityKind, ActivityTerm, ClassroomContent, EnrollRound, Period, Role, Slot, User, Weekday } from "./types";
@@ -265,11 +265,6 @@ const EMPTY_CLASSROOM: ClassroomContent = { topics: [], teams: [], upcoming: [] 
 export async function getClassroom(activity: Activity): Promise<ClassroomContent> {
   if (isSupabase) return EMPTY_CLASSROOM;
   return DEMO_CLASSROOMS[activity.id] ?? EMPTY_CLASSROOM;
-}
-
-/** Souhrn na Domov. Naostro zatím null — úkoly, hlasování a zprávy ještě nejsou. */
-export async function getHomeSummary(): Promise<typeof DEMO_HOME | null> {
-  return isSupabase ? null : DEMO_HOME;
 }
 
 // ---------------------------------------------------------------------------

@@ -36,7 +36,7 @@
 1. Přihlášení, role, kurzy, rozvrh a Meet (zatím na ukázkových datech, pak Supabase)
 2. Úkoly, odevzdávání a hodnocení
 3. Chaty, nástěnka a notifikace
-4. Zápisy, hlasování a návrhy
+4. Zápisy, hlasování a návrhy (hotovo)
 
 ## Implementace (stav)
 
@@ -74,3 +74,6 @@
 - Instagram v profilu: tabulka `profile_socials` (sloupec `instagram`; `discord` zůstal v DB nepoužívaný). Vidí všichni ve škole, upravuje každý svůj v Nastavení (`saveProfile` normalizuje „@jmeno“ i odkaz). V kartě Kontakt jako výrazný odkaz s ikonou fotoaparátu. Data `getSocials()` v `data.ts`.
 - Profilové fotky: `profiles.avatar_path`, soukromý bucket `avatary/<id uživatele>/<čas>.jpg` (čtou jen členové školy). Nahrává se v Nastavení (`AvatarUpload`: prohlížeč ořízne na čtverec 320 px JPEG, nahraje, pak akce `setAvatar` uloží cestu a smaže starou). Obrázek podává `/api/avatar/[id]` (přesměrování na podepsaný odkaz). Kdo má fotku, posílá layout do `AvatarState` → `useAvatarSrc` (`src/lib/avatar-store.ts`); `Avatar` (`src/components/Avatar.tsx`) ji ukáže podle `userId`, odkazu `/lide/<id>` nebo `tone="me"`, jinak iniciály. Nové avatary s cizím člověkem: předat `userId` nebo `href`.
 - Barva profilu: `profiles.banner_color` (modra výchozí, fialova, ruzova, cervena, zluta, zelena; seznam v `src/lib/banner.ts`). Volí se v Nastavení (kolečka v `ProfileForm`, ukládá `saveProfile`), v profilu `data-color` na kartě `.cover` a odstíny v `profil.module.css` (pruh i kolečko s iniciálami, `--bav`). Malá kolečka s iniciálami (menu, hlavička, seznamy) mají zvolenou barvu přes `useAvatarColor` (layout předává `colors` do `AvatarState`).
+- Návrhy (`/navrhy`, detail `/navrhy/[id]`): tabulky `proposals`, `proposal_supports`, `proposal_comments`. Autor volí cíl (`goal`: `shromazdeni` / `schvaleni`) a navrhne počet podporovatelů (`need_proposed`); vyučující/admin ho potvrdí nebo upraví (`set_proposal_need` → `need`). Autor podporuje automaticky (trigger), `support_count` a `reached_at` drží `proposal_recount` (oznámení autorovi a vyučujícím při dosažení). Výsledek `resolve_proposal`: `projednano` (jen shromáždění, závěr), `schvaleno` (jen schválení) / `zamitnuto` se zdůvodněním → oznámení autorovi a podporovatelům; `withdraw_proposal` (autor), `reopen_proposal` (vyučující), mazání jen admin. Uzavřené jsou v sbaleném seznamu. Komponenty v `src/components/proposals/`.
+- Hlasování (`/hlasovani`) = přání nových ateliérů, expedic a témat kurzů: `wishes`, `wish_votes` (hlasy vidí každý jen svoje, počet `vote_count` z triggeru; autor hlasuje automaticky). Vyučující přání vypíše propojením s aktivitou (`fulfil_wish` → „Vypsáno“, oznámení všem, kdo chtěli), nebo uzavře se zdůvodněním (`close_wish`), `reopen_wish` vrací. Autor smaže svoje, dokud ho nikdo další nechce. Odznak v menu a karta na Domově = otevřená přání bez mého hlasu.
+- Data `src/lib/data-proposals.ts`, typy a popisky `src/lib/proposals.ts`, akce `src/lib/actions/proposals.ts`, ukázková data `src/lib/demo-proposals.ts`. Oznámení druhů `navrh` a `prani`.

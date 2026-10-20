@@ -176,19 +176,3 @@ export const DEMO_CLASSROOMS: Record<string, ClassroomContent> = {
   },
 };
 
-/** Ukázkové údaje pro karty na Domově (úkoly, hlasování a zprávy přijdou v etapách 2–4). */
-export const DEMO_HOME = {
-  tasks: { open: 6, done: 4, waiting: 3, late: 3 },
-  toGrade: 6,
-  polls: { waiting: 2, running: 3, closed: 2, nextEnd: "Nože na expedici, za 2 dny" },
-  messages: { unread: 3, from: ["u-jaukner", "u-komarek"] },
-  deadlines: [
-    { date: "2026-10-21", title: "Reflexe prezentace z TEDx", meta: "Ateliér Prezentační schopnosti · 23:59", urgent: true },
-    { date: "2026-10-22", title: "Příprava týmové prezentace", meta: "Ateliér Prezentační schopnosti", urgent: false },
-    { date: "2026-10-26", title: "Esej: fraktály v přírodě", meta: "Komplexní čísla a fraktály", urgent: false },
-  ],
-  votes: [
-    { title: "Nože na expedici", ends: "za 2 dny", soon: true, percent: 64 },
-    { title: "Páteční ateliéry od 10:00", ends: "za 4 dny", soon: false, percent: 41 },
-  ],
-};

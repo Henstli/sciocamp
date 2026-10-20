@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { homeTasks } from "@/lib/data-assignments";
 import { unreadMessages } from "@/lib/data-communication";
 import { plural } from "@/lib/format";
-import { activitiesForUser, getHomeSummary, getUserById, getUsersByIds, listActivities } from "@/lib/data";
+import { activitiesForUser, getUserById, getUsersByIds, listActivities } from "@/lib/data";
 import { activityHref } from "@/lib/links";
 import { canTeach, firstNameVocative, initials } from "@/lib/roles";
 import { blockedWeekdays, currentOrNext, expeditionBlocker, weekAllDay, weekEntries } from "@/lib/schedule";
@@ -25,6 +25,8 @@ import {
   sameDate,
 } from "@/lib/time";
 import styles from "./home.module.css";
+import { listWishes } from "@/lib/data-proposals";
+import { WISH_KIND_LABEL } from "@/lib/proposals";
 
 export const metadata: Metadata = { title: "Domov" };
 
@@ -43,7 +45,9 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const blockedDays = blockedWeekdays(monday, blocked, allDay);
   const upcoming = currentOrNext(activities, now, blocked);
   const upcomingTeacher = upcoming ? await getUserById(upcoming.activity.teacherId) : null;
-  const home = await getHomeSummary();
+  const wishes = await listWishes(user);
+  const openWishes = wishes.filter((w) => w.status === "open");
+  const wishWaiting = openWishes.filter((w) => !w.voted).length;
   const tasks = await homeTasks(user);
   const messages = await unreadMessages(user);
   const senders = await getUsersByIds(messages.from.slice(0, 3));
@@ -114,15 +118,23 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           </StatCard>
         )}
 
-        {home && (
-          <StatCard href="/hlasovani" icon="vote" title="Hlasování" value={home.polls.waiting} unit="čekají na tvůj hlas">
-            <div className={styles.chips}>
-              <span className="chip chip-wait">{home.polls.running} probíhající</span>
-              <span className="chip chip-info">{home.polls.closed} ukončená</span>
+        <StatCard
+          href="/hlasovani"
+          icon="vote"
+          title="Hlasování"
+          value={wishWaiting}
+          unit={`${plural(wishWaiting, "přání čeká", "přání čekají", "přání čeká")} na tvůj hlas`}
+        >
+          <div className={styles.chips}>
+            <span className="chip chip-wait">{openWishes.length} {plural(openWishes.length, "otevřené", "otevřená", "otevřených")}</span>
+            <span className="chip chip-ok">{wishes.filter((w) => w.status === "vypsano").length} vypsáno</span>
+          </div>
+          {openWishes[0] && (
+            <div className={styles.statFoot}>
+              Nejžádanější: {openWishes[0].title} ({openWishes[0].voteCount})
             </div>
-            <div className={styles.statFoot}>Nejbližší konec: {home.polls.nextEnd}</div>
-          </StatCard>
-        )}
+          )}
+        </StatCard>
 
         {(
           <StatCard href="/zpravy" icon="chat" title="Zprávy" value={messages.unread} unit={plural(messages.unread, "nepřečtená zpráva", "nepřečtené zprávy", "nepřečtených zpráv")}>
@@ -171,28 +183,31 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             })}
           </section>
 
-          {home && (
-          <section aria-label="Probíhající hlasování" className={`card ${styles.panel}`}>
-            <div className={styles.panelHead}>
-              <h2 className="section-title">Hlasování</h2>
-              <Link href="/hlasovani">Vše</Link>
-            </div>
-            {home.votes.map((v) => (
-              <div key={v.title} className={styles.vote}>
-                <div className={styles.voteHead}>
-                  <div className={styles.itemTitle}>{v.title}</div>
-                  <span className={`chip ${v.soon ? "chip-wait" : "chip-info"}`}>{v.ends}</span>
-                </div>
-                <div className={styles.progress}>
-                  <div style={{ width: `${v.percent}%` }} />
-                </div>
-                <div className={styles.itemMeta}>Hlasovalo {v.percent} % · ty zatím ne</div>
+          {openWishes.length > 0 && (
+            <section aria-label="Nejžádanější přání" className={`card ${styles.panel}`}>
+              <div className={styles.panelHead}>
+                <h2 className="section-title">Hlasování</h2>
+                <Link href="/hlasovani">Vše</Link>
               </div>
-            ))}
-            <Link href="/hlasovani" className="btn btn-primary">
-              Jít hlasovat
-            </Link>
-          </section>
+              {openWishes.slice(0, 3).map((w) => (
+                <div key={w.id} className={styles.vote}>
+                  <div className={styles.voteHead}>
+                    <div className={styles.itemTitle}>{w.title}</div>
+                    <span className="chip chip-info">{WISH_KIND_LABEL[w.kind]}</span>
+                  </div>
+                  <div className={styles.progress}>
+                    <div style={{ width: `${Math.round((w.voteCount / openWishes[0].voteCount) * 100)}%` }} />
+                  </div>
+                  <div className={styles.itemMeta}>
+                    {w.voteCount} {plural(w.voteCount, "člověk to chce", "lidé to chtějí", "lidí to chce")}
+                    {w.voted ? " · ty taky" : ""}
+                  </div>
+                </div>
+              ))}
+              <Link href="/hlasovani" className="btn btn-primary">
+                {wishWaiting > 0 ? "Jít hlasovat" : "Přidat přání"}
+              </Link>
+            </section>
           )}
         </div>
       </div>
