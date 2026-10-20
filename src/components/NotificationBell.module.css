@@ -122,11 +122,12 @@
   color: var(--ok);
 }
 .icon[data-kind="oznameni"],
-.icon[data-kind="komentar"] {
+.icon[data-kind="komentar"],
+.icon[data-kind="termin"] {
   background: var(--wait-bg);
   color: var(--wait);
 }
-.icon[data-kind="termin"] {
+.icon[data-kind="skola"] {
   background: var(--late-bg);
   color: var(--late);
 }

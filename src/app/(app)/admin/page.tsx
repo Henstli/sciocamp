@@ -6,9 +6,12 @@ import { listActivities, listPeriods, listTerms, listUsers } from "@/lib/data";
 import { currentPeriod, describeWhen, hasEnded } from "@/lib/periods";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { canTeach, initials } from "@/lib/roles";
-import { isoToPragueLocal, nowMs, pragueNow, toIso } from "@/lib/time";
+import { formatDue, isoToPragueLocal, nowMs, pragueNow, toIso } from "@/lib/time";
 import { readyTeachers } from "@/lib/data-enroll";
 import { storageReport } from "@/lib/storage-cleanup";
+import { listAnnouncements } from "@/lib/data-announcements";
+import { AUDIENCE_LABEL, announcementActive } from "@/lib/announcements";
+import { AnnouncementManager } from "@/components/announcements/AnnouncementManager";
 import { AdminTabs } from "./AdminTabs";
 import { PeriodManager } from "./PeriodManager";
 import { StorageManager, type StorageView } from "./StorageManager";
@@ -35,6 +38,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
   const terms = await listTerms();
   const storage = await loadStorage();
+  const announcements = await listAnnouncements();
   // Připravené ateliéry a expedice (do zápisu se dají vyhlásit spolu s kurzy).
   const freeOf = (a: (typeof activities)[number]) =>
     !(a.round && a.round.closesAt > new Date(nowMs()).toISOString());
@@ -120,9 +124,27 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                     ? "periods"
                     : tab === "uloziste"
                       ? "storage"
-                      : "users"
+                      : tab === "oznameni"
+                        ? "announcements"
+                        : "users"
         }
         storageTab={<StorageManager report={storage.report} problem={storage.problem} />}
+        announcementsTab={
+          <AnnouncementManager
+            live={isSupabase}
+            items={announcements.map((a) => {
+              const active = announcementActive(a, nowMs());
+              return {
+                id: a.id,
+                title: a.title,
+                audience: AUDIENCE_LABEL[a.audience],
+                author: nameOf(a.createdBy) || "Admin",
+                ended: !active,
+                status: active ? (a.endsAt ? `Na Domově do ${formatDue(a.endsAt)}` : "Na Domově") : "Ukončeno",
+              };
+            })}
+          />
+        }
         periodsTab={
           <div className={styles.periodsStack}>
             <PeriodManager periods={periodRows} ready={readyCounts} />

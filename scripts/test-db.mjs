@@ -1255,4 +1255,31 @@ await test("připomínky termínu: jen neodevzdané úkoly do 24 h, jednou, a jd
   await db.query(`delete from public.assignments where id = any($1)`, [[soon, later, done]]);
 });
 
+await test("oznámení na Domově: zakládá jen admin, vidí cílová skupina, skrytí je osobní", async () => {
+  await assert.rejects(() => as(teacher, `insert into public.announcements (title) values ('Učitel')`));
+  await assert.rejects(() => as(student, `insert into public.announcements (title) values ('Student')`));
+  const [all] = await as(admin, `insert into public.announcements (title, body) values ('Zítra výuka odpadá', 'Kvůli výpadku proudu.') returning id`);
+  const [staff] = await as(admin, `insert into public.announcements (title, audience) values ('Porada v pátek', 'vyucujici') returning id`);
+  const seen = async (who) => (await as(who, `select id from public.announcements`)).map((r) => r.id);
+  assert.ok((await seen(student)).includes(all.id));
+  assert.ok(!(await seen(student)).includes(staff.id));
+  assert.ok((await seen(teacher)).includes(staff.id));
+  assert.equal((await seen(outsider)).includes(all.id), true, "student mimo třídy je taky člen školy");
+  // Notifikace přišla studentům i učitelům, autorovi ne; učitelská jen učitelům.
+  const notes = async (who, title) => (await db.query(`select 1 from public.notifications where user_id = $1 and kind = 'skola' and title = $2`, [who, title])).rows.length;
+  assert.equal(await notes(student, "Zítra výuka odpadá"), 1);
+  assert.equal(await notes(admin, "Zítra výuka odpadá"), 0);
+  assert.equal(await notes(student, "Porada v pátek"), 0);
+  assert.equal(await notes(teacher, "Porada v pátek"), 1);
+  // Skrytí: každý jen svoje.
+  await as(student, `insert into public.announcement_dismissals (announcement_id) values ($1)`, [all.id]);
+  await assert.rejects(() => as(student, `insert into public.announcement_dismissals (announcement_id, user_id) values ($1, $2)`, [all.id, student2]));
+  assert.equal((await as(student2, `select * from public.announcement_dismissals`)).length, 0);
+  // Ukončit a smazat smí jen admin.
+  assert.equal((await as(teacher, `update public.announcements set ends_at = now() where id = $1 returning 1`, [staff.id])).length, 0);
+  await as(admin, `update public.announcements set ends_at = now() where id = $1`, [all.id]);
+  assert.equal((await as(student, `delete from public.announcements where id = $1 returning 1`, [all.id])).length, 0);
+  await as(admin, `delete from public.announcements where id = any($1)`, [[all.id, staff.id]]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

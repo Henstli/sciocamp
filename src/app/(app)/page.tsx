@@ -30,6 +30,8 @@ import {
 } from "@/lib/time";
 import styles from "./home.module.css";
 import { HomeSearch } from "@/components/search/HomeSearch";
+import { AnnouncementBanner } from "@/components/announcements/AnnouncementBanner";
+import { homeAnnouncements } from "@/lib/data-announcements";
 import { buildSearchIndex } from "@/lib/search-index";
 import { listProposals, listWishes, memberCount } from "@/lib/data-proposals";
 import { CHOICE_LABEL, percentOf, votingDaysLeft, votingOpen } from "@/lib/proposals";
@@ -84,6 +86,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const messages = await unreadMessages(user);
   const senders = await getUsersByIds(messages.from.slice(0, 3));
   const teaching = canTeach(user.role);
+  const announcements = await homeAnnouncements(user);
+  const authors = await getUsersByIds([...new Set(announcements.map((a) => a.createdBy))]);
   // Úkoly, kterým do 24 hodin končí termín a nejsou odevzdané (jde vypnout v Nastavení).
   const dueSoon =
     !teaching && user.homeDueAlerts !== false
@@ -107,6 +111,19 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       >
         <HomeSearch items={await buildSearchIndex(user)} />
       </PageHeader>
+
+      {announcements.map((a) => (
+        <AnnouncementBanner
+          key={a.id}
+          item={{
+            id: a.id,
+            title: a.title,
+            body: a.body,
+            linkUrl: a.linkUrl,
+            meta: [authors.find((u) => u.id === a.createdBy)?.name, a.endsAt ? `platí do ${formatDue(a.endsAt)}` : null].filter(Boolean).join(" · "),
+          }}
+        />
+      ))}
 
       {upcoming && (
         <div className={styles.banner} data-live={upcoming.live}>

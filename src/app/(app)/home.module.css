@@ -327,15 +327,15 @@ a.deadline:hover .itemTitle {
   gap: 14px;
   padding: 14px 18px;
   border-radius: 16px;
-  background: var(--late-bg);
-  border: 1px solid #efc4c4;
+  background: var(--wait-bg);
+  border: 1px solid #f3d9a6;
 }
 .dueIcon {
   flex: none;
   width: var(--tap);
   height: var(--tap);
   border-radius: var(--r-btn);
-  background: var(--late);
+  background: #f0a63a;
   color: #fff;
   display: flex;
   align-items: center;
@@ -349,7 +349,7 @@ a.deadline:hover .itemTitle {
   gap: 6px;
 }
 .dueBody .bannerTitle {
-  color: var(--late);
+  color: var(--wait);
   margin-top: 2px;
 }
 .dueList {
@@ -386,5 +386,5 @@ a.deadline:hover .itemTitle {
 .dueMore {
   font-size: 13px;
   font-weight: 700;
-  color: var(--late);
+  color: var(--wait);
 }
