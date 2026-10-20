@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { activityHref } from "@/lib/links";
+import { Avatar } from "./Avatar";
 import { hasEnded, hasStarted } from "@/lib/periods";
 import { ROLE_LABEL, initials } from "@/lib/roles";
 import type { Activity, User } from "@/lib/types";
@@ -48,7 +49,9 @@ export function ProfileView({
           <div className={styles.b2} />
         </div>
         <div className={styles.identity}>
-          <div className={styles.bigAvatar}>{initials(person.name)}</div>
+          <div className={styles.bigAvatar}>
+            <Avatar initials={initials(person.name)} userId={person.id} tone={isMe ? "me" : "student"} size={94} />
+          </div>
           <div className={styles.idText}>
             <h1 className={styles.name}>{person.name}</h1>
             <div className={styles.sub}>

@@ -222,7 +222,7 @@ export function Messenger({
             {found.map((p) => (
               <li key={p.id}>
                 <Link href={`/zpravy?s=${p.id}`} className={styles.row} onClick={() => setQuery("")} scroll={false}>
-                  <Avatar initials={p.initials} size={42} tone={tone(p.role)} />
+                  <Avatar initials={p.initials} userId={p.id} size={42} tone={tone(p.role)} />
                   <span className={styles.rowMain}>
                     <span className={styles.rowName}>{p.name}</span>
                     <span className={styles.rowPreview}>{p.caption}</span>
@@ -244,7 +244,7 @@ export function Messenger({
                   aria-current={c.id === activeId ? "true" : undefined}
                   scroll={false}
                 >
-                  <Avatar initials={c.person.initials} size={42} tone={tone(c.person.role)} />
+                  <Avatar initials={c.person.initials} userId={c.person.id} size={42} tone={tone(c.person.role)} />
                   <span className={styles.rowMain}>
                     <span className={styles.rowTop}>
                       <span className={styles.rowName}>{c.person.name}</span>

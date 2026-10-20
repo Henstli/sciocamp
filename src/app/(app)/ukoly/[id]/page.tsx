@@ -270,7 +270,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
                     className={styles.studentRow}
                     aria-current={s.id === selectedId ? "true" : undefined}
                   >
-                    <Avatar initials={initials(s.name)} size={36} />
+                    <Avatar initials={initials(s.name)} size={36} userId={s.id} />
                     <span className={styles.studentMain}>
                       <span className={styles.studentName}>{s.name}</span>
                       <span className={styles.studentMeta}>

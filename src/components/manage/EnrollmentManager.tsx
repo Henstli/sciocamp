@@ -78,7 +78,7 @@ export function EnrollmentManager({
           <ul className={styles.list}>
             {inClass.map((s) => (
               <li key={s.id} className={styles.row}>
-                <Avatar initials={s.initials} size={34} />
+                <Avatar initials={s.initials} size={34} userId={s.id} />
                 <span className={styles.rowMain}>
                   <span className={styles.rowName}>{s.name}</span>
                   <span className={styles.hint}>{s.grade ? `${s.grade}. ročník` : "bez ročníku"}</span>
@@ -149,7 +149,7 @@ export function EnrollmentManager({
                       })
                     }
                   />
-                  <Avatar initials={s.initials} size={34} />
+                  <Avatar initials={s.initials} size={34} userId={s.id} />
                   <span className={styles.rowMain}>
                     <span className={styles.rowName}>{s.name}</span>
                     <span className={styles.hint}>

@@ -28,6 +28,7 @@
 }
 .headerAvatar {
   flex: none;
+  overflow: hidden;
   width: var(--tap);
   height: var(--tap);
   border-radius: 22px;
@@ -47,6 +48,7 @@
 
 .avatar {
   flex: none;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -105,4 +107,12 @@
 }
 .avatarLink:hover {
   box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--primary-line);
+}
+
+/* Profilová fotka v kulatém avataru */
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }

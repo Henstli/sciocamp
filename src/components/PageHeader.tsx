@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { NotificationBell } from "./NotificationBell";
+import { Avatar, MyPhoto } from "./Avatar";
+
+export { Avatar };
 import styles from "./ui.module.css";
 
 export function PageHeader({
@@ -26,39 +29,11 @@ export function PageHeader({
       {avatar && <NotificationBell />}
       {avatar && (
         <Link href="/profil" aria-label={`Profil: ${avatar.name}`} className={styles.headerAvatar}>
-          {avatar.initials}
+          <MyPhoto initials={avatar.initials} />
         </Link>
       )}
     </header>
   );
-}
-
-export function Avatar({
-  initials,
-  size = 36,
-  tone = "student",
-  href,
-  title,
-}: {
-  initials: string;
-  size?: number;
-  tone?: "student" | "ucitel" | "admin" | "me" | "late" | "teal";
-  /** Odkaz na profil člověka — avatar je pak klikací */
-  href?: string;
-  title?: string;
-}) {
-  const props = {
-    className: `${styles.avatar} ${styles[`avatar_${tone}`]}`,
-    style: { width: size, height: size, borderRadius: size / 2, fontSize: size >= 44 ? 15 : size >= 40 ? 13 : 12 },
-  };
-  if (href) {
-    return (
-      <Link href={href} {...props} className={`${props.className} ${styles.avatarLink}`} aria-label={title ? `Profil: ${title}` : "Profil"} title={title}>
-        {initials}
-      </Link>
-    );
-  }
-  return <span {...props}>{initials}</span>;
 }
 
 /** Adresa profilu člověka. */

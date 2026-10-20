@@ -130,7 +130,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
               <div className={styles.faces}>
                 {senders.map((s) => (
                   <span key={s.id} className={styles.face}>
-                    <Avatar initials={initials(s.name)} size={30} tone={s.role === "student" ? "student" : "ucitel"} />
+                    <Avatar initials={initials(s.name)} userId={s.id} size={30} tone={s.role === "student" ? "student" : "ucitel"} />
                   </span>
                 ))}
               </div>

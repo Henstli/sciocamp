@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MyPhoto } from "./Avatar";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon, type IconName } from "./Icon";
@@ -118,7 +119,9 @@ export function Sidebar({ user, showTeach, showAdmin, badges }: SidebarProps) {
 
         <div className={styles.userCard}>
           <Link href="/profil" className={styles.user} aria-current={isActive("/profil") ? "page" : undefined}>
-            <span className={styles.avatar}>{user.initials}</span>
+            <span className={styles.avatar}>
+              <MyPhoto initials={user.initials} />
+            </span>
             <span className={styles.userText}>
               <span className={styles.userName}>{user.name}</span>
               <span className={styles.userRole}>{user.caption}</span>

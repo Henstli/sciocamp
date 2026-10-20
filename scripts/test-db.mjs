@@ -861,4 +861,16 @@ await test("sociální sítě: každý vyplní své, vidí je všichni ve škole
   assert.equal((await db.query(`select instagram from public.profile_socials where user_id = $1`, [student])).rows[0].instagram, "simon.liska");
 });
 
+await test("profilové fotky: každý nahraje a nastaví jen svou, vidí je škola", async () => {
+  await as(student, `insert into storage.objects (bucket_id, name) values ('avatary', $1)`, [`${student}/1.jpg`]);
+  await assert.rejects(() => as(student, `insert into storage.objects (bucket_id, name) values ('avatary', $1)`, [`${teacher}/1.jpg`]));
+  await as(student, `update public.profiles set avatar_path = $2 where id = $1`, [student, `${student}/1.jpg`]);
+  // Cizí cesta neprojde (kontrola sloupce), cizí profil nejde upravit (RLS).
+  await assert.rejects(() => as(student, `update public.profiles set avatar_path = $2 where id = $1`, [student, `${teacher}/1.jpg`]));
+  const r = await as(student, `update public.profiles set avatar_path = null where id = $1 returning id`, [teacher]);
+  assert.equal(r.length, 0);
+  assert.equal((await as(teacher2, `select name from storage.objects where bucket_id = 'avatary'`)).length, 1);
+  await assert.rejects(() => as(student, `update public.profiles set role = 'admin' where id = $1`, [student]));
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

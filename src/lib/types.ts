@@ -15,6 +15,8 @@ export type User = {
   /** false = pozvánka odeslána, účet ještě nebyl použit. */
   active: boolean;
   bio?: string;
+  /** Profilová fotka v úložišti (bucket avatary), jinak null. */
+  avatarPath?: string | null;
 };
 
 /** „ostatni“ se v aplikaci jmenuje Událost (třídnická konzultace, seminář…). */

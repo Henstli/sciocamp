@@ -1,0 +1,60 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { useAvatarSrc } from "@/lib/avatar-store";
+import styles from "./ui.module.css";
+
+/**
+ * Kulatý avatar: profilová fotka, když ji člověk má, jinak iniciály.
+ * Čí je, se pozná z `userId`, z odkazu na profil (`/lide/<id>`), nebo u
+ * `tone="me"` je to přihlášený uživatel.
+ */
+export function Avatar({
+  initials,
+  size = 36,
+  tone = "student",
+  href,
+  title,
+  userId,
+}: {
+  initials: string;
+  size?: number;
+  tone?: "student" | "ucitel" | "admin" | "me" | "late" | "teal";
+  /** Odkaz na profil člověka — avatar je pak klikací */
+  href?: string;
+  title?: string;
+  userId?: string;
+}) {
+  const id = userId ?? href?.match(/^\/lide\/([^/?#]+)/)?.[1];
+  const src = useAvatarSrc(id, tone === "me");
+  const [broken, setBroken] = useState<string | null>(null);
+  const showPhoto = src && broken !== src;
+  const props = {
+    className: `${styles.avatar} ${styles[`avatar_${tone}`]}`,
+    style: { width: size, height: size, borderRadius: size / 2, fontSize: size >= 44 ? 15 : size >= 40 ? 13 : 12 },
+  };
+  const inner = showPhoto ? (
+    // eslint-disable-next-line @next/next/no-img-element -- malé obrázky přes vlastní adresu, optimalizace netřeba
+    <img src={src} alt="" className={styles.avatarImg} onError={() => setBroken(src)} />
+  ) : (
+    initials
+  );
+  if (href) {
+    return (
+      <Link href={href} {...props} className={`${props.className} ${styles.avatarLink}`} aria-label={title ? `Profil: ${title}` : "Profil"} title={title}>
+        {inner}
+      </Link>
+    );
+  }
+  return <span {...props}>{inner}</span>;
+}
+
+/** Fotka přihlášeného (v hlavičce a v menu), jinak jeho iniciály. */
+export function MyPhoto({ initials }: { initials: string }) {
+  const src = useAvatarSrc(null, true);
+  const [broken, setBroken] = useState<string | null>(null);
+  if (!src || broken === src) return <>{initials}</>;
+  // eslint-disable-next-line @next/next/no-img-element -- malé obrázky přes vlastní adresu
+  return <img src={src} alt="" className={styles.avatarImg} onError={() => setBroken(src)} />;
+}

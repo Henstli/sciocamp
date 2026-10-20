@@ -23,9 +23,10 @@ type ProfileRow = {
   bio: string | null;
   activated: boolean;
   blocked: boolean;
+  avatar_path: string | null;
 };
 
-const PROFILE_COLUMNS = "id, email, full_name, role, grade, staff_note, bio, activated, blocked";
+const PROFILE_COLUMNS = "id, email, full_name, role, grade, staff_note, bio, activated, blocked, avatar_path";
 
 export function toUser(r: ProfileRow): User {
   return {
@@ -37,6 +38,7 @@ export function toUser(r: ProfileRow): User {
     group: r.role === "student" ? (r.grade ? `${r.grade}. ročník` : "Student") : r.staff_note || (r.role === "admin" ? "Vedení školy" : "Vyučující"),
     active: r.activated,
     bio: r.bio ?? undefined,
+    avatarPath: r.avatar_path ?? null,
   };
 }
 

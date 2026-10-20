@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { PageSkeleton, SidebarSkeleton } from "@/components/Skeletons";
 import { requireUser } from "@/lib/auth";
-import { getHomeSummary } from "@/lib/data";
+import { getHomeSummary, listUsers } from "@/lib/data";
+import { AvatarState } from "@/components/AvatarState";
 import { homeTasks } from "@/lib/data-assignments";
 import { unreadMessages } from "@/lib/data-communication";
 import { canTeach, initials, isAdmin, roleCaption } from "@/lib/roles";
@@ -30,19 +31,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 async function UserSidebar() {
   const user = await requireUser();
-  const [home, tasks, messages] = await Promise.all([getHomeSummary(), homeTasks(user), unreadMessages(user)]);
+  const [home, tasks, messages, users] = await Promise.all([
+    getHomeSummary(),
+    homeTasks(user),
+    unreadMessages(user),
+    listUsers(),
+  ]);
+  // Kdo má profilovou fotku (cesta slouží i jako verze pro prohlížeč).
+  const avatars = Object.fromEntries(
+    users.filter((u) => u.avatarPath).map((u) => [u.id, u.avatarPath!]),
+  );
   const teach = canTeach(user.role);
   return (
-    <Sidebar
-      user={{ name: user.name, initials: initials(user.name), caption: roleCaption(user) }}
-      showTeach={teach}
-      showAdmin={isAdmin(user.role)}
-      badges={{
-        ukoly: tasks.headline || undefined,
-        hlasovani: home?.polls.waiting,
-        zpravy: messages.unread || undefined,
-        vyuka: undefined,
-      }}
-    />
+    <>
+      <AvatarState map={avatars} meId={user.id} />
+      <Sidebar
+        user={{
+          name: user.name,
+          initials: initials(user.name),
+          caption: roleCaption(user),
+        }}
+        showTeach={teach}
+        showAdmin={isAdmin(user.role)}
+        badges={{
+          ukoly: tasks.headline || undefined,
+          hlasovani: home?.polls.waiting,
+          zpravy: messages.unread || undefined,
+          vyuka: undefined,
+        }}
+      />
+    </>
   );
 }

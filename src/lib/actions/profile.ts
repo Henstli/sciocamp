@@ -57,3 +57,21 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
   refresh();
   return { info: "Uloženo." };
 }
+
+/**
+ * Nastaví (nebo smaže, `path = null`) profilovou fotku. Soubor už nahrál
+ * prohlížeč do bucketu `avatary` do složky `<id uživatele>/`.
+ */
+export async function setAvatar(path: string | null): Promise<ProfileState> {
+  const user = await requireUser();
+  if (!isSupabase) return { info: "Ukázkový režim: fotka se neukládá." };
+  if (path !== null && !new RegExp(`^${user.id}/[A-Za-z0-9._-]+$`).test(path)) return { error: "Neplatný soubor." };
+  const sb = await createClient();
+  const { data: before } = await sb.from("profiles").select("avatar_path").eq("id", user.id).maybeSingle();
+  const { error } = await sb.from("profiles").update({ avatar_path: path }).eq("id", user.id);
+  if (error) return { error: "Fotku se nepodařilo uložit." };
+  const old = before?.avatar_path as string | null | undefined;
+  if (old && old !== path) await sb.storage.from("avatary").remove([old]);
+  refresh();
+  return { info: path ? "Fotka uložena." : "Fotka odstraněna." };
+}
