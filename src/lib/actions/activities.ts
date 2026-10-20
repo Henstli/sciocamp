@@ -256,6 +256,9 @@ export async function saveActivity(_prev: ActivityFormState, formData: FormData)
       .single();
     if (error || !data) return { error: `Aktivitu se nepodařilo založit${error?.message ? `: ${error.message}` : "."}` };
     activityId = data.id;
+    // Založeno z přání v Hlasování → přání je vypsané a hlasující dostanou oznámení.
+    const wishId = String(formData.get("wishId") ?? "");
+    if (wishId) await sb.rpc("fulfil_wish", { wish: wishId, activity: activityId });
   }
 
   // Rozvrh: nahradíme celý.

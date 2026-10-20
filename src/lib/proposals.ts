@@ -86,6 +86,20 @@ export type Wish = {
   voted: boolean;
 };
 
+/** Jak dlouho přání sbírá hlasy; nevypsané se pak smaže. */
+export const WISH_DAYS = 14;
+
+/** Kolik celých dní přání ještě zbývá (0 = poslední den). */
+export function wishDaysLeft(createdAt: string, nowMs: number): number {
+  const end = Date.parse(createdAt) + WISH_DAYS * 86_400_000;
+  return Math.max(0, Math.ceil((end - nowMs) / 86_400_000) - 1);
+}
+
+/** Prošlé (nevypsané a starší 14 dní) se nezobrazuje. */
+export function wishExpired(w: { status: string; createdAt: string }, nowMs: number): boolean {
+  return w.status !== "vypsano" && Date.parse(w.createdAt) + WISH_DAYS * 86_400_000 <= nowMs;
+}
+
 export const WISH_KIND_LABEL: Record<WishKind, string> = {
   atelier: "Ateliér",
   expedice: "Expedice",

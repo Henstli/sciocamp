@@ -4,8 +4,9 @@ import "server-only";
 import { cache } from "react";
 import { isSupabase } from "./config";
 import { DEMO_PROPOSAL_COMMENTS, DEMO_PROPOSALS, DEMO_WISHES } from "./demo-proposals";
-import type { Proposal, ProposalComment, Wish } from "./proposals";
+import { wishExpired, type Proposal, type ProposalComment, type Wish } from "./proposals";
 import { createClient } from "./supabase/server";
+import { nowMs } from "./time";
 import type { User } from "./types";
 
 const PROPOSAL_COLUMNS =
@@ -112,8 +113,13 @@ export async function getProposal(
 
 const WISH_COLUMNS = "id, author_id, kind, title, body, status, activity_id, note, closed_at, vote_count, created_at";
 
-/** Všechna přání, nejžádanější první. */
+/** Všechna platná přání (prošlá bez vypsání se nezobrazují), nejžádanější první. */
 async function listWishesUncached(user: User): Promise<Wish[]> {
+  const now = nowMs();
+  return (await readWishes(user)).filter((w) => !wishExpired(w, now));
+}
+
+async function readWishes(user: User): Promise<Wish[]> {
   if (!isSupabase) {
     return DEMO_WISHES.map(({ voters, ...w }) => ({ ...w, voteCount: voters.length, voted: voters.includes(user.id) })).sort(
       (a, b) => b.voteCount - a.voteCount || b.createdAt.localeCompare(a.createdAt),
@@ -143,6 +149,18 @@ async function listWishesUncached(user: User): Promise<Wish[]> {
 }
 
 export const listWishes = cache(listWishesUncached);
+
+/** Jedno přání (pro vypsání aktivitou). */
+export async function getWish(user: User, id: string): Promise<Wish | null> {
+  return (await listWishes(user)).find((w) => w.id === id) ?? null;
+}
+
+/** Smaže z databáze nevypsaná přání starší 14 dní. */
+export async function purgeExpiredWishes(): Promise<void> {
+  if (!isSupabase) return;
+  const sb = await createClient();
+  await sb.rpc("purge_expired_wishes");
+}
 
 /** Počet otevřených přání, u kterých přihlášený ještě nehlasoval (odznak v menu). */
 export async function wishesWaiting(user: User): Promise<number> {

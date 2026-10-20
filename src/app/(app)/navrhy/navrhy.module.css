@@ -466,3 +466,48 @@ a.title:hover {
     display: inline-flex;
   }
 }
+
+/* Hlas u přání: šipka nahoru a počet (jako na Redditu) */
+.arrowVote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  color: var(--text-muted);
+}
+.arrowBtn {
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.arrowBtn:hover:not(:disabled) {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.arrowBtn:disabled {
+  cursor: default;
+}
+.arrowBtn:focus-visible {
+  outline: 3px solid var(--primary-line);
+}
+.arrowVote[data-on="true"] {
+  color: var(--primary);
+}
+.arrowCount {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+}
+.arrowVote[data-on="true"] .arrowCount {
+  color: var(--primary);
+}

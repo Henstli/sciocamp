@@ -5,6 +5,7 @@ import { ActivityForm } from "@/components/manage/ActivityForm";
 import { PageHeader } from "@/components/PageHeader";
 import { requireTeacher } from "@/lib/auth";
 import { listPeriods, listStaff, listTerms } from "@/lib/data";
+import { getWish } from "@/lib/data-proposals";
 import { currentPeriod } from "@/lib/periods";
 import { pragueNow, toIso, todayIso } from "@/lib/time";
 import { isAdmin } from "@/lib/roles";
@@ -15,8 +16,12 @@ export const metadata: Metadata = { title: "Nová aktivita" };
 
 export default async function NewActivityPage({ searchParams }: PageProps<"/ucitel/nova">) {
   const user = await requireTeacher();
-  const { typ } = await searchParams;
-  const kind: ActivityKind = typ === "atelier" || typ === "ostatni" || typ === "expedice" ? typ : "kurz";
+  const { typ, prani } = await searchParams;
+  // Vypsání přání z Hlasování: předvyplní druh, název a popis.
+  const wish = typeof prani === "string" ? await getWish(user, prani) : null;
+  const fromWish = wish?.status === "open" ? wish : null;
+  const wanted = fromWish?.kind ?? typ;
+  const kind: ActivityKind = wanted === "atelier" || wanted === "ostatni" || wanted === "expedice" ? wanted : "kurz";
   const admin = isAdmin(user.role);
   const staff = (await listStaff()).map((s) => ({ id: s.id, name: s.name }));
   const periods = await listPeriods();
@@ -25,9 +30,9 @@ export default async function NewActivityPage({ searchParams }: PageProps<"/ucit
 
   return (
     <>
-      <Link href={admin ? "/admin?tab=kurzy" : "/ucitel"} className={styles.back}>
+      <Link href={fromWish ? "/hlasovani" : admin ? "/admin?tab=kurzy" : "/ucitel"} className={styles.back}>
         <Icon name="chevronLeft" size={16} strokeWidth={2.2} />
-        {admin ? "Správa" : "Moje třídy"}
+        {fromWish ? "Hlasování" : admin ? "Správa" : "Moje třídy"}
       </Link>
       <PageHeader
         title="Nová aktivita"
@@ -37,11 +42,12 @@ export default async function NewActivityPage({ searchParams }: PageProps<"/ucit
         periods={periods}
         terms={(await listTerms()).filter((t) => t.endsOn >= todayIso() || t.id === "")}
         canPickTeacher={admin}
+        fromWish={fromWish ? { id: fromWish.id, title: fromWish.title, votes: fromWish.voteCount } : undefined}
         staff={staff}
         initial={{
           kind,
-          title: "",
-          description: "",
+          title: fromWish?.title ?? "",
+          description: fromWish?.body ?? "",
           location: "",
           periodId: current?.id ?? "",
           startsOn: "",

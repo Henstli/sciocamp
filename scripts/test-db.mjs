@@ -946,7 +946,7 @@ await test("hlasování: anonymní hlasy, vypsání aktivitou a oznámení", asy
   await as(teacher, `select public.fulfil_wish($1, $2)`, [w.id, atelier.id]);
   const n = await db.query(`select user_id, href from public.notifications where kind = 'prani'`);
   assert.deepEqual(n.rows.map((r) => r.user_id).sort(), [student, teacher2].sort());
-  assert.equal(n.rows[0].href, "/ateliery/prezentacni-schopnosti");
+  assert.equal(n.rows[0].href, "/zapisy");
   await assert.rejects(() => as(student2, `insert into public.wish_votes (wish_id) values ($1)`, [w.id]));
 
   const [w2] = await as(student2, `insert into public.wishes (kind, title) values ('kurz', 'Kurz vaření') returning id`);
@@ -954,6 +954,17 @@ await test("hlasování: anonymní hlasy, vypsání aktivitou a oznámení", asy
   await as(teacher, `select public.close_wish($1, 'Nemáme kuchyň.')`, [w2.id]);
   await as(teacher, `select public.reopen_wish($1)`, [w2.id]);
   assert.equal((await as(student2, `delete from public.wishes where id = $1 returning 1`, [w2.id])).length, 1);
+});
+
+await test("hlasování: nevypsaná přání po 14 dnech zmizí", async () => {
+  const [old] = await as(student, `insert into public.wishes (kind, title) values ('kurz', 'Staré přání') returning id`);
+  const [fresh] = await as(student, `insert into public.wishes (kind, title) values ('kurz', 'Nové přání') returning id`);
+  const [done] = await as(student, `insert into public.wishes (kind, title) values ('kurz', 'Vypsané přání') returning id`);
+  await as(teacher, `select public.fulfil_wish($1, $2)`, [done.id, course.id]);
+  await db.query(`update public.wishes set created_at = now() - interval '15 days' where id in ($1, $2)`, [old.id, done.id]);
+  await as(student2, `select public.purge_expired_wishes()`);
+  const left = (await db.query(`select id from public.wishes where id in ($1, $2, $3)`, [old.id, fresh.id, done.id])).rows.map((r) => r.id);
+  assert.deepEqual(left.sort(), [fresh.id, done.id].sort());
 });
 
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

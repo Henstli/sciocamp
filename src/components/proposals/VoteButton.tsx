@@ -48,6 +48,42 @@ export function VoteButton({
   };
 
   const what = kind === "proposal" ? "Podpořit návrh" : "Chci to";
+
+  // Přání: šipka nahoru a počet pod ní (jako na Redditu).
+  if (kind === "wish") {
+    return (
+      <div className={styles.voteWrap}>
+        <div className={styles.arrowVote} data-on={state.on}>
+          <button
+            type="button"
+            className={styles.arrowBtn}
+            aria-pressed={state.on}
+            disabled={disabled}
+            onClick={toggle}
+            aria-label={`Chci to (${state.count})`}
+            title={error ?? (disabled ? "Uzavřeno" : state.on ? "Zrušit hlas" : "Chci to")}
+          >
+            <svg viewBox="0 0 24 24" width={26} height={26} aria-hidden="true">
+              <path
+                d="M12 3.5 4 12.5h4.75V20h6.5v-7.5H20z"
+                fill={state.on ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <span className={styles.arrowCount}>{state.count}</span>
+        </div>
+        {error && (
+          <span role="status" className={styles.voteError}>
+            {error}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={styles.voteWrap}>
       <button

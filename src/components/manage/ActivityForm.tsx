@@ -56,7 +56,10 @@ export function ActivityForm({
   canPickTeacher,
   periods,
   terms = [],
+  fromWish,
 }: {
+  /** Vypsání přání z Hlasování: po založení se přání propojí a lidé dostanou oznámení. */
+  fromWish?: { id: string; title: string; votes: number };
   /** Termíny ateliérů a expedic od admina (jen ty, které ještě neskončily) */
   terms?: { id: string; kind: "atelier" | "expedice"; name: string | null; startsOn: string; endsOn: string }[];
   initial: ActivityFormValues;
@@ -98,6 +101,15 @@ export function ActivityForm({
   return (
     <form onSubmit={keepForm(action)} className={`card ${styles.form}`} noValidate>
       {initial.slug && <input type="hidden" name="slug" value={initial.slug} />}
+      {fromWish && (
+        <>
+          <input type="hidden" name="wishId" value={fromWish.id} />
+          <p className={styles.formInfo} style={{ margin: 0 }}>
+            Vypisuješ přání „{fromWish.title}“. Po uložení dostane oznámení {fromWish.votes}{" "}
+            {fromWish.votes === 1 ? "člověk, který ho chtěl" : fromWish.votes < 5 ? "lidé, kteří ho chtěli" : "lidí, kteří ho chtěli"}.
+          </p>
+        </>
+      )}
       <input type="hidden" name="slots" value={JSON.stringify(slots.map(({ day, start, end }) => ({ day, start, end })))} />
 
       <fieldset className={styles.fieldset}>
