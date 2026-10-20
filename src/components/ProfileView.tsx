@@ -25,7 +25,10 @@ export function ProfileView({
   shownBadges = [],
   badgeProgress = null,
   live = false,
+  wrap = null,
 }: {
+  /** Pruh „Tvůj rok v Campu“ (jen vlastní profil, když běží wrap) */
+  wrap?: React.ReactNode;
   /** Vystavené odznaky (nejvýš 3) */
   shownBadges?: EarnedBadge[];
   /** Moje sbírka odznaků s postupem (jen ve vlastním profilu studenta) */
@@ -95,6 +98,8 @@ export function ProfileView({
           </div>
         )}
       </section>
+
+      {wrap}
 
       <div className={styles.stats}>
         {student ? (

@@ -44,7 +44,7 @@ const KIND_TABS = [
   ["ostatni", "Události"],
   ["expedice", "Expedice"],
 ] as const;
-type TabKey = "users" | "periods" | "storage" | "announcements" | (typeof KIND_TABS)[number][0];
+type TabKey = "users" | "periods" | "tools" | "announcements" | (typeof KIND_TABS)[number][0];
 
 const KIND_WORDS: Record<ActivityKind, { title: string; add: string; empty: string; past: string }> = {
   kurz: { title: "Všechny kurzy", add: "Nový kurz", empty: "Zatím tu není žádný kurz.", past: "Proběhlé kurzy" },
@@ -69,7 +69,7 @@ export function AdminTabs({
   live,
   initialTab = "users",
   periodsTab,
-  storageTab,
+  toolsTab,
   announcementsTab,
 }: {
   users: AdminUser[];
@@ -78,8 +78,8 @@ export function AdminTabs({
   initialTab?: TabKey;
   /** Obsah záložky Kurzová období (vykreslený na serveru) */
   periodsTab?: React.ReactNode;
-  /** Obsah záložky Úložiště (vykreslený na serveru) */
-  storageTab?: React.ReactNode;
+  /** Obsah záložky Nástroje: wrap, úložiště… (vykreslený na serveru) */
+  toolsTab?: React.ReactNode;
   /** Obsah záložky Oznámení (vykreslený na serveru) */
   announcementsTab?: React.ReactNode;
 }) {
@@ -137,8 +137,8 @@ export function AdminTabs({
             {label}
           </button>
         ))}
-        <button role="tab" aria-selected={tab === "storage"} className="tab" onClick={() => setTab("storage")}>
-          Úložiště
+        <button role="tab" aria-selected={tab === "tools"} className="tab" onClick={() => setTab("tools")}>
+          Nástroje
         </button>
       </div>
 
@@ -233,7 +233,7 @@ export function AdminTabs({
       )}
 
       {tab === "periods" && periodsTab}
-      {tab === "storage" && storageTab}
+      {tab === "tools" && toolsTab}
       {tab === "announcements" && announcementsTab}
 
       {KIND_TABS.map(([key]) =>

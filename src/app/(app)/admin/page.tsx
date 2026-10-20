@@ -16,12 +16,14 @@ import { AdminTabs } from "./AdminTabs";
 import { PeriodManager } from "./PeriodManager";
 import { StorageManager, type StorageView } from "./StorageManager";
 import { TermManager } from "./TermManager";
+import { WrapTools } from "./WrapTools";
+import { wrapState } from "@/lib/data-wrap";
 import styles from "./admin.module.css";
 
 export const metadata: Metadata = { title: "Uživatelé a škola" };
 
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const { tab } = await searchParams;
   const users = await listUsers();
   const activities = await listActivities();
@@ -39,6 +41,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const terms = await listTerms();
   const storage = await loadStorage();
   const announcements = await listAnnouncements();
+  const wrap = await wrapState(me);
   // Připravené ateliéry a expedice (do zápisu se dají vyhlásit spolu s kurzy).
   const freeOf = (a: (typeof activities)[number]) =>
     !(a.round && a.round.closesAt > new Date(nowMs()).toISOString());
@@ -122,13 +125,26 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   ? "expedice"
                   : tab === "obdobi"
                     ? "periods"
-                    : tab === "uloziste"
-                      ? "storage"
+                    : tab === "nastroje" || tab === "uloziste" || tab === "wrap"
+                      ? "tools"
                       : tab === "oznameni"
                         ? "announcements"
                         : "users"
         }
-        storageTab={<StorageManager report={storage.report} problem={storage.problem} />}
+        toolsTab={
+          <div className={styles.periodsStack}>
+            <WrapTools
+              live={isSupabase}
+              launchLocal={wrap ? isoToPragueLocal(wrap.launchAt) : ""}
+              launchText={wrap ? formatLaunch(wrap.launchAt) : ""}
+              untilText={wrap ? formatLaunch(wrap.until) : ""}
+              active={!!wrap?.active}
+              trial={!!wrap?.trial}
+              season={wrap?.season ?? 0}
+            />
+            <StorageManager report={storage.report} problem={storage.problem} />
+          </div>
+        }
         announcementsTab={
           <AnnouncementManager
             live={isSupabase}
@@ -191,6 +207,13 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       />
     </>
   );
+}
+
+/** „20. 6. 2027 v 8:00“ */
+function formatLaunch(iso: string): string {
+  const [d, t] = isoToPragueLocal(iso).split("T");
+  const [y, m, day] = d.split("-").map(Number);
+  return `${day}. ${m}. ${y} v ${Number(t.slice(0, 2))}:${t.slice(3, 5)}`;
 }
 
 function Stat({ label, value }: { label: string; value: number | string }) {

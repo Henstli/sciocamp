@@ -1552,4 +1552,63 @@ await test("odznaky: udělení, úrovně, oznámení, vystavení", async () => {
   await db.query(`delete from auth.users where id = $1`, [kid]);
 });
 
+await test("wrap: spuštění, zkouška na adminovi, data a typ", async () => {
+  const state = async (uid) => (await as(uid, `select public.wrap_state() as s`))[0].s;
+  // Před spuštěním (výchozí 20. 6.) wrap student nevidí ani nenačte.
+  await db.query(`update public.wrap_settings set launch_at = null`);
+  const before = await state(student);
+  if (new Date() < new Date(before.launch_at)) {
+    assert.equal(before.active, false);
+    await assert.rejects(() => as(student, `select public.wrap_data()`), /není spuštěný/);
+  }
+  // Datum mění jen admin a jen v letošním školním roce.
+  await assert.rejects(() => as(student, `select public.set_wrap_launch(now())`), /jen admin/);
+  await assert.rejects(() => as(admin, `select public.set_wrap_launch(now() + interval '2 years')`), /letošního školního roku/);
+  // Admin si zkoušku spustí jen na sobě.
+  await assert.rejects(() => as(student, `select public.start_wrap_trial()`), /jen admin/);
+  await as(admin, `select public.mark_wrap_seen()`);
+  await as(admin, `select public.start_wrap_trial()`);
+  const trial = await state(admin);
+  assert.equal(trial.active, true);
+  assert.equal(trial.trial, true);
+  assert.equal(trial.seen, false, "zkouška vrátí automatické otevření");
+  await as(admin, `select public.stop_wrap_trial()`);
+  assert.equal((await state(admin)).trial, false);
+  // Spuštění pro všechny (před hodinou) — student vidí svoje data a typ.
+  const { rows: [exp] } = await db.query(
+    `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on, published)
+     values ('wrap-vyprava', 'expedice', 'Wrap výprava', $1, current_date - 2, current_date, true) returning id`, [teacher]);
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2)`, [exp.id, student]);
+  const { rows: [task] } = await db.query(
+    `insert into public.assignments (activity_id, title, due_at, max_points, created_by) values ($1, 'Wrap úkol', now() + interval '1 day', 10, $2) returning id`,
+    [course.id, teacher]);
+  await db.query(`insert into public.submissions (assignment_id, student_id, status, submitted_at) values ($1, $2, 'odevzdano', now())`, [task.id, student]);
+  await db.query(`insert into public.reviews (assignment_id, student_id, result, points, feedback, reviewed_by) values ($1, $2, 'splneno', 10, 'Super', $3)`, [task.id, student, teacher]);
+  await as(admin, `select public.set_wrap_launch(greatest(now() - interval '1 hour', public.wrap_season_start()::timestamp at time zone 'Europe/Prague'))`);
+  const live = await state(student);
+  assert.equal(live.active, true);
+  assert.equal(live.seen, false);
+  const data = (await as(student, `select public.wrap_data() as d`))[0].d;
+  assert.equal(data.role, "student");
+  assert.ok(data.mine.handed >= 1 && data.mine.on_time >= 1 && data.mine.full_points >= 1);
+  assert.ok(data.mine.people.length <= 3);
+  assert.deepEqual(data.mine.expeditions, ["Wrap výprava"]);
+  assert.equal(data.mine.expedition_days, 3);
+  assert.equal(data.mine.type.key, "vypravnik");
+  assert.ok(data.school.handed >= 1);
+  await as(student, `select public.mark_wrap_seen()`);
+  assert.equal((await state(student)).seen, true);
+  // Vyučující dostane svoji verzi.
+  const tdata = (await as(teacher, `select public.wrap_data() as d`))[0].d;
+  assert.ok(tdata.mine.reviews >= 1 && tdata.mine.feedback >= 1);
+  assert.equal(tdata.mine.expeditions, 1);
+  assert.ok(typeof tdata.mine.type.key === "string");
+  // Ukazatele ostatních přímo nikdo nevolá.
+  await assert.rejects(() => as(student, `select * from public.wrap_student_values(current_date)`));
+  await db.query(`update public.wrap_settings set launch_at = null`);
+  await db.query(`delete from public.wrap_views`);
+  await db.query(`delete from public.assignments where id = $1`, [task.id]);
+  await db.query(`delete from public.activities where id = $1`, [exp.id]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

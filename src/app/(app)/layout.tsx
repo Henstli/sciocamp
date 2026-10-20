@@ -9,6 +9,8 @@ import { PresenceTracker } from "@/components/PresenceTracker";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { ThemeSync } from "@/components/ThemeSync";
 import { BadgeCelebration } from "@/components/badges/BadgeCelebration";
+import { WrapLauncher } from "@/components/wrap/WrapPlayer";
+import { wrapState } from "@/lib/data-wrap";
 import { isSupabase } from "@/lib/config";
 import { MandatoryVote } from "@/components/proposals/MandatoryVote";
 import { bannerSwatch } from "@/lib/banner";
@@ -43,11 +45,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 async function UserSidebar() {
   const user = await requireUser();
-  const [wishWaiting, tasks, messages, users] = await Promise.all([
+  const [wishWaiting, tasks, messages, users, wrap] = await Promise.all([
     wishesWaiting(user),
     homeTasks(user),
     unreadMessages(user),
     listUsers(),
+    wrapState(user),
   ]);
   // Kdo má profilovou fotku (cesta slouží i jako verze pro prohlížeč).
   const avatars = Object.fromEntries(
@@ -65,6 +68,8 @@ async function UserSidebar() {
       <LiveRefresh userId={user.id} live={isSupabase} />
       {isSupabase && <ThemeSync pref={user.theme ?? "light"} />}
       <BadgeCelebration live={isSupabase} />
+      {/* Wrap „Tvůj rok v Campu“: po spuštění se jednou sám otevře */}
+      <WrapLauncher autoOpen={!!wrap?.active && !wrap.seen} />
       <Sidebar
         user={{
           name: user.name,

@@ -1,0 +1,794 @@
+/* Wrap „Tvůj rok v Campu“. Příběh má vlastní barvy snímků (stejné ve světlém
+   i tmavém režimu), proto tu jsou barvy natvrdo místo tokenů. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: #0f1226;
+  color: #ffffff;
+  font-family: var(--font);
+  outline: none;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, var(--w-a), var(--w-b));
+  opacity: 0.45;
+}
+
+.aside {
+  position: absolute;
+  left: 40px;
+  top: 36px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.asideKicker {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.asideTitle {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.asideHint {
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+.arrow {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.16);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+}
+.arrow:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.26);
+}
+.arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.arrow svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.arrow:focus-visible,
+.iconBtn:focus-visible,
+.saveBtn:focus-visible,
+.closeBtn:focus-visible,
+.tapPrev:focus-visible,
+.tapNext:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.story {
+  position: relative;
+  overflow: hidden;
+  width: 428px;
+  height: min(800px, calc(100dvh - 48px));
+  border-radius: 28px;
+  background: linear-gradient(160deg, var(--w-a), var(--w-b));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  flex: none;
+}
+
+@media (max-width: 700px) {
+  .overlay {
+    gap: 0;
+  }
+  .aside,
+  .arrow {
+    display: none;
+  }
+  .story {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+@media (min-width: 701px) and (max-width: 980px) {
+  .aside {
+    display: none;
+  }
+}
+
+.glow1,
+.glow2 {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.55;
+  animation: float 9s ease-in-out infinite;
+  pointer-events: none;
+}
+.glow1 {
+  width: 320px;
+  height: 320px;
+  top: -90px;
+  right: -120px;
+  background: var(--w-g1);
+}
+.glow2 {
+  width: 260px;
+  height: 260px;
+  bottom: -80px;
+  left: -110px;
+  background: var(--w-g2);
+  animation-delay: -4s;
+}
+.ring {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  left: -65px;
+  top: 30%;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  animation: spin 60s linear infinite;
+  pointer-events: none;
+}
+
+.top {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: 14px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.segments {
+  display: flex;
+  gap: 4px;
+}
+.seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+.seg i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: #ffffff;
+}
+.segRun {
+  width: 0;
+  animation: seg 7s linear forwards;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.18);
+  display: grid;
+  place-items: center;
+}
+.logo svg,
+.cardHead svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.barTitle {
+  font-size: 13px;
+  font-weight: 800;
+}
+.demo {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.grow {
+  flex: 1;
+}
+.iconBtn {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.iconBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.iconBtn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.iconBtn svg .fill {
+  fill: #ffffff;
+  stroke: none;
+}
+
+.tapPrev,
+.tapNext {
+  position: absolute;
+  top: 96px;
+  bottom: 0;
+  z-index: 2;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tapPrev {
+  left: 0;
+  width: 30%;
+}
+.tapNext {
+  right: 0;
+  width: 70%;
+}
+
+.slide {
+  position: absolute;
+  top: calc(max(14px, env(safe-area-inset-top)) + 96px);
+  left: 26px;
+  right: 26px;
+  bottom: max(28px, env(safe-area-inset-bottom));
+  /* Nad klepacími zónami, ale propouští klepnutí (kromě tlačítek karty) */
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.kicker {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.title {
+  margin: 0;
+  font-size: clamp(26px, 7.6vw, 32px);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.big {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+.bigNum {
+  font-size: clamp(72px, 24vw, 104px);
+  line-height: 0.95;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+.bigUnit {
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+.line,
+.person {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.13);
+}
+.lineValue {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  min-width: 64px;
+  white-space: nowrap;
+}
+.lineLabel {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.person {
+  gap: 12px;
+  padding: 10px 14px;
+}
+.rank {
+  font-size: 18px;
+  font-weight: 800;
+  width: 20px;
+}
+.personName {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.personCount {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.badges {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 10px;
+  margin-top: 8px;
+}
+.badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.typeCard {
+  margin-top: 10px;
+  padding: 24px 20px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.typeTile,
+.cardTile {
+  width: 96px;
+  height: 96px;
+  border-radius: 30px;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+}
+.typeTile svg,
+.cardTile svg {
+  width: 52px;
+  height: 52px;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.typeName {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.typeDesc {
+  font-size: 15px;
+  line-height: 1.5;
+  opacity: 0.92;
+}
+
+.note {
+  margin: auto 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+  opacity: 0.92;
+}
+
+/* Karta roku */
+.card {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 20px 16px;
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.card::before,
+.card::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.card::before {
+  width: 260px;
+  height: 260px;
+  top: -120px;
+  right: -100px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.card::after {
+  width: 180px;
+  height: 180px;
+  bottom: -90px;
+  left: -70px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.card > * {
+  position: relative;
+}
+.cardHead {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+.cardHead svg {
+  width: 16px;
+  height: 16px;
+}
+.cardTile {
+  margin-top: 4px;
+  width: 88px;
+  height: 88px;
+  border-radius: 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.cardWho {
+  font-size: 15px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+.cardType {
+  margin-top: -8px;
+  font-size: 36px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.cardShort {
+  font-size: 14px;
+  line-height: 1.45;
+  opacity: 0.92;
+  max-width: 290px;
+}
+.cardStats {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+.cardStats > div {
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cardStats strong {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.cardStats span {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  opacity: 0.9;
+}
+.cardFoot {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 14px;
+  font-weight: 800;
+}
+.cardAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  pointer-events: auto;
+  position: relative;
+  z-index: 5;
+}
+.saveBtn,
+.closeBtn {
+  min-height: 50px;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.saveBtn {
+  flex: 1.4;
+  border: 0;
+  background: #ffffff;
+  color: #111a33;
+}
+.saveBtn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: #111a33;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.saveBtn:disabled {
+  opacity: 0.7;
+}
+.closeBtn {
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  color: #ffffff;
+}
+
+/* Nízké obrazovky: menší karta a čísla, ať se vše vejde */
+@media (max-height: 740px) {
+  .bigNum {
+    font-size: 76px;
+  }
+  .card {
+    gap: 6px;
+    padding: 14px 16px 12px;
+  }
+  .cardTile {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+  }
+  .cardTile svg {
+    width: 38px;
+    height: 38px;
+  }
+  .cardType {
+    font-size: 30px;
+  }
+  .line,
+  .person {
+    padding: 10px 14px;
+  }
+  .lineValue {
+    font-size: 22px;
+  }
+  .typeCard {
+    padding: 18px 16px;
+  }
+  .typeTile {
+    width: 72px;
+    height: 72px;
+    border-radius: 22px;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Animace */
+.in {
+  animation: in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.pop {
+  animation: pop 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.d1 {
+  animation-delay: 0.12s;
+}
+.d2 {
+  animation-delay: 0.3s;
+}
+.d4 {
+  animation-delay: 0.8s;
+}
+
+@keyframes in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes seg {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(18px, -22px) scale(1.08);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .in,
+  .pop,
+  .glow1,
+  .glow2,
+  .ring {
+    animation: none;
+  }
+}
+
+/* Pruh v profilu */
+.banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 18px;
+  background: linear-gradient(130deg, #3b6fe0 0%, #5b4bc4 60%, #0f6b5f 120%);
+  color: #ffffff;
+}
+.bannerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.bannerIcon svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.bannerText {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bannerText strong {
+  font-size: 17px;
+  font-weight: 800;
+}
+.bannerText span {
+  font-size: 14px;
+  opacity: 0.9;
+}
+.bannerBtn {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1f4fb8;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.bannerBtn:hover {
+  background: #e8effd;
+}
+.bannerBtn:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
