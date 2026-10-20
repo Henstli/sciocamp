@@ -32,6 +32,15 @@
   --atelier-bg: #eeeafd;
   --other: #0f6b5f;
   --other-bg: #e0f2ef;
+  /* Události (oranžová) a konzultace (růžová) — ať se neplete s expedicí */
+  --event: #b54a12;
+  --event-bg: #fdebdd;
+  --event-line: #f6cfae;
+  --event-tint: #fff6ef;
+  --event-fg: #a3420f;
+  --consult-bg: #fbe6f0;
+  --consult-line: #f2c2d8;
+  --consult-fg: #a02c62;
 
   --accent-badge: #f0a63a;
 
@@ -105,6 +114,14 @@
   --atelier-tint: #1e1a40;
   --other: #1f8f7c;
   --other-bg: #173a32;
+  --event: #d0632a;
+  --event-bg: #3b2416;
+  --event-line: #61391f;
+  --event-tint: #2b1b11;
+  --event-fg: #f7b98a;
+  --consult-bg: #3a1a2b;
+  --consult-line: #5e2a45;
+  --consult-fg: #f3a6cb;
   --other-line: #25574a;
   --other-tint: #142e28;
 

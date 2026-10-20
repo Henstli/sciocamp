@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Icon } from "../Icon";
 import { MeetLink } from "../MeetLink";
-import { Milestones } from "../ClassCard";
+import { Milestones, kindTone } from "../ClassCard";
 import { ClassTabs, type ClassView } from "./ClassTabs";
 import { requireUser } from "@/lib/auth";
 import { canOpenActivity, getActivity, getClassroom, getUsersByIds, listActivities, listStaff, teachesActivity } from "@/lib/data";
@@ -176,7 +176,7 @@ export async function ClassroomPage({
             label={activity.project.name ? `Projekt: ${activity.project.name}` : "Milníky ateliéru"}
             done={activity.project.milestonesDone}
             total={activity.project.milestonesTotal}
-            tone={activity.tone}
+            tone={kindTone(activity)}
           />
         </section>
       )}

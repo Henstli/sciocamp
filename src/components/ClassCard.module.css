@@ -24,6 +24,9 @@
 .head[data-tone="teal"] {
   background: var(--other);
 }
+.head[data-tone="orange"] {
+  background: var(--event);
+}
 
 .when {
   font-size: 12px;
@@ -94,6 +97,9 @@
 }
 .ms[data-tone="teal"] div[data-done="true"] {
   background: var(--other);
+}
+.ms[data-tone="orange"] div[data-done="true"] {
+  background: var(--event);
 }
 
 /* Štítek „Začne 2. 11.“ / „Připravuje se“ v hlavičce karty */

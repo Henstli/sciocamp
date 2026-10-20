@@ -29,7 +29,7 @@ export function ClassCard({
   const href = activityHref(activity);
   return (
     <article className={`card ${styles.card}`}>
-      <Link href={href} className={styles.head} data-tone={activity.tone}>
+      <Link href={href} className={styles.head} data-tone={kindTone(activity)}>
         <div className={styles.when}>
           {describeWhen(activity) || "Bez rozvrhu"}
         </div>
@@ -49,7 +49,7 @@ export function ClassCard({
                 label={activity.project.name ? `Projekt: ${activity.project.name}` : "Milníky ateliéru"}
                 done={activity.project.milestonesDone}
                 total={activity.project.milestonesTotal}
-                tone={activity.tone}
+                tone={kindTone(activity)}
               />
             )}
             {activity.location && (
@@ -87,6 +87,14 @@ export function ClassCard({
   );
 }
 
+/** Barva karty: událost vždy oranžová, expedice zelenomodrá (jako v rozvrhu), jinak uložený odstín. */
+export function kindTone(a: Pick<Activity, "kind" | "tone">): CardTone {
+  if (a.kind === "ostatni") return "orange";
+  if (a.kind === "expedice") return "teal";
+  return a.tone;
+}
+export type CardTone = Activity["tone"] | "orange";
+
 export function Milestones({
   done,
   total,
@@ -96,7 +104,7 @@ export function Milestones({
   done: number;
   total: number;
   label: string;
-  tone: Activity["tone"];
+  tone: CardTone;
 }) {
   return (
     <div>

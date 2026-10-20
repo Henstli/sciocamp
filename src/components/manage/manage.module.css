@@ -119,6 +119,10 @@
   background: var(--atelier-bg);
 }
 .kind[data-checked="true"][data-kind="ostatni"] {
+  border-color: var(--event);
+  background: var(--event-bg);
+}
+.kind[data-checked="true"][data-kind="expedice"] {
   border-color: var(--other);
   background: var(--other-bg);
 }

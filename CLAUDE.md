@@ -15,7 +15,7 @@
 - Text `#111A33`, sekundární text `#3A4560`, tlumený text `#5A6782`
 - Primární `#3B6FE0`, tmavší `#2F5FCC`, text na světlém `#1F4FB8`, světlá výplň `#E8EFFD`, `#C9D8FA`
 - Stavy: hotovo `#17704A` na `#E3F4EC`, čeká `#8A5300` na `#FDF1DC`, po termínu `#A82E2E` na `#FBE7E7`
-- Typy aktivit: kurz modrá, ateliér `#5B4BC4` / `#EEEAFD`, ostatní/expedice `#0F6B5F` / `#E0F2EF`
+- Typy aktivit: kurz modrá, ateliér `#5B4BC4` / `#EEEAFD`, expedice `#0F6B5F` / `#E0F2EF`, událost (`ostatni`) oranžová `#B54A12` / `#FDEBDD` (tokeny `--event*`), konzultace v rozvrhu růžová (`--consult*`). Karta aktivity bere barvu z `kindTone()` v `ClassCard.tsx` (událost a expedice podle druhu, ne podle uloženého `tone`).
 - Zaoblení: karty 18 px, tlačítka 12 px; dotykové cíle min. 44 px
 
 ## Rozhodnutí

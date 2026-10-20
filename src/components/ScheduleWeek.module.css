@@ -124,12 +124,12 @@
   color: var(--atelier-text);
 }
 .entry[data-kind="ostatni"] {
-  background: var(--wait-bg);
-  color: var(--wait);
+  background: var(--event-bg);
+  color: var(--event-fg);
 }
 .entry[data-kind="konzultace"] {
-  background: var(--ok-bg);
-  color: var(--ok);
+  background: var(--consult-bg);
+  color: var(--consult-fg);
 }
 .entry[data-kind="expedice"] {
   background: var(--other-bg);
@@ -187,7 +187,7 @@
   border-radius: 3px;
 }
 .legend i[data-kind="konzultace"] {
-  background: var(--ok-line);
+  background: var(--consult-line);
 }
 .legend i[data-kind="kurz"] {
   background: var(--primary-line);
@@ -196,7 +196,7 @@
   background: var(--atelier-line);
 }
 .legend i[data-kind="ostatni"] {
-  background: var(--wait-line);
+  background: var(--event-line);
 }
 .legend i[data-kind="expedice"] {
   background: var(--other-line);
@@ -242,8 +242,8 @@
   color: var(--atelier-text);
 }
 .allDayEntry[data-kind="ostatni"] {
-  background: var(--wait-bg);
-  color: var(--wait);
+  background: var(--event-bg);
+  color: var(--event-fg);
 }
 .allDayEntry[data-kind="blocked"] {
   background: repeating-linear-gradient(135deg, var(--other-bg) 0 10px, var(--other-tint) 10px 20px);

@@ -95,8 +95,8 @@
   color: var(--atelier-text);
 }
 .icon[data-kind="ostatni"] {
-  background: var(--wait-bg);
-  color: var(--wait);
+  background: var(--event-bg);
+  color: var(--event-fg);
 }
 .icon[data-kind="expedice"] {
   background: var(--other-bg);
