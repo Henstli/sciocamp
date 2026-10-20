@@ -23,7 +23,7 @@ export function PublishNow({ id }: { id: string }) {
       >
         {pending ? "Zveřejňuji…" : "Zveřejnit hned"}
       </button>
-      {error && <span style={{ color: "var(--late)", fontSize: 13, fontWeight: 600 }}>{error}</span>}
+      {error && <span style={{ color: "var(--late-fg)", fontSize: 13, fontWeight: 600 }}>{error}</span>}
     </>
   );
 }

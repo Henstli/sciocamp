@@ -44,7 +44,7 @@ a.small {
   border-radius: 10px;
 }
 .error {
-  color: var(--late);
+  color: var(--late-fg);
   background: var(--late-bg);
 }
 .info {
@@ -104,10 +104,10 @@ a.small {
   border-color: var(--primary-line);
 }
 .legend span[data-k="taken"]::before {
-  background: #e3e8f2;
+  background: var(--border);
 }
 .legend span[data-k="off"]::before {
-  background: repeating-linear-gradient(135deg, #eef1f7 0 4px, #f8f9fc 4px 8px);
+  background: repeating-linear-gradient(135deg, var(--border-soft) 0 4px, var(--surface-2) 4px 8px);
 }
 
 /* Tabulka bloků × vyučujících */
@@ -178,12 +178,12 @@ button.cell:hover {
   color: var(--primary-text);
 }
 .cell[data-k="taken"] {
-  background: #e3e8f2;
-  border-color: #e3e8f2;
+  background: var(--border);
+  border-color: var(--border);
 }
 .cell[data-k="off"],
 .cell[data-k="past"] {
-  background: repeating-linear-gradient(135deg, #eef1f7 0 4px, #f8f9fc 4px 8px);
+  background: repeating-linear-gradient(135deg, var(--border-soft) 0 4px, var(--surface-2) 4px 8px);
   border-color: var(--border-soft);
 }
 
@@ -279,7 +279,7 @@ button.cell:hover {
 }
 .guest button:hover {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .actions,
 .inline {
@@ -300,7 +300,7 @@ button.cell:hover {
   cursor: pointer;
 }
 .linkBtn:hover {
-  color: var(--late);
+  color: var(--late-fg);
 }
 .input {
   flex: 1 1 240px;
@@ -378,14 +378,14 @@ button.cell:hover {
 }
 .slotRow[data-k="guest"] {
   background: var(--atelier-bg);
-  border-color: #d7cffa;
+  border-color: var(--atelier-line);
 }
 .slotRow[data-k="block"],
 .slotRow[data-k="day"],
 .slotRow[data-k="rule"],
 .slotRow[data-k="busy"],
 .slotRow[data-k="past"] {
-  background: repeating-linear-gradient(135deg, #f3f5fa 0 6px, #fafbfd 6px 12px);
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 6px, var(--surface-2) 6px 12px);
   color: var(--text-muted);
 }
 .ruleGrid {
@@ -405,9 +405,9 @@ button.cell:hover {
   cursor: pointer;
 }
 .rule[aria-pressed="true"] {
-  background: repeating-linear-gradient(135deg, #fbe7e7 0 6px, #fdf3f3 6px 12px);
-  border-color: #e7b4b4;
-  color: var(--late);
+  background: repeating-linear-gradient(135deg, var(--late-bg) 0 6px, var(--late-tint) 6px 12px);
+  border-color: var(--late-line);
+  color: var(--late-fg);
   text-decoration: line-through;
 }
 
@@ -431,7 +431,7 @@ button.cell:hover {
   max-width: 140px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

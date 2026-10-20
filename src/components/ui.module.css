@@ -55,12 +55,12 @@
   font-weight: 700;
 }
 .avatar_student {
-  background: #dce7ff;
+  background: var(--primary-soft-2);
   color: var(--primary-text);
 }
 .avatar_ucitel {
-  background: #e9e4ff;
-  color: #4b3bb5;
+  background: var(--atelier-line);
+  color: var(--atelier-text);
 }
 .avatar_admin {
   background: var(--primary-text);
@@ -72,11 +72,11 @@
 }
 .avatar_late {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .avatar_teal {
   background: var(--other-bg);
-  color: var(--other);
+  color: var(--other-fg);
 }
 
 .empty {
@@ -140,4 +140,9 @@
   background: #22a06b;
   border: 2px solid var(--card);
   box-sizing: content-box;
+}
+
+/* Tmavý režim: tmavší výplň, aby byly bílé iniciály čitelné */
+:global(:root[data-theme="dark"]) .avatar_admin {
+  background: var(--primary-dark);
 }

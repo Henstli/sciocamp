@@ -70,7 +70,7 @@
 .fieldError {
   font-size: 13px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .formError,
 .formInfo {
@@ -80,7 +80,7 @@
   border-radius: 10px;
 }
 .formError {
-  color: var(--late);
+  color: var(--late-fg);
   background: var(--late-bg);
 }
 .formInfo {
@@ -179,7 +179,7 @@
 }
 .remove:hover {
   border-color: var(--late);
-  color: var(--late);
+  color: var(--late-fg);
 }
 
 .enroll {
@@ -266,11 +266,11 @@ label.row:hover,
 .dangerBtn {
   background: var(--card);
   border-color: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .dangerBtn:hover {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .dangerSolid {
   background: var(--late);
@@ -361,7 +361,7 @@ label.row:hover,
   padding: 16px;
   border-radius: 14px;
   border: 1px solid var(--atelier-bg);
-  background: #faf9ff;
+  background: var(--atelier-tint);
 }
 .roundStatus {
   display: flex;
@@ -391,16 +391,16 @@ label.row:hover,
   min-height: 36px;
   padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid #c9d8fa;
-  background: #e8effd;
-  color: #1f4fb8;
+  border: 1px solid var(--primary-line);
+  background: var(--primary-soft);
+  color: var(--primary-text);
   font: inherit;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
 .quickChip:hover {
-  background: #dce6fc;
+  background: var(--primary-soft-2);
 }
 
 /* Výběr barvy profilu */
@@ -435,12 +435,12 @@ label.row:hover,
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px transparent;
+  box-shadow: 0 0 0 2px var(--card), 0 0 0 4px transparent;
   transition: box-shadow 0.15s;
 }
 .swatch input:checked + span {
-  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--text);
+  box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--text);
 }
 .swatch input:focus-visible + span {
-  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--primary);
+  box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--primary);
 }

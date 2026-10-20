@@ -105,7 +105,7 @@
   background: var(--primary-tint);
 }
 .item[data-unread="true"] {
-  background: #f7f9ff;
+  background: var(--surface-2);
 }
 .icon {
   flex: none;
@@ -129,7 +129,7 @@
 }
 .icon[data-kind="skola"] {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .text {
   flex: 1;

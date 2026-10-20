@@ -127,7 +127,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: #f9fafd;
+  background: var(--surface-2);
 }
 .threadHead {
   display: flex;
@@ -272,7 +272,7 @@
   margin: 8px 16px 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .composer {
   display: flex;
@@ -469,7 +469,7 @@
   place-items: center;
   border-radius: 30%;
   background: var(--atelier-bg);
-  color: var(--atelier);
+  color: var(--atelier-fg);
   font-weight: 800;
 }
 .headButton {
@@ -587,7 +587,7 @@
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .formNote {
   margin: 0;
@@ -739,7 +739,7 @@
   padding: 3px 8px;
   border-radius: 999px;
   background: var(--atelier-bg);
-  color: var(--atelier);
+  color: var(--atelier-fg);
 }
 .memberActions {
   display: flex;
@@ -779,7 +779,7 @@
 .confirmBox p {
   margin: 0;
   font-size: 14px;
-  color: var(--late);
+  color: var(--late-fg);
   font-weight: 600;
   line-height: 1.5;
 }
@@ -793,13 +793,13 @@
   color: #fff;
 }
 .dangerOutline {
-  border: 1px solid #e7b4b4;
+  border: 1px solid var(--late-line);
   background: var(--card);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .dangerOutline:hover {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .messages[hidden],
 .composer[hidden] {
@@ -809,6 +809,6 @@
   max-height: 240px;
 }
 .online {
-  color: #17704a;
+  color: var(--ok);
   font-weight: 700;
 }

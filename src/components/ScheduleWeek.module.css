@@ -96,7 +96,7 @@
 }
 .dayCol[data-today="true"] {
   background-color: var(--primary-tint);
-  background-image: linear-gradient(#e3e9f7 1px, transparent 1px);
+  background-image: linear-gradient(var(--border) 1px, transparent 1px);
   border-radius: 0 0 12px 12px;
 }
 
@@ -133,7 +133,7 @@
 }
 .entry[data-kind="expedice"] {
   background: var(--other-bg);
-  color: var(--other);
+  color: var(--other-fg);
 }
 .entry[data-live="true"] {
   background: var(--primary);
@@ -187,19 +187,19 @@
   border-radius: 3px;
 }
 .legend i[data-kind="konzultace"] {
-  background: #bfe3d0;
+  background: var(--ok-line);
 }
 .legend i[data-kind="kurz"] {
   background: var(--primary-line);
 }
 .legend i[data-kind="atelier"] {
-  background: #d7cffa;
+  background: var(--atelier-line);
 }
 .legend i[data-kind="ostatni"] {
-  background: #f6dcae;
+  background: var(--wait-line);
 }
 .legend i[data-kind="expedice"] {
-  background: #bfe5de;
+  background: var(--other-line);
 }
 .legend i[data-kind="live"] {
   background: var(--primary);
@@ -235,7 +235,7 @@
   line-height: 1.3;
   overflow: hidden;
   background: var(--other-bg);
-  color: var(--other);
+  color: var(--other-fg);
 }
 .allDayEntry[data-kind="atelier"] {
   background: var(--atelier-bg);
@@ -246,8 +246,8 @@
   color: var(--wait);
 }
 .allDayEntry[data-kind="blocked"] {
-  background: repeating-linear-gradient(135deg, var(--other-bg) 0 10px, #eaf6f3 10px 20px);
-  color: var(--other);
+  background: repeating-linear-gradient(135deg, var(--other-bg) 0 10px, var(--other-tint) 10px 20px);
+  color: var(--other-fg);
 }
 .allDayEntry[data-kind="kurz"] {
   background: var(--primary-soft);

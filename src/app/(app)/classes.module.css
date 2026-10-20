@@ -84,6 +84,6 @@
   color: var(--text);
 }
 .pastRow:hover {
-  background: #fbfcfe;
+  background: var(--surface-2);
   color: var(--text);
 }

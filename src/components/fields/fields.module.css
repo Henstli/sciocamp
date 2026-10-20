@@ -29,7 +29,7 @@
 .error {
   font-size: 12px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .due {
   display: flex;

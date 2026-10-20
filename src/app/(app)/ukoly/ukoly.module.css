@@ -15,7 +15,7 @@
   border-radius: 4px;
 }
 .filter[aria-selected="true"] .dot {
-  box-shadow: 0 0 0 2px #fff;
+  box-shadow: 0 0 0 2px var(--card);
 }
 .count {
   font-size: 12px;
@@ -71,7 +71,7 @@
   border-bottom: 0;
 }
 .row:hover {
-  background: #fbfcfe;
+  background: var(--surface-2);
   color: var(--text);
 }
 .icon {
@@ -93,7 +93,7 @@
 }
 .icon[data-tone="late"] {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .icon[data-tone="info"] {
   background: var(--border-soft);
@@ -143,8 +143,8 @@
   color: #fff;
 }
 .actionDanger {
-  border-color: #e7b4b4;
-  color: var(--late);
+  border-color: var(--late-line);
+  color: var(--late-fg);
 }
 .empty {
   padding: 28px 20px;

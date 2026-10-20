@@ -25,6 +25,8 @@ export type User = {
   dueReminders?: boolean;
   /** Pruh s blížícími se termíny na Domově (výchozí ano). */
   homeDueAlerts?: boolean;
+  /** Vzhled aplikace (Profil → Vzhled) */
+  theme?: "light" | "dark" | "system";
 };
 
 /** „ostatni“ se v aplikaci jmenuje Událost (třídnická konzultace, seminář…). */

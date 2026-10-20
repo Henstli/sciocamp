@@ -36,7 +36,7 @@
 .error {
   font-size: 13px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
   background: var(--late-bg);
   padding: 8px 12px;
   border-radius: 10px;
@@ -83,11 +83,11 @@
 }
 .badge[data-kind="pdf"] {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .badge[data-kind="link"] {
   background: var(--other-bg);
-  color: var(--other);
+  color: var(--other-fg);
 }
 .itemText {
   flex: 1;
@@ -128,7 +128,7 @@ a.itemName:hover {
 }
 .remove:hover {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 
 /* Přidávání a formuláře */
@@ -176,7 +176,7 @@ a.itemName:hover {
 .fieldError {
   font-size: 13px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .submit {
   min-height: 48px;
@@ -332,7 +332,7 @@ a.itemName:hover {
 .lateNote {
   font-size: 14px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
   background: var(--late-bg);
   padding: 10px 14px;
   border-radius: 10px;

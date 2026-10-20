@@ -100,7 +100,7 @@
 }
 .icon[data-kind="expedice"] {
   background: var(--other-bg);
-  color: var(--other);
+  color: var(--other-fg);
 }
 .icon[data-kind="proposal"],
 .icon[data-kind="wish"],

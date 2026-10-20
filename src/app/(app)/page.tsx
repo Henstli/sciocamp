@@ -296,7 +296,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
                   </div>
                   <div className={styles.pollBar}>
                     <span style={{ width: share(p.proCount), background: "var(--primary)" }} />
-                    <span style={{ width: share(p.neutralCount), background: "#c3cad8" }} />
+                    <span style={{ width: share(p.neutralCount), background: "var(--neutral)" }} />
                     <span style={{ width: share(p.againstCount), background: "#c93b3b" }} />
                   </div>
                   <div className={styles.itemMeta}>

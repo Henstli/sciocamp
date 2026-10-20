@@ -188,7 +188,7 @@ export function WithdrawButton({ id }: { id: string }) {
       <button
         type="button"
         className="btn btn-outline"
-        style={{ color: "var(--late)", borderColor: "#e7b4b4" }}
+        style={{ color: "var(--late-fg)", borderColor: "var(--late-line)" }}
         disabled={pending}
         onClick={() => start(async () => setRes(await withdrawProposal(id)))}
       >
@@ -232,7 +232,7 @@ export function DeleteProposal({ id, closed, afterDelete }: { id: string; closed
         <button
           type="button"
           className="btn btn-outline"
-          style={{ minHeight: 36, color: "var(--late)", borderColor: "#e7b4b4" }}
+          style={{ minHeight: 36, color: "var(--late-fg)", borderColor: "var(--late-line)" }}
           disabled={pending || (closed && !done)}
           onClick={() =>
             start(async () => {

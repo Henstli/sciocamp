@@ -183,7 +183,7 @@
 }
 .face {
   display: inline-flex;
-  border: 2px solid #fff;
+  border: 2px solid var(--card);
   border-radius: 50%;
 }
 .face + .face {
@@ -328,7 +328,7 @@ a.deadline:hover .itemTitle {
   padding: 14px 18px;
   border-radius: 16px;
   background: var(--wait-bg);
-  border: 1px solid #f3d9a6;
+  border: 1px solid var(--wait-line);
 }
 .dueIcon {
   flex: none;
@@ -372,7 +372,7 @@ a.deadline:hover .itemTitle {
   color: var(--text);
 }
 .dueItem:hover {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--hover-overlay);
   color: var(--text);
 }
 .dueTitle {

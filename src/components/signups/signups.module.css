@@ -86,7 +86,7 @@
   margin: 0;
   font-size: 13px;
   font-weight: 700;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .groups {
   display: flex;
@@ -151,7 +151,7 @@
   color: var(--text-2);
 }
 .count[data-over="true"] {
-  color: var(--late);
+  color: var(--late-fg);
 }
 .bar {
   height: 6px;
@@ -200,7 +200,7 @@
 }
 .remove:hover {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .optionActions {
   flex: none;

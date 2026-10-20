@@ -256,7 +256,7 @@
 .error {
   font-size: 14px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
   background: var(--late-bg);
   padding: 10px 14px;
   border-radius: 10px;

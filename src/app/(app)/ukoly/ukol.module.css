@@ -167,7 +167,7 @@
   border-bottom: 0;
 }
 .studentRow:hover {
-  background: #fbfcfe;
+  background: var(--surface-2);
   color: var(--text);
 }
 .studentRow[aria-current="true"] {
@@ -243,17 +243,17 @@
   }
 }
 .success[data-tone="error"] {
-  color: var(--late);
+  color: var(--late-fg);
   background: var(--late-bg);
 }
 .lateText {
-  color: var(--late);
+  color: var(--late-fg);
   font-weight: 700;
 }
 .lateNote {
   font-size: 14px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
   background: var(--late-bg);
   padding: 10px 14px;
   border-radius: 10px;

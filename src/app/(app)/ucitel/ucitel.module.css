@@ -67,8 +67,8 @@
   gap: 14px 20px;
   padding: 20px;
   margin-bottom: 16px;
-  border: 1px solid #f3dcb0;
-  background: #fffaf0;
+  border: 1px solid var(--wait-line);
+  background: var(--wait-tint);
 }
 .prepareText {
   flex: 1 1 320px;
@@ -91,7 +91,7 @@
   align-items: center;
   gap: 6px;
   font-weight: 800;
-  color: #17704a;
+  color: var(--ok);
 }
 .readyInfo,
 .readyError {
@@ -100,7 +100,7 @@
   color: var(--text-2);
 }
 .readyError {
-  color: var(--late);
+  color: var(--late-fg);
 }
 .waitlist {
   padding: 16px 20px;

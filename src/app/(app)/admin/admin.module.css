@@ -90,7 +90,7 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
-  background: #fbfcfe;
+  background: var(--surface-2);
   border-top: 0;
 }
 .person {
@@ -187,7 +187,7 @@
 }
 
 .msgError {
-  color: var(--late);
+  color: var(--late-fg);
   font-weight: 600;
   font-size: 13px;
 }
@@ -276,10 +276,10 @@
 }
 .readyCount {
   font-weight: 800;
-  color: #8a5300;
+  color: var(--wait);
 }
 .readyCount[data-all] {
-  color: #17704a;
+  color: var(--ok);
 }
 .readyList {
   list-style: none;
@@ -304,14 +304,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #fdf1dc;
-  color: #8a5300;
+  background: var(--wait-bg);
+  color: var(--wait);
   font-size: 12px;
   font-weight: 800;
 }
 .readyList li[data-ready] .readyMark {
-  background: #e3f4ec;
-  color: #17704a;
+  background: var(--ok-bg);
+  color: var(--ok);
 }
 .grow {
   flex: 1;
@@ -323,8 +323,8 @@
   gap: 10px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: #fdf1dc;
-  color: #5c3a00;
+  background: var(--wait-bg);
+  color: var(--wait);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -386,7 +386,7 @@
   gap: 6px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--hover-overlay);
 }
 .publishAlso label {
   display: flex;
@@ -444,7 +444,7 @@
   min-width: 0;
 }
 .savedNote {
-  color: #17704a;
+  color: var(--ok);
   font-weight: 600;
 }
 .pastList {
@@ -469,8 +469,8 @@
 /* Student bez ročníku — upozornit, ať ho admin zařadí */
 .select[data-missing] {
   border-color: var(--wait, #8a5300);
-  background-color: #fdf1dc;
-  color: #8a5300;
+  background-color: var(--wait-bg);
+  color: var(--wait);
 }
 
 /* Název období a štítek stavu vedle sebe s mezerou */

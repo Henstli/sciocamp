@@ -28,7 +28,7 @@ const FILTERS: [WishKind | "all", string][] = [
 
 const KIND_CHIP: Record<WishKind, React.CSSProperties> = {
   atelier: { background: "var(--atelier-bg)", color: "var(--atelier-text)" },
-  expedice: { background: "var(--other-bg)", color: "var(--other)" },
+  expedice: { background: "var(--other-bg)", color: "var(--other-fg)" },
   kurz: { background: "var(--primary-soft)", color: "var(--primary-text)" },
 };
 

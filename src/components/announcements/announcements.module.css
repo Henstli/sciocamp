@@ -6,7 +6,7 @@
   padding: 16px 18px;
   border-radius: 16px;
   background: var(--late-bg);
-  border: 1px solid #efc4c4;
+  border: 1px solid var(--late-line);
   border-left: 5px solid var(--late);
 }
 .icon {
@@ -32,7 +32,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .title {
   margin: 0;
@@ -64,23 +64,23 @@
   gap: 4px;
   font-size: 13px;
   font-weight: 700;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .dismiss {
   align-self: flex-start;
   min-height: 40px;
   padding: 0 14px;
   border-radius: var(--r-btn);
-  border: 1px solid #e7b4b4;
+  border: 1px solid var(--late-line);
   background: var(--card);
   font: inherit;
   font-size: 13px;
   font-weight: 700;
-  color: var(--late);
+  color: var(--late-fg);
   cursor: pointer;
 }
 .dismiss:hover {
-  background: #fff5f5;
+  background: var(--late-tint);
 }
 
 /* Správa → Oznámení */
@@ -131,7 +131,7 @@ textarea.input {
 .error {
   font-size: 12px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .actions {
   display: flex;
@@ -147,7 +147,7 @@ textarea.input {
 .msgError {
   font-size: 13px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .list {
   list-style: none;
@@ -181,7 +181,7 @@ textarea.input {
   padding: 3px 8px;
   border-radius: 999px;
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .chip[data-ended="true"] {
   background: var(--bg);
@@ -204,8 +204,8 @@ textarea.input {
   color: var(--primary-text);
 }
 .smallDanger:hover {
-  border-color: #e7b4b4;
-  color: var(--late);
+  border-color: var(--late-line);
+  color: var(--late-fg);
 }
 .empty {
   padding: 14px 20px;

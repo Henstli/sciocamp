@@ -33,7 +33,7 @@
 .title,
 .card,
 .big {
-  background: linear-gradient(90deg, var(--border-soft), #f7f9fc, var(--border-soft));
+  background: linear-gradient(90deg, var(--border-soft), var(--surface-2), var(--border-soft));
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
 }

@@ -185,7 +185,7 @@
 }
 .fileBadge[data-kind="pdf"] {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .comments {
   display: flex;
@@ -291,7 +291,7 @@
 }
 .workIcon[data-kind="pdf"] {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .workIcon[data-kind="video"] {
   background: var(--primary-soft);
@@ -299,7 +299,7 @@
 }
 .workIcon[data-kind="kviz"] {
   background: var(--other-bg);
-  color: var(--other);
+  color: var(--other-fg);
 }
 
 .peopleSide {
@@ -427,7 +427,7 @@
 .formError {
   font-size: 13px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .meetForm .composerInput {
   flex: none;
@@ -439,7 +439,7 @@ a.event {
   color: var(--text);
 }
 a.workRow:hover {
-  background: #fbfcfe;
+  background: var(--surface-2);
   color: var(--text);
 }
 a.event:hover {
@@ -557,13 +557,13 @@ a.event:hover {
 }
 .iconBtn:hover {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .formError {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--late);
+  color: var(--late-fg);
 }
 .formInfo {
   margin: 0;

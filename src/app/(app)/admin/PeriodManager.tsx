@@ -117,7 +117,7 @@ export function PeriodManager({
               <button
                 type="button"
                 className="btn btn-outline"
-                style={{ minHeight: 40, color: "var(--late)", borderColor: "#e7b4b4" }}
+                style={{ minHeight: 40, color: "var(--late-fg)", borderColor: "var(--late-line)" }}
                 disabled={pending}
                 onClick={() => start(async () => setMsg(await deletePeriod(p.id)))}
               >

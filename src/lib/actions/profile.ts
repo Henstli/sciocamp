@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { requireUser } from "../auth";
 import { isSupabase } from "../config";
 import { isBannerColor } from "../banner";
+import { isThemePref } from "../theme";
 import { createClient } from "../supabase/server";
 
 export type ProfileState = { error?: string; info?: string; fieldErrors?: Record<string, string> };
@@ -110,4 +111,15 @@ export async function setHomeDueAlerts(on: boolean): Promise<ProfileState> {
   if (error) return { error: "Nastavení se nepodařilo uložit." };
   refresh();
   return { info: on ? "Termíny se na Domově ukazují." : "Termíny se na Domově neukazují." };
+}
+
+/** Vzhled aplikace (světlý / tmavý / podle zařízení). */
+export async function setTheme(theme: string): Promise<ProfileState> {
+  const user = await requireUser();
+  if (!isThemePref(theme)) return { error: "Neznámý vzhled." };
+  if (!isSupabase) return {};
+  const sb = await createClient();
+  const { error } = await sb.from("profiles").update({ theme }).eq("id", user.id);
+  if (error) return { error: "Vzhled se nepodařilo uložit." };
+  return {};
 }

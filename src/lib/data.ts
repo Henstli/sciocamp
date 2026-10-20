@@ -2,6 +2,7 @@
 // jako přihlášený uživatel (oprávnění hlídá RLS), jinak vrací ukázková data.
 
 import "server-only";
+import { isThemePref } from "./theme";
 import { cache } from "react";
 import { isSupabase } from "./config";
 import { DEMO_ACTIVITIES, DEMO_CLASSROOMS, DEMO_PERIODS, DEMO_TERMS, DEMO_USERS } from "./demo-data";
@@ -28,9 +29,10 @@ type ProfileRow = {
   show_online?: boolean;
   due_reminders?: boolean;
   home_due_alerts?: boolean;
+  theme?: string;
 };
 
-const PROFILE_COLUMNS = "id, email, full_name, role, grade, staff_note, bio, activated, blocked, avatar_path, banner_color, show_online, due_reminders, home_due_alerts";
+const PROFILE_COLUMNS = "id, email, full_name, role, grade, staff_note, bio, activated, blocked, avatar_path, banner_color, show_online, due_reminders, home_due_alerts, theme";
 
 export function toUser(r: ProfileRow): User {
   return {
@@ -47,6 +49,7 @@ export function toUser(r: ProfileRow): User {
     showOnline: r.show_online !== false,
     dueReminders: r.due_reminders !== false,
     homeDueAlerts: r.home_due_alerts !== false,
+    theme: isThemePref(r.theme) ? r.theme : "light",
   };
 }
 

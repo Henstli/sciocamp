@@ -35,9 +35,83 @@
 
   --accent-badge: #f0a63a;
 
+  /* Doplňkové odstíny (aby šel přepnout tmavý režim) */
+  --surface-2: #fbfcfe;
+  --neutral: #c3cad8;
+  --primary-soft-2: #dce7ff;
+  --ok-bg-2: #d6eee2;
+  --ok-line: #bfe3cf;
+  --wait-line: #f3dcb0;
+  --wait-tint: #fffaf0;
+  --late-line: #e7b4b4;
+  --late-tint: #fff5f5;
+  --other-line: #bfe5de;
+  --other-tint: #eaf6f3;
+  --atelier-line: #d7cffa;
+  --atelier-tint: #faf9ff;
+  --hover-overlay: rgba(255, 255, 255, 0.6);
+  /* Barva textu na světlé/tmavé ploše (v tmavém režimu světlejší než výplň) */
+  --late-fg: #a82e2e;
+  --other-fg: #0f6b5f;
+  --atelier-fg: #5b4bc4;
+
   --r-card: 18px;
   --r-btn: 12px;
   --tap: 44px;
+}
+
+/* Tmavý režim (Profil → Vzhled). Barvy podle návrhu autora: tmavě modrá
+   noční paleta, jemné výplně a světlé texty štítků. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1226;
+  --card: #171b38;
+  --surface-2: #141832;
+  --border: #262b52;
+  --border-soft: #1f2447;
+  --border-input: #343a68;
+  --neutral: #4a5180;
+
+  --text: #eef0fb;
+  --text-2: #c5cae6;
+  --text-muted: #9aa2c7;
+
+  --primary: #4f78e6;
+  --primary-dark: #3e66d4;
+  --primary-text: #9db4ff;
+  --primary-hover-text: #c3d1ff;
+  --primary-soft: #222b5c;
+  --primary-soft-2: #2a3570;
+  --primary-line: #34407a;
+  --primary-tint: #1b2149;
+
+  --ok: #8fe0c2;
+  --ok-bg: #173a32;
+  --ok-bg-2: #1d4a3f;
+  --ok-line: #25574a;
+  --wait: #f2c98e;
+  --wait-bg: #3a2d17;
+  --wait-line: #5a4523;
+  --wait-tint: #2a2214;
+  --late: #e06666;
+  --late-bg: #3f1c24;
+  --late-line: #6a2c38;
+  --late-tint: #2c1620;
+
+  --atelier: #8b78e6;
+  --atelier-text: #c9bcff;
+  --atelier-bg: #2a2457;
+  --atelier-line: #3d3478;
+  --atelier-tint: #1e1a40;
+  --other: #1f8f7c;
+  --other-bg: #173a32;
+  --other-line: #25574a;
+  --other-tint: #142e28;
+
+  --hover-overlay: rgba(255, 255, 255, 0.06);
+  --late-fg: #f4a3a3;
+  --other-fg: #8fe0c2;
+  --atelier-fg: #c9bcff;
 }
 
 *,
@@ -206,7 +280,7 @@ p {
 }
 .chip-late {
   background: var(--late-bg);
-  color: var(--late);
+  color: var(--late-fg);
 }
 .chip-info {
   background: var(--border-soft);

@@ -76,7 +76,7 @@ export function TeacherAvailability({
                 <button
                   type="button"
                   className="btn btn-outline"
-                  style={{ color: "var(--late)", borderColor: "#e7b4b4" }}
+                  style={{ color: "var(--late-fg)", borderColor: "var(--late-line)" }}
                   disabled={pending}
                   onClick={() => {
                     setConfirmDay(null);
