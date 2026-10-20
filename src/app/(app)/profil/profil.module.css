@@ -276,3 +276,13 @@
   color: var(--primary-text);
   font-weight: 600;
 }
+
+/* Vystavené odznaky na kartě profilu */
+.badges {
+  padding: 0 28px 22px;
+}
+.badgesHint {
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}

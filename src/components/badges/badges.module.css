@@ -1,0 +1,458 @@
+/* Odznaky: animace získání a sbírka v profilu */
+
+/* ---------- Animace získání ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 14, 32, 0.66);
+  backdrop-filter: blur(4px);
+  animation: fade 0.25s ease-out both;
+}
+.card {
+  position: relative;
+  width: min(420px, 100%);
+  box-sizing: border-box;
+  padding: 34px 28px 24px;
+  border-radius: 24px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 30px 80px rgba(10, 14, 32, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  animation: cardIn 0.35s ease-out both;
+}
+.counter {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.stage {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: grid;
+  place-items: center;
+}
+.rays {
+  position: absolute;
+  inset: -18px;
+  animation: raysIn 0.8s ease-out 0.7s both;
+}
+.raysInner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0.35;
+  animation: spin 18s linear infinite;
+}
+.glow {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  opacity: 0.5;
+}
+.particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -5px 0 0 -5px;
+  animation: burst 1s cubic-bezier(0.1, 0.7, 0.3, 1) 0.8s both;
+}
+.badge {
+  position: relative;
+  animation: pop 1.15s cubic-bezier(0.2, 0.8, 0.25, 1) 0.15s both;
+}
+.shineClip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: polygon(50% 2%, 96% 28%, 96% 74%, 50% 98%, 4% 74%, 4% 28%);
+  pointer-events: none;
+}
+.shine {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  width: 40%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 255, 255, 0) 100%);
+  animation: shine 0.9s ease-in-out 1.25s both;
+}
+.kicker {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary-text);
+  animation: rise 0.45s ease-out 1s both;
+}
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  animation: rise 0.45s ease-out 1.12s both;
+}
+.chip {
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  animation: rise 0.45s ease-out 1.12s both;
+}
+.chip[data-metal="bronz"] {
+  background: var(--wait-tint);
+  box-shadow: inset 0 0 0 1px var(--wait-line);
+  color: var(--wait);
+}
+.chip[data-metal="stribro"] {
+  background: var(--neutral);
+  color: var(--text-2);
+}
+.chip[data-metal="zlato"] {
+  background: var(--wait-bg);
+  color: var(--wait);
+}
+.chip[data-metal="vzacny"] {
+  background: var(--atelier-bg);
+  color: var(--atelier-fg);
+}
+.desc {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-2);
+  animation: rise 0.45s ease-out 1.24s both;
+}
+.note {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.actions {
+  margin-top: 12px;
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  animation: rise 0.45s ease-out 1.5s both;
+}
+.actions :global(.btn) {
+  flex: 1;
+  justify-content: center;
+}
+.skip {
+  margin-top: 2px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  min-height: 36px;
+  animation: rise 0.45s ease-out 1.5s both;
+}
+.skip:hover {
+  color: var(--text-2);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+@keyframes pop {
+  0% {
+    transform: perspective(700px) rotateY(-540deg) scale(0.2);
+    opacity: 0;
+  }
+  55% {
+    transform: perspective(700px) rotateY(18deg) scale(1.14);
+    opacity: 1;
+  }
+  78% {
+    transform: perspective(700px) rotateY(-6deg) scale(0.97);
+  }
+  100% {
+    transform: perspective(700px) rotateY(0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes shine {
+  from {
+    transform: translateX(-160%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(260%) skewX(-18deg);
+  }
+}
+@keyframes raysIn {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes burst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.2);
+    opacity: 0;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* Vypnuté animace v zařízení: jen jemné objevení. */
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .card,
+  .badge,
+  .rays,
+  .kicker,
+  .title,
+  .chip,
+  .desc,
+  .actions,
+  .skip {
+    animation: fade 0.2s ease-out both;
+  }
+  .raysInner {
+    animation: none;
+  }
+  .particle,
+  .shine {
+    display: none;
+  }
+}
+
+/* ---------- Vystavené odznaky v profilu ---------- */
+.shown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+.shownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.shownText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.shownName {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+.shownTier {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ---------- Sbírka ---------- */
+.collection {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.collectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.collectionHead p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.groupHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.groupHead h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+.groupHead span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+.dot[data-cat="start"] {
+  background: #5a6782;
+}
+.dot[data-cat="uceni"] {
+  background: #3b6fe0;
+}
+.dot[data-cat="dobro"] {
+  background: #0f6b5f;
+}
+.dot[data-cat="komunita"] {
+  background: #5b4bc4;
+}
+.dot[data-cat="tajne"] {
+  background: var(--text);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
+  gap: 12px;
+}
+.item {
+  position: relative;
+  box-sizing: border-box;
+  padding: 18px 14px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.item[data-locked="true"] {
+  border-color: var(--border-soft);
+}
+.item[data-locked="true"] svg {
+  opacity: 0.75;
+}
+.item[data-shown="true"] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.itemName {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+.item[data-locked="true"] .itemName {
+  color: var(--text-muted);
+}
+.itemDesc {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+.progress {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-soft);
+  overflow: hidden;
+}
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--primary);
+}
+.bar[data-cat="dobro"] span {
+  background: #0f6b5f;
+}
+.bar[data-cat="komunita"] span {
+  background: #5b4bc4;
+}
+.bar[data-cat="start"] span,
+.bar[data-cat="tajne"] span {
+  background: var(--text-2);
+}
+.progressText {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.earned {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ok);
+}
+.showBtn {
+  margin-top: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.showBtn:hover:not(:disabled) {
+  border-color: var(--primary-line);
+  color: var(--primary-text);
+}
+.showBtn[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+.showBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.error {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--late-fg);
+}

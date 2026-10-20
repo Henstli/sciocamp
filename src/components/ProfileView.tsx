@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { activityHref } from "@/lib/links";
 import { Avatar } from "./Avatar";
+import { BadgeCollection, ShownBadges } from "./badges/BadgeCollection";
+import type { BadgeProgress, EarnedBadge } from "@/lib/badges";
 import { hasEnded, hasStarted } from "@/lib/periods";
 import { ROLE_LABEL, initials } from "@/lib/roles";
 import type { Activity, User } from "@/lib/types";
@@ -20,7 +22,16 @@ export function ProfileView({
   activities,
   todayIso,
   canOpen,
+  shownBadges = [],
+  badgeProgress = null,
+  live = false,
 }: {
+  /** Vystavené odznaky (nejvýš 3) */
+  shownBadges?: EarnedBadge[];
+  /** Moje sbírka odznaků s postupem (jen ve vlastním profilu studenta) */
+  badgeProgress?: BadgeProgress[] | null;
+  /** Naostro (výběr vystavených se ukládá) */
+  live?: boolean;
   /** Které aktivity smí divák otevřít (slugy); ostatní jsou jen štítek bez odkazu. Bez údaje = všechny. */
   canOpen?: string[];
   /** Instagram (vidí všichni ve škole) */
@@ -72,6 +83,17 @@ export function ProfileView({
           )}
         </div>
         {person.bio && <p className={styles.bio}>{person.bio}</p>}
+        {student && (shownBadges.length > 0 || isMe) && (
+          <div className={styles.badges}>
+            {shownBadges.length > 0 ? (
+              <ShownBadges badges={shownBadges} />
+            ) : (
+              <a href="#odznaky" className={styles.badgesHint}>
+                Vystav si na profil až 3 odznaky →
+              </a>
+            )}
+          </div>
+        )}
       </section>
 
       <div className={styles.stats}>
@@ -141,6 +163,10 @@ export function ProfileView({
           </div>
         </section>
       </div>
+
+      {isMe && badgeProgress && badgeProgress.length > 0 && (
+        <BadgeCollection progress={badgeProgress} shown={shownBadges.map((b) => b.key)} live={live} />
+      )}
     </div>
   );
 }

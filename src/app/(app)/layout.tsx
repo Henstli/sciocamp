@@ -8,6 +8,7 @@ import { AvatarState } from "@/components/AvatarState";
 import { PresenceTracker } from "@/components/PresenceTracker";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { ThemeSync } from "@/components/ThemeSync";
+import { BadgeCelebration } from "@/components/badges/BadgeCelebration";
 import { isSupabase } from "@/lib/config";
 import { MandatoryVote } from "@/components/proposals/MandatoryVote";
 import { bannerSwatch } from "@/lib/banner";
@@ -63,6 +64,7 @@ async function UserSidebar() {
       <PresenceTracker userId={user.id} live={isSupabase} visible={user.showOnline !== false} />
       <LiveRefresh userId={user.id} live={isSupabase} />
       {isSupabase && <ThemeSync pref={user.theme ?? "light"} />}
+      {user.role === "student" && <BadgeCelebration live={isSupabase} />}
       <Sidebar
         user={{
           name: user.name,

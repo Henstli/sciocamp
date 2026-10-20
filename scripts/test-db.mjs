@@ -1505,4 +1505,47 @@ await test("ankety ve skupině: založit, hlasovat, ukončit", async () => {
   await db.query(`delete from public.conversations where id = any($1)`, [[g, pair]]);
 });
 
+await test("odznaky: udělení, úrovně, oznámení, vystavení", async () => {
+  const kid = await createUser("odznak.student@scioskola.cz", { role: "student", grade: "1" }, { full_name: "Odznak Student" });
+  const refresh = async () => (await as(kid, `select badge, tier from public.refresh_my_badges()`)).map((r) => `${r.badge}:${r.tier}`).sort();
+  // Hned po startu: Zakladatel (první rok aplikace).
+  assert.deepEqual(await refresh(), ["zakladatel:1"]);
+  // Vyplněný profil a první odevzdaný úkol.
+  await db.query(`update public.profiles set avatar_path = id::text || '/1.jpg', bio = 'Ahoj' where id = $1`, [kid]);
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2)`, [course.id, kid]);
+  const ids = (await db.query(`insert into public.assignments (activity_id, title, due_at, created_by)
+    select $1, 'Úkol ' || g, now() + interval '1 day', $2 from generate_series(1, 15) g returning id`, [course.id, teacher])).rows.map((r) => r.id);
+  await db.query(`insert into public.submissions (assignment_id, student_id, status, submitted_at) values ($1, $2, 'odevzdano', now())`, [ids[0], kid]);
+  assert.deepEqual(await refresh(), ["prvni-krok:1", "vitej:1", "zakladatel:1"]);
+  // Viděné se už nevracejí; oznámení jen jednou na odznak.
+  await as(kid, `select public.mark_badges_seen($1)`, [["prvni-krok", "vitej", "zakladatel"]]);
+  assert.deepEqual(await refresh(), []);
+  const notes = async () => (await db.query(`select title from public.notifications where user_id = $1 and kind = 'odznak'`, [kid])).rows.map((r) => r.title).sort();
+  assert.deepEqual(await notes(), ["Nový odznak: Vítej v Campu", "Nový odznak: Zakladatel", "Nový odznak: První krok"].sort());
+  // 15 odevzdaných (včas) → Pracant I a Včas I.
+  await db.query(`insert into public.submissions (assignment_id, student_id, status, submitted_at)
+    select unnest($1::uuid[]), $2, 'odevzdano', now()`, [ids.slice(1), kid]);
+  assert.deepEqual(await refresh(), ["pracant:1", "vcas:1"]);
+  assert.ok((await notes()).includes("Nový odznak: Pracant I"));
+  // Postup ve sbírce.
+  const mine = await as(kid, `select badge, value, tier from public.my_badges() where badge in ('pracant', 'hlas-skoly')`);
+  assert.equal(mine.find((r) => r.badge === "pracant").value, 15);
+  assert.equal(mine.find((r) => r.badge === "hlas-skoly").tier, 0);
+  // Druhý dech: vrácený a pak splněný úkol se pamatuje.
+  await db.query(`insert into public.reviews (assignment_id, student_id, result, request, reviewed_by) values ($1, $2, 'vraceno', 'Doplň', $3)`, [ids[0], kid, teacher]);
+  await db.query(`update public.reviews set result = 'splneno' where assignment_id = $1 and student_id = $2`, [ids[0], kid]);
+  assert.equal((await as(kid, `select value from public.my_badges() where badge = 'druhy-dech'`))[0].value, 1);
+  // Vystavení: jen získané, nejvýš 3; ostatní vidí jen vystavené.
+  await assert.rejects(() => as(kid, `select public.set_shown_badges($1)`, [["hlas-skoly"]]), /jen získaný/);
+  await assert.rejects(() => as(kid, `select public.set_shown_badges($1)`, [["pracant", "vcas", "vitej", "zakladatel"]]), /nejvýš 3/);
+  await as(kid, `select public.set_shown_badges($1)`, [["zakladatel", "pracant"]]);
+  const shown = await as(student, `select badge, tier from public.shown_badges_of($1)`, [kid]);
+  assert.deepEqual(shown.map((r) => r.badge), ["zakladatel", "pracant"]);
+  assert.equal((await as(student, `select 1 from public.user_badges where user_id = $1`, [kid])).length, 0, "cizí sbírku nevidí");
+  // Vyučující odznaky nedostává.
+  assert.deepEqual((await as(teacher, `select badge from public.refresh_my_badges()`)), []);
+  await db.query(`delete from public.assignments where id = any($1)`, [ids]);
+  await db.query(`delete from auth.users where id = $1`, [kid]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);
