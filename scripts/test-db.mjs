@@ -1431,4 +1431,38 @@ await test("akce se zprávami: odpověď, úprava, připnutí a reakce", async (
   await db.query(`delete from public.conversations where id = any($1)`, [[conv, other]]);
 });
 
+await test("celoškolní chat: jsou v něm všichni, nejde odejít ani smazat", async () => {
+  const [{ school_chat_id: school }] = await as(student, `select public.school_chat_id()`);
+  assert.ok(school);
+  const members = async () => (await db.query(`select user_id from public.conversation_members where conversation_id = $1`, [school])).rows.map((r) => r.user_id);
+  assert.ok((await members()).includes(student) && (await members()).includes(admin), "všichni");
+  // Nový člověk je tam hned.
+  const fresh = await createUser("novy.student@scioskola.cz", {}, { full_name: "Nový Student" });
+  assert.ok((await members()).includes(fresh), "nový");
+  await assert.rejects(() => as(student, `select public.leave_group($1)`, [school]), /nejde odejít/);
+  await assert.rejects(() => as(admin, `select public.remove_group_member($1, $2)`, [school, student]));
+  await assert.rejects(() => as(admin, `select public.delete_group($1)`, [school]));
+  await assert.rejects(() => db.query(`update public.conversations set title = 'Jiný' where id = $1`, [school]), /přejmenovat/);
+  // Zprávy: zvoneček jen při zmínce.
+  await db.query(`delete from public.notifications where href = $1`, [`/zpravy?k=${school}`]);
+  await as(student, `insert into public.messages (conversation_id, body) values ($1, 'Ahoj všichni')`, [school]);
+  const notes = async () => (await db.query(`select user_id, kind from public.notifications where href = $1`, [`/zpravy?k=${school}`])).rows;
+  assert.equal((await notes()).length, 0, "bez zmínky nic");
+  await as(student, `insert into public.messages (conversation_id, body) values ($1, $2)`, [school, `@[Eliot Komárek](${student2}) mrkni`]);
+  const n = await notes();
+  assert.equal(n.length, 1);
+  assert.equal(n[0].user_id, student2);
+  // Připnout a mazat cizí smí vyučující a admin, student ne.
+  const [msg] = await as(student, `insert into public.messages (conversation_id, body) values ($1, 'Nevhodné') returning id`, [school]);
+  await assert.rejects(() => as(student2, `select public.pin_chat_message('zpravy', $1, true)`, [msg.id]), /připnout nemůžeš/);
+  await as(teacher, `select public.pin_chat_message('zpravy', $1, true)`, [msg.id]);
+  await assert.rejects(() => as(student2, `select public.delete_chat_message('zpravy', $1)`, [msg.id]), /smazat nemůžeš/);
+  await as(teacher, `select public.delete_chat_message('zpravy', $1)`, [msg.id]);
+  // Smazání účtu člověka z chatu odebere normálně.
+  await db.query(`delete from auth.users where id = $1`, [fresh]);
+  assert.ok(!(await members()).includes(fresh), "smazaný účet");
+  await db.query(`delete from public.messages where conversation_id = $1`, [school]);
+  await db.query(`delete from public.notifications where href = $1`, [`/zpravy?k=${school}`]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

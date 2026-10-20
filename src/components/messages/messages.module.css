@@ -864,3 +864,15 @@
     right: calc(100% + 8px);
   }
 }
+
+/* Celoškolní chat: vždy nahoře v seznamu a odlišený */
+.groupAvatar[data-school="true"] {
+  background: var(--primary);
+  color: #fff;
+}
+.row[data-school="true"] {
+  border-bottom: 1px solid var(--border-soft);
+}
+.row[data-school="true"]:not([aria-current="true"]) {
+  background: var(--surface-2);
+}

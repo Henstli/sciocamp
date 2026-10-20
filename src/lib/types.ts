@@ -247,6 +247,8 @@ export type ConversationSummary = {
   id: string;
   /** Skupinový chat (má název a správce) */
   isGroup: boolean;
+  /** Celoškolní chat „Celá škola“ (jsou v něm všichni, nejde opustit) */
+  isSchool?: boolean;
   /** Název skupiny (u dvojice null) */
   title: string | null;
   /** Druhý člověk (u skupiny null) */

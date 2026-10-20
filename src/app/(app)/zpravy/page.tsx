@@ -46,7 +46,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
         return {
           id: c.id,
           person: null,
-          group: { title: c.title ?? "Skupina", initials: groupInitials(c.title ?? "Skupina"), memberCount: c.memberCount },
+          group: { title: c.title ?? "Skupina", initials: groupInitials(c.title ?? "Skupina"), memberCount: c.memberCount, school: !!c.isSchool },
           time,
           preview,
           unread: c.unread,
@@ -56,7 +56,9 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
       if (!other) return null;
       return { id: c.id, person: contact(other), group: null, time, preview: c.lastMine ? `Ty: ${text}` : text, unread: c.unread };
     })
-    .filter((c): c is ConversationView => !!c);
+    .filter((c): c is ConversationView => !!c)
+    // Celoškolní chat je vždy nahoře, ať nezapadne.
+    .sort((a, b) => Number(!!b.group?.school) - Number(!!a.group?.school));
 
   // Která konverzace je otevřená: ?k=<id>, nebo ?s=<id člověka> (i nová, zatím bez zpráv).
   const wanted = typeof k === "string" ? list.find((c) => c.id === k) : undefined;
@@ -75,6 +77,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
           id: open.id,
           title: open.group.title,
           initials: open.group.initials,
+          school: open.group.school,
           meAdmin: members.some((m) => m.userId === user.id && m.isAdmin),
           members: members
             .map((m) => ({ ...contactOf(m.userId), isAdmin: m.isAdmin, me: m.userId === user.id }))
@@ -126,7 +129,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
       />
       <Messenger
         key={open?.id ?? activePerson?.id ?? "nic"}
-        me={{ id: user.id, initials: initials(user.name) }}
+        me={{ id: user.id, initials: initials(user.name), staff: user.role !== "student" }}
         conversations={list}
         people={people}
         activeId={open?.id ?? null}

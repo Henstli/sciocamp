@@ -309,6 +309,8 @@ export function GroupPanel({ group, people, live }: { group: GroupView; people: 
               </button>
             </div>
           </div>
+        ) : group.school ? (
+          <p className={styles.formNote}>V celoškolním chatu je celá škola, každý nový člověk se přidá sám. Odejít z něj ani nikoho odebrat nejde.</p>
         ) : (
           <div className={styles.panelActions}>
             <button type="button" className="btn btn-outline" onClick={() => setConfirm("leave")}>

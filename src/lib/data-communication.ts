@@ -119,10 +119,15 @@ async function classChatUncached(activity: Activity): Promise<ClassMessage[]> {
 // ---------------------------------------------------------------------------
 
 async function conversationsForUncached(user: User): Promise<ConversationSummary[]> {
-  if (!isSupabase) return user.id === "u-liska" ? DEMO_CONVERSATIONS : [];
+  // Celoškolní chat je v ukázkovém režimu u každého.
+  if (!isSupabase) return user.id === "u-liska" ? DEMO_CONVERSATIONS : DEMO_CONVERSATIONS.filter((c) => c.isSchool);
   const sb = await createClient();
-  const { data, error } = await sb.rpc("my_chats");
+  const [{ data, error }, { data: school }] = await Promise.all([
+    sb.rpc("my_chats"),
+    sb.from("conversations").select("id").eq("is_school", true).maybeSingle(),
+  ]);
   if (error || !data) return [];
+  const schoolId = (school as { id: string } | null)?.id ?? null;
   return (
     data as {
       conversation_id: string;
@@ -140,6 +145,7 @@ async function conversationsForUncached(user: User): Promise<ConversationSummary
   ).map((r) => ({
     id: r.conversation_id,
     isGroup: r.is_group,
+    isSchool: r.conversation_id === schoolId,
     title: r.title,
     otherId: r.other_id,
     memberCount: r.member_count,

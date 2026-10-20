@@ -1,6 +1,7 @@
 // Ukázková data pro etapu 3 (nástěnka, chat třídy, zprávy, notifikace).
 // Časy jsou pevné (kolem 18.–19. 10. 2026), aby ukázka vypadala stále stejně.
 
+import { DEMO_USERS } from "./demo-data";
 import type { ClassMessage, ConversationMember, ConversationSummary, DirectMessage, NotificationItem, Post } from "./types";
 
 export const DEMO_POSTS: Record<string, Post[]> = {
@@ -52,6 +53,21 @@ export const DEMO_CLASS_CHAT: Record<string, ClassMessage[]> = {
 /** Konverzace ukázkového studenta (u-liska) podle návrhu design/Zpravy.dc.html. */
 export const DEMO_CONVERSATIONS: ConversationSummary[] = [
   {
+    id: "k-skola",
+    isGroup: true,
+    isSchool: true,
+    title: "Celá škola",
+    otherId: null,
+    memberCount: DEMO_USERS.length,
+    lastAt: "2026-10-19T10:15:00Z",
+    lastBody: "Nezapomeňte, že v pátek je sraz expedic v 7:30 u nádraží.",
+    lastAuthor: "u-pavel",
+    lastMine: false,
+    lastHasFile: false,
+    lastSystem: false,
+    unread: 1,
+  },
+  {
     id: "k-skupina",
     isGroup: true,
     title: "Projekt Cestománie",
@@ -73,6 +89,20 @@ export const DEMO_CONVERSATIONS: ConversationSummary[] = [
 ];
 
 export const DEMO_MESSAGES: Record<string, DirectMessage[]> = {
+  "k-skola": [
+    {
+      id: "s1",
+      authorId: "u-pavel",
+      body: "Vítejte v celoškolním chatu! Je tu celá škola, tak pište slušně a k věci. 🙂",
+      file: null,
+      createdAt: "2026-10-12T07:00:00Z",
+      pinnedAt: "2026-10-12T07:01:00Z",
+      pinnedBy: "u-pavel",
+      reactions: [{ emoji: "👍", userIds: ["u-liska", "u-komarek", "u-kolarova"] }],
+    },
+    { id: "s2", authorId: "u-komarek", body: "Ví někdo, jestli se jídelna na expedici platí předem?", file: null, createdAt: "2026-10-19T09:40:00Z" },
+    { id: "s3", authorId: "u-pavel", body: "Nezapomeňte, že v pátek je sraz expedic v 7:30 u nádraží.", file: null, createdAt: "2026-10-19T10:15:00Z", replyTo: "s2" },
+  ],
   "k-skupina": [
     { id: "g0", authorId: "u-liska", body: "Šimon Samuel Liška založil(a) skupinu „Projekt Cestománie“", file: null, createdAt: "2026-10-19T08:30:00Z", system: true },
     { id: "g1", authorId: "u-liska", body: "Ahoj, kdy se sejdeme kvůli prezentaci?", file: null, createdAt: "2026-10-19T08:31:00Z" },
@@ -129,6 +159,12 @@ export const DEMO_MEMBER_STATE: Record<string, { deliveredAt: string; readAt: st
 
 /** Členové ukázkové skupiny (u-liska je správce). */
 export const DEMO_GROUP_MEMBERS: Record<string, ConversationMember[]> = {
+  "k-skola": DEMO_USERS.filter((u) => u.active !== false).map((u) => ({
+    userId: u.id,
+    isAdmin: false,
+    deliveredAt: "2026-10-19T10:15:00Z",
+    readAt: "2026-10-19T10:15:00Z",
+  })),
   "k-skupina": [
     { userId: "u-liska", isAdmin: true, deliveredAt: "2026-10-19T09:05:00Z", readAt: "2026-10-19T08:31:00Z" },
     { userId: "u-komarek", isAdmin: false, deliveredAt: "2026-10-19T09:05:00Z", readAt: "2026-10-19T09:05:00Z" },

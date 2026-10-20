@@ -37,13 +37,21 @@ export type ConversationView = {
   id: string;
   /** Druhý člověk (u skupiny null) */
   person: ContactView | null;
-  group: { title: string; initials: string; memberCount: number } | null;
+  group: { title: string; initials: string; memberCount: number; school?: boolean } | null;
   time: string;
   preview: string;
   unread: number;
 };
 export type GroupMemberView = ContactView & { isAdmin: boolean; me: boolean };
-export type GroupView = { id: string; title: string; initials: string; meAdmin: boolean; members: GroupMemberView[] };
+export type GroupView = {
+  id: string;
+  title: string;
+  initials: string;
+  meAdmin: boolean;
+  members: GroupMemberView[];
+  /** Celoškolní chat (nejde opustit, připínají a moderují vyučující a admin) */
+  school?: boolean;
+};
 export type MemberState = { userId: string; deliveredAt: string; readAt: string };
 export type ThreadMessage = {
   id: string;
@@ -105,7 +113,8 @@ export function Messenger({
 }: {
   /** Stav ostatních členů (Doručeno / Přečteno) */
   memberStates?: MemberState[];
-  me: { id: string; initials: string };
+  /** `staff` = vyučující nebo admin (moderuje celoškolní chat) */
+  me: { id: string; initials: string; staff?: boolean };
   conversations: ConversationView[];
   people: ContactView[];
   activeId: string | null;
@@ -496,7 +505,8 @@ export function Messenger({
 
   // Stav poslední zprávy, pokud je moje: Odesílá se / Odesláno / Doručeno / Přečteno.
   const last = messages.filter((m) => !m.system).at(-1);
-  const status = !last?.mine ? null : last.pending ? "Odesílá se…" : readStatus(last.createdAt, states, live, !!activeGroup);
+  // V celoškolním chatu se stav přečtení neukazuje (je tam celá škola).
+  const status = !last?.mine ? null : last.pending ? "Odesílá se…" : activeGroup?.school ? null : readStatus(last.createdAt, states, live, !!activeGroup);
 
   // Zprávy s oddělovači dnů
   const rows: ({ kind: "day"; label: string } | { kind: "msg"; m: ThreadMessage })[] = [];
@@ -559,12 +569,13 @@ export function Messenger({
                 <Link
                   href={`/zpravy?k=${c.id}`}
                   className={styles.row}
+                  data-school={!!c.group?.school}
                   aria-current={c.id === activeId && !creating ? "true" : undefined}
                   onClick={() => setCreating(false)}
                   scroll={false}
                 >
                   {c.group ? (
-                    <GroupAvatar initials={c.group.initials} size={42} />
+                    <GroupAvatar initials={c.group.initials} size={42} school={c.group.school} />
                   ) : (
                     <Avatar presence initials={c.person!.initials} userId={c.person!.id} size={42} tone={tone(c.person!.role)} />
                   )}
@@ -602,10 +613,11 @@ export function Messenger({
               </Link>
               {activeGroup ? (
                 <>
-                  <GroupAvatar initials={activeGroup.initials} size={42} />
+                  <GroupAvatar initials={activeGroup.initials} size={42} school={activeGroup.school} />
                   <button type="button" className={styles.headButton} onClick={() => setPanel((v) => !v)} aria-expanded={panel}>
                     <span className={styles.headName}>{activeGroup.title}</span>
                     <span className={styles.headCaption}>
+                      {activeGroup.school && "Všichni ve škole · "}
                       {activeGroup.members.length} {plural(activeGroup.members.length, "člen", "členové", "členů")}
                       <GroupOnline ids={activeGroup.members.filter((m) => !m.me).map((m) => m.id)} /> · {panel ? "zpět do chatu" : "zobrazit členy"}
                     </span>
@@ -635,7 +647,7 @@ export function Messenger({
             </header>
 
             {activeGroup && panel && <GroupPanel group={activeGroup} people={people} live={live} />}
-            {!(activeGroup && panel) && <PinnedBar items={pinnedItems} canUnpin onUnpin={(id) => { const m = byId.get(id); if (m) void pin(m); }} />}
+            {!(activeGroup && panel) && <PinnedBar items={pinnedItems} canUnpin={!activeGroup?.school || !!me.staff} onUnpin={(id) => { const m = byId.get(id); if (m) void pin(m); }} />}
 
             <div className={styles.messages} aria-live="polite" ref={thread} hidden={!!activeGroup && panel}>
               {rows.length === 0 && <p className={styles.emptyThread}>Napiš první zprávu.</p>}
@@ -664,8 +676,8 @@ export function Messenger({
                     align={align}
                     myReactions={(m.reactions ?? []).filter((x) => x.userIds.includes(me.id)).map((x) => x.emoji)}
                     canEdit={m.mine && !!m.body && !isGifUrl(m.body)}
-                    canDelete={m.mine}
-                    canPin
+                    canDelete={m.mine || (!!activeGroup?.school && !!me.staff)}
+                    canPin={!activeGroup?.school || !!me.staff}
                     pinned={!!m.pinnedAt}
                     onReact={(e) => {
                       const has = (m.reactions ?? []).some((x) => x.emoji === e && x.userIds.includes(me.id));
@@ -840,10 +852,10 @@ function GroupOnline({ ids }: { ids: string[] }) {
 }
 
 /** Kulaté logo skupiny s iniciálami názvu. */
-export function GroupAvatar({ initials, size = 42 }: { initials: string; size?: number }) {
+export function GroupAvatar({ initials, size = 42, school = false }: { initials: string; size?: number; school?: boolean }) {
   return (
-    <span className={styles.groupAvatar} style={{ width: size, height: size, fontSize: size >= 40 ? 13 : 11 }} aria-hidden="true">
-      {initials}
+    <span className={styles.groupAvatar} data-school={school} style={{ width: size, height: size, fontSize: size >= 40 ? 13 : 11 }} aria-hidden="true">
+      {school ? <Icon name="logo" size={Math.round(size / 2)} /> : initials}
     </span>
   );
 }
