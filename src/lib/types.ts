@@ -273,6 +273,17 @@ export type ConversationMember = {
 };
 
 /** Soukromá zpráva. */
+/** Anketa ve skupinovém chatu (zpráva „📊 otázka“). */
+export type ChatPoll = {
+  id: string;
+  question: string;
+  /** Jde vybrat víc možností */
+  multiple: boolean;
+  closedAt: string | null;
+  authorId: string;
+  options: { id: string; label: string; voterIds: string[] }[];
+};
+
 export type DirectMessage = {
   id: string;
   authorId: string;
@@ -281,6 +292,8 @@ export type DirectMessage = {
   createdAt: string;
   /** Systémová zpráva skupiny („X opustil(a) skupinu“) */
   system?: boolean;
+  /** Anketa (jen ve skupinách) */
+  poll?: ChatPoll | null;
 } & ChatMeta;
 
 export type NotificationItem = {

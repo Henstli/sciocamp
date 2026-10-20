@@ -127,6 +127,25 @@ export const DEMO_MESSAGES: Record<string, DirectMessage[]> = {
       pinnedBy: "u-liska",
       reactions: [{ emoji: "❤️", userIds: ["u-kolarova"] }],
     },
+    {
+      id: "g4",
+      authorId: "u-kolarova",
+      body: "📊 Kdy uděláme generálku prezentace?",
+      file: null,
+      createdAt: "2026-10-19T09:20:00Z",
+      poll: {
+        id: "anketa-1",
+        question: "Kdy uděláme generálku prezentace?",
+        multiple: false,
+        closedAt: null,
+        authorId: "u-kolarova",
+        options: [
+          { id: "anketa-1-a", label: "Středa odpoledne", voterIds: ["u-kolarova"] },
+          { id: "anketa-1-b", label: "Čtvrtek odpoledne", voterIds: ["u-komarek", "u-jaukner"] },
+          { id: "anketa-1-c", label: "Pátek ráno", voterIds: [] },
+        ],
+      },
+    },
   ],
   "k-jakubcova": [
     { id: "dm1", authorId: "u-jakubcova", body: "Ahoj Šimone, nezapomeň prosím na seznam povinné literatury, potřebuju ho do zítřka.", file: null, createdAt: "2026-10-18T11:20:00Z" },

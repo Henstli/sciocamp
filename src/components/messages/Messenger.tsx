@@ -23,11 +23,14 @@ import { plural } from "@/lib/format";
 import { useIsOnline, useOnlineCount } from "@/lib/presence";
 import { createClient } from "@/lib/supabase/client";
 import { formatClock, formatDayLabel } from "@/lib/time";
-import type { ChatMeta, Role, SubmissionFile } from "@/lib/types";
+import type { ChatMeta, ChatPoll, Role, SubmissionFile } from "@/lib/types";
 import { useStickToBottom } from "@/lib/use-stick-to-bottom";
 import { isCompressibleImage } from "@/lib/image-compress";
 import { tooBigMessage, uploadFilesDetailed, uploadLimit } from "@/lib/upload";
 import { GroupPanel, NewGroupForm } from "./GroupPanel";
+import { PollCard, PollComposer } from "./Poll";
+import { closePoll, createPoll, usePollLive, votePoll } from "@/lib/poll-client";
+import { applyVote, myChoices, setMyVotes } from "@/lib/polls";
 import styles from "./messages.module.css";
 
 const BUCKET = "zpravy";
@@ -70,6 +73,8 @@ export type ThreadMessage = {
   createdAt: string;
   /** Ještě se odesílá */
   pending?: boolean;
+  /** Anketa (jen ve skupinách) */
+  poll?: ChatPoll | null;
 } & ChatMeta;
 
 /** Jak dlouho po posledním signálu ukazovat, že druhý píše (ms). */
@@ -149,6 +154,12 @@ export function Messenger({
   const typingSentAt = useRef(0);
   const typingChannel = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
   const thread = useRef<HTMLDivElement>(null);
+  /** Formulář nové ankety (jen ve skupině) */
+  const [pollOpen, setPollOpen] = useState(false);
+  const [pollBusy, setPollBusy] = useState(false);
+  const [pollError, setPollError] = useState<string | null>(null);
+  /** Ankety, které přišly živě dřív než jejich zpráva (id zprávy → anketa) */
+  const pendingPolls = useRef(new Map<string, ChatPoll>());
   const stickToBottom = useStickToBottom(thread, activeId ?? activePerson?.id ?? null);
 
   // Koho jde v konverzaci zmínit přes @ (členové skupiny, u dvojice ten druhý).
@@ -207,6 +218,7 @@ export function Messenger({
                     day: formatDayLabel(r.created_at, new Date()),
                     createdAt: r.created_at,
                     replyTo: r.reply_to ?? null,
+                    poll: pendingPolls.current.get(r.id) ?? null,
                     reactions: [],
                   },
                 ],
@@ -379,6 +391,89 @@ export function Messenger({
   }, [query, people]);
 
   /** Odešle rozepsanou zprávu, nebo rovnou GIF (`gif` = odkaz). */
+  // Ankety ostatních, hlasy a ukončení naživo.
+  usePollLive(convId, live && !!activeGroup, {
+    onPoll: (messageId, poll) => {
+      if (byId.has(messageId)) patch(messageId, (m) => ({ ...m, poll }));
+      else pendingPolls.current.set(messageId, poll);
+    },
+    onVote: (pollId, optionId, userId, add) =>
+      setMessages((ms) =>
+        ms.map((m) =>
+          m.poll && (pollId ? m.poll.id === pollId : m.poll.options.some((o) => o.id === optionId)) ? { ...m, poll: applyVote(m.poll, optionId, userId, add) } : m,
+        ),
+      ),
+    onClosed: (pollId, closedAt) => setMessages((ms) => ms.map((m) => (m.poll?.id === pollId ? { ...m, poll: { ...m.poll, closedAt } } : m))),
+  });
+
+  async function vote(m: ThreadMessage, choices: string[]) {
+    if (!m.poll) return;
+    const before = myChoices(m.poll, me.id);
+    patch(m.id, (x) => (x.poll ? { ...x, poll: setMyVotes(x.poll, me.id, choices) } : x));
+    if (!live) return;
+    const res = await votePoll(m.poll.id, choices);
+    if (res.error) {
+      patch(m.id, (x) => (x.poll ? { ...x, poll: setMyVotes(x.poll, me.id, before) } : x));
+      setError(res.error);
+    }
+  }
+
+  async function togglePoll(m: ThreadMessage, closed: boolean) {
+    if (!m.poll) return;
+    const before = m.poll.closedAt;
+    patch(m.id, (x) => (x.poll ? { ...x, poll: { ...x.poll, closedAt: closed ? new Date().toISOString() : null } } : x));
+    if (!live) return;
+    const res = await closePoll(m.poll.id, closed);
+    if (res.error) {
+      patch(m.id, (x) => (x.poll ? { ...x, poll: { ...x.poll, closedAt: before } } : x));
+      setError(res.error);
+    }
+  }
+
+  async function newPoll(question: string, options: string[], multiple: boolean) {
+    if (!activeGroup) return;
+    setPollError(null);
+    stickToBottom();
+    const base = {
+      mine: true,
+      authorId: me.id,
+      authorName: "Ty",
+      authorInitials: me.initials,
+      authorRole: "student" as Role,
+      body: `📊 ${question}`,
+      file: null,
+      time: "teď",
+      day: "Dnes",
+      reactions: [],
+    };
+    if (!live) {
+      const id = `local-${messages.length}`;
+      const poll: ChatPoll = {
+        id: `${id}-anketa`,
+        question,
+        multiple,
+        closedAt: null,
+        authorId: me.id,
+        options: options.map((label, i) => ({ id: `${id}-${i}`, label, voterIds: [] })),
+      };
+      setMessages((m) => [...m, { ...base, id, createdAt: new Date().toISOString(), poll }]);
+      setPollOpen(false);
+      return;
+    }
+    setPollBusy(true);
+    const res = await createPoll(activeGroup.id, question, options, multiple);
+    setPollBusy(false);
+    if (res.error || !res.messageId) return setPollError(res.error ?? "Anketu se nepodařilo založit.");
+    const createdAt = res.createdAt ?? new Date().toISOString();
+    setMessages((m) =>
+      m.some((x) => x.id === res.messageId)
+        ? m
+        : [...m, { ...base, id: res.messageId!, time: formatClock(createdAt), day: formatDayLabel(createdAt, new Date()), createdAt, poll: res.poll ?? null }],
+    );
+    setPollOpen(false);
+    router.refresh();
+  }
+
   async function send(gif?: string) {
     if (editing && !gif) return saveEdit();
     stickToBottom();
@@ -675,7 +770,7 @@ export function Messenger({
                   <MessageTools
                     align={align}
                     myReactions={(m.reactions ?? []).filter((x) => x.userIds.includes(me.id)).map((x) => x.emoji)}
-                    canEdit={m.mine && !!m.body && !isGifUrl(m.body)}
+                    canEdit={m.mine && !!m.body && !isGifUrl(m.body) && !m.poll}
                     canDelete={m.mine || (!!activeGroup?.school && !!me.staff)}
                     canPin={!activeGroup?.school || !!me.staff}
                     pinned={!!m.pinnedAt}
@@ -700,7 +795,19 @@ export function Messenger({
                         {m.mine && tools}
                         <div className={styles.bubbleCol}>
                           {m.file && <Attachment bucket={BUCKET} file={m.file} live={live} />}
-                          {m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.bubble}><MentionText body={m.body} meId={me.id} /></div>)}
+                          {m.poll ? (
+                            <PollCard
+                              poll={m.poll}
+                              meId={me.id}
+                              mine={m.mine}
+                              canClose={m.poll.authorId === me.id || !!activeGroup?.meAdmin || (!!activeGroup?.school && !!me.staff)}
+                              nameOf={nameOf}
+                              onVote={(choices) => void vote(m, choices)}
+                              onClose={(closed) => void togglePoll(m, closed)}
+                            />
+                          ) : (
+                            m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.bubble}><MentionText body={m.body} meId={me.id} /></div>)
+                          )}
                         </div>
                         {!m.mine && tools}
                       </div>
@@ -769,6 +876,9 @@ export function Messenger({
                 </button>
               </div>
             )}
+            {activeGroup && !panel && pollOpen && (
+              <PollComposer busy={pollBusy} error={pollError} onCancel={() => (setPollOpen(false), setPollError(null))} onCreate={(q, o, multi) => void newPoll(q, o, multi)} />
+            )}
             {!(activeGroup && panel) && (editingMsg || replying) && (
               <div className={styles.contextWrap}>
                 {editingMsg ? (
@@ -805,6 +915,7 @@ export function Messenger({
                   onFile={setFile}
                   onEmoji={(e) => setDraft((d) => insertAtCursor(draftInput.current, d, e))}
                   onGif={(url) => void send(url)}
+                  onPoll={activeGroup ? () => (cancelContext(), setPollOpen(true)) : undefined}
                 />
               )}
               <label className={styles.grow}>

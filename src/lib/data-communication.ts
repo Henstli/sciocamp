@@ -16,9 +16,11 @@ import {
 } from "./demo-communication";
 import { CHAT_META_COLUMNS } from "./chat";
 import { chatMetaFor } from "./data-chat";
+import { POLL_SELECT, toPoll, type PollRow, type PollVoteRow } from "./polls";
 import { createClient } from "./supabase/server";
 import type {
   Activity,
+  ChatPoll,
   ClassMessage,
   ConversationMember,
   ConversationSummary,
@@ -170,7 +172,7 @@ export async function conversationMessages(conversationId: string): Promise<Dire
     .limit(200);
   if (error || !data) return [];
   const files = data.filter((m) => m.file_path).map((m) => ({ path: m.file_path!, name: m.file_name ?? "soubor", size: m.file_size }));
-  const [urls, meta] = await Promise.all([sign(MESSAGE_BUCKET, files), chatMetaFor("zpravy", conversationId)]);
+  const [urls, meta, polls] = await Promise.all([sign(MESSAGE_BUCKET, files), chatMetaFor("zpravy", conversationId), conversationPolls(conversationId)]);
   return data.reverse().map((m) => ({
     ...meta(m),
     id: m.id,
@@ -179,7 +181,20 @@ export async function conversationMessages(conversationId: string): Promise<Dire
     file: m.file_path ? { path: m.file_path, name: m.file_name ?? "soubor", size: m.file_size, url: urls.get(m.file_path) } : null,
     createdAt: m.created_at,
     system: !!m.system,
+    poll: polls.get(m.id) ?? null,
   }));
+}
+
+/** Ankety v konverzaci podle id zprávy (bez tabulek anket = žádné). */
+async function conversationPolls(conversationId: string): Promise<Map<string, ChatPoll>> {
+  const sb = await createClient();
+  const [{ data: polls }, { data: votes }] = await Promise.all([
+    sb.from("chat_polls").select(POLL_SELECT).eq("conversation_id", conversationId),
+    sb.from("chat_poll_votes").select("option_id, user_id, poll_id").eq("conversation_id", conversationId),
+  ]);
+  const out = new Map<string, ChatPoll>();
+  for (const r of (polls ?? []) as PollRow[]) out.set(r.message_id, toPoll(r, ((votes ?? []) as PollVoteRow[]).filter((v) => v.poll_id === r.id)));
+  return out;
 }
 
 /** Členové konverzace: správci a kdy měli zprávy doručené a přečtené. */

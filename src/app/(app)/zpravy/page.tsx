@@ -108,6 +108,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
           reactions: m.reactions ?? [],
           deletedAt: m.deletedAt ?? null,
           deletedBy: m.deletedBy ?? null,
+          poll: m.poll ?? null,
         };
       })
     : [];

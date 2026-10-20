@@ -1,0 +1,267 @@
+/* Anketa ve skupinovém chatu */
+.card {
+  width: min(360px, 100%);
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.card[data-mine="true"] {
+  border-color: var(--primary-line);
+}
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--primary-text);
+}
+.closedChip {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--neutral);
+  color: var(--text-2);
+  font-size: 11px;
+}
+.question {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.option {
+  position: relative;
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.option:hover:not(:disabled) {
+  border-color: var(--primary-line);
+}
+.option:disabled {
+  cursor: default;
+}
+.option[data-selected="true"] {
+  border-color: var(--primary);
+}
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--primary-soft);
+  transition: width 0.3s ease;
+}
+.option[data-winner="true"] .fill {
+  background: var(--primary-soft-2);
+}
+.mark {
+  position: relative;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--border-input);
+  background: var(--card);
+  color: #fff;
+}
+.mark[data-multiple="true"] {
+  border-radius: 5px;
+}
+.option[data-selected="true"] .mark {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+.label {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.count {
+  position: relative;
+  flex: none;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-2);
+}
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.footBtn {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.footBtn:hover {
+  border-color: var(--primary-line);
+  color: var(--primary-text);
+}
+
+/* Formulář nové ankety (nad polem pro psaní) */
+.composer {
+  margin: 8px 16px 0;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(17, 26, 51, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+.composerHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary-text);
+}
+.composerHead strong {
+  flex: 1;
+  color: var(--text);
+}
+.close,
+.remove {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.close:hover,
+.remove:hover {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+.field {
+  display: flex;
+}
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-input);
+  background: var(--card);
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.optionInputs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.composerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-input);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.add:hover {
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+.error {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--late-fg);
+}
+.composerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

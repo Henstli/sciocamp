@@ -14,8 +14,11 @@ export function ComposerPlus({
   onFile,
   onEmoji,
   onGif,
+  onPoll,
   idPrefix,
 }: {
+  /** Bez handleru se Anketa v nabídce neukáže (jen skupiny ve Zprávách) */
+  onPoll?: () => void;
   onFile: (file: File) => void;
   onEmoji: (emoji: string) => void;
   /** Bez handleru se GIF v nabídce neukáže */
@@ -60,15 +63,20 @@ export function ComposerPlus({
     setPanel((cur) => (cur === p ? null : p));
   };
 
-  type Key = "file" | "gif" | "emoji" | "camera";
+  type Key = "file" | "gif" | "emoji" | "camera" | "poll";
   const items: { key: Key; label: string; icon: React.ReactNode; phoneOnly?: boolean }[] = [
     { key: "file", label: "Příloha", icon: <Icon name="paperclip" size={18} /> },
     ...(onGif && GIPHY_KEY ? [{ key: "gif" as const, label: "GIF", icon: <Icon name="gif" size={20} /> }] : []),
     { key: "emoji", label: "Emoji", icon: <Icon name="smile" size={18} /> },
     { key: "camera", label: "Kamera", icon: <Icon name="camera" size={18} />, phoneOnly: true },
+    ...(onPoll ? [{ key: "poll" as const, label: "Anketa", icon: <Icon name="vote" size={18} /> }] : []),
   ];
   function select(key: Key) {
-    if (key === "file" || key === "camera") pick(key);
+    if (key === "poll") {
+      setOpen(false);
+      setPanel(null);
+      onPoll?.();
+    } else if (key === "file" || key === "camera") pick(key);
     else showPanel(key);
   }
 

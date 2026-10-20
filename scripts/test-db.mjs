@@ -1465,4 +1465,44 @@ await test("celoškolní chat: jsou v něm všichni, nejde odejít ani smazat", 
   await db.query(`delete from public.notifications where href = $1`, [`/zpravy?k=${school}`]);
 });
 
+await test("ankety ve skupině: založit, hlasovat, ukončit", async () => {
+  const [{ create_group: g }] = await as(student, `select public.create_group('Ankety', $1)`, [[student2, teacher]]);
+  const [{ create_chat_poll: msgId }] = await as(student, `select public.create_chat_poll($1, 'Kdy se sejdeme?', $2, false)`, [g, ["Středa", " ", "Čtvrtek"]]);
+  const [poll] = await as(student2, `select id, question from public.chat_polls where message_id = $1`, [msgId]);
+  assert.equal(poll.question, "Kdy se sejdeme?");
+  const opts = await as(student2, `select id, label from public.chat_poll_options where poll_id = $1 order by position`, [poll.id]);
+  assert.deepEqual(opts.map((o) => o.label), ["Středa", "Čtvrtek"], "prázdná možnost vynechaná");
+  const [{ body }] = await as(student2, `select body from public.messages where id = $1`, [msgId]);
+  assert.equal(body, "📊 Kdy se sejdeme?");
+  // Málo možností, cizí, dvojice.
+  await assert.rejects(() => as(student, `select public.create_chat_poll($1, 'X', $2)`, [g, ["Jen jedna"]]), /dvě možnosti/);
+  await assert.rejects(() => as(outsider, `select public.create_chat_poll($1, 'X', $2)`, [g, ["a", "b"]]));
+  const [{ start_conversation: pair }] = await as(student, `select public.start_conversation($1)`, [admin]);
+  await assert.rejects(() => as(student, `select public.create_chat_poll($1, 'X', $2)`, [pair, ["a", "b"]]), /jen ve skupině/);
+  // Hlasování: jedna možnost, změna hlasu, cizí nevidí.
+  await as(student2, `select public.vote_chat_poll($1, $2)`, [poll.id, [opts[0].id]]);
+  await assert.rejects(() => as(student2, `select public.vote_chat_poll($1, $2)`, [poll.id, [opts[0].id, opts[1].id]]), /jen jedna/);
+  await as(student2, `select public.vote_chat_poll($1, $2)`, [poll.id, [opts[1].id]]);
+  await as(teacher, `select public.vote_chat_poll($1, $2)`, [poll.id, [opts[1].id]]);
+  const votes = await as(student, `select option_id from public.chat_poll_votes where poll_id = $1`, [poll.id]);
+  assert.equal(votes.length, 2);
+  assert.ok(votes.every((v) => v.option_id === opts[1].id), "změna hlasu");
+  assert.equal((await as(outsider, `select 1 from public.chat_poll_votes`)).length, 0);
+  await assert.rejects(() => as(outsider, `select public.vote_chat_poll($1, $2)`, [poll.id, [opts[0].id]]));
+  // Ukončit smí autor (a správce skupiny), ne ostatní; po ukončení se nehlasuje.
+  await assert.rejects(() => as(student2, `select public.close_chat_poll($1)`, [poll.id]), /jen ten/);
+  await as(student, `select public.close_chat_poll($1)`, [poll.id]);
+  await assert.rejects(() => as(teacher, `select public.vote_chat_poll($1, $2)`, [poll.id, [opts[0].id]]), /ukončená/);
+  // Více odpovědí.
+  const [{ create_chat_poll: m2 }] = await as(teacher, `select public.create_chat_poll($1, 'Co vezmeme?', $2, true)`, [g, ["Míč", "Karty", "Frisbee"]]);
+  const [p2] = await as(student, `select id from public.chat_polls where message_id = $1`, [m2]);
+  const o2 = await as(student, `select id from public.chat_poll_options where poll_id = $1 order by position`, [p2.id]);
+  await as(student, `select public.vote_chat_poll($1, $2)`, [p2.id, [o2[0].id, o2[2].id]]);
+  assert.equal((await as(student, `select 1 from public.chat_poll_votes where poll_id = $1`, [p2.id])).length, 2);
+  // Smazaná zpráva vezme anketu s sebou.
+  await as(teacher, `select public.delete_chat_message('zpravy', $1)`, [m2]);
+  assert.equal((await db.query(`select 1 from public.chat_polls where id = $1`, [p2.id])).rows.length, 0);
+  await db.query(`delete from public.conversations where id = any($1)`, [[g, pair]]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);
