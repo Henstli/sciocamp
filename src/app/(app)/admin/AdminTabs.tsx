@@ -25,6 +25,8 @@ type AdminCourse = {
   href: string;
   /** Už proběhlo */
   ended: boolean;
+  /** Stav neproběhlé aktivity: běží / připravuje se (studenti ji ještě nevidí) / vyhlášená, začne později */
+  phase: { kind: "bezi" | "priprava" | "chysta"; label: string } | null;
   kind: string;
   kindKey: ActivityKind;
   title: string;
@@ -410,6 +412,12 @@ function ActivityList({ kind, items }: { kind: ActivityKind; items: AdminCourse[
   );
 }
 
+const PHASE_HINT = {
+  bezi: "Aktivita právě probíhá.",
+  priprava: "Studenti ji zatím nevidí v nabídce — kurz není zveřejněný, ateliér nebo expedice ještě nejsou vyhlášené v zápisovém kole. „Čeká na vyhlášení“ = vyučující ji označil jako připravenou.",
+  chysta: "Je zveřejněná nebo vyhlášená, ale ještě nezačala.",
+} as const;
+
 function ActivityRow({ c }: { c: AdminCourse }) {
   const full = c.cap !== null && c.taken >= c.cap;
   return (
@@ -428,6 +436,11 @@ function ActivityRow({ c }: { c: AdminCourse }) {
           </div>
         )}
       </div>
+      {c.phase && (
+        <span className={`chip ${c.phase.kind === "bezi" ? "chip-ok" : c.phase.kind === "priprava" ? "chip-wait" : "chip-primary"}`} title={PHASE_HINT[c.phase.kind]}>
+          {c.phase.label}
+        </span>
+      )}
       {c.meetUrl ? (
         <a href={c.meetUrl} target="_blank" rel="noopener noreferrer" className="chip chip-ok" style={{ textDecoration: "none" }}>
           Meet připraven

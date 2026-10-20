@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
 import { listActivities, listPeriods, listTerms, listUsers } from "@/lib/data";
-import { currentPeriod, describeWhen, hasEnded } from "@/lib/periods";
+import { activityRange, currentPeriod, describeWhen, hasEnded, hasStarted } from "@/lib/periods";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { canTeach, initials } from "@/lib/roles";
 import { formatDue, isoToPragueLocal, nowMs, pragueNow, toIso } from "@/lib/time";
@@ -16,6 +16,7 @@ import { AdminTabs } from "./AdminTabs";
 import { PeriodManager } from "./PeriodManager";
 import { StorageManager, type StorageView } from "./StorageManager";
 import { TermManager } from "./TermManager";
+import type { Activity } from "@/lib/types";
 import styles from "./admin.module.css";
 
 export const metadata: Metadata = { title: "Uživatelé a škola" };
@@ -178,6 +179,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             id: a.id,
             href: activityHref(a),
             ended: hasEnded(a, today),
+            phase: hasEnded(a, today) ? null : activityPhase(a, today),
             kind: KIND_LABEL[a.kind],
             kindKey: a.kind,
             title: a.title,
@@ -209,4 +211,15 @@ async function loadStorage(): Promise<{ report: StorageView | null; problem?: st
   } catch {
     return { report: null };
   }
+}
+
+/** Stav aktivity, která ještě neskončila (pro štítek ve Správě). */
+function activityPhase(a: Activity, today: string): { kind: "bezi" | "priprava" | "chysta"; label: string } {
+  if (hasStarted(a, today)) return { kind: "bezi", label: "Probíhá" };
+  // Studenti ji ještě nevidí: kurz nezveřejněný, ateliér / expedice nevyhlášené v kole.
+  const hidden = a.kind === "kurz" ? a.published === false : (a.kind === "atelier" || a.kind === "expedice") && !a.round;
+  if (hidden) return { kind: "priprava", label: a.announceReady ? "Čeká na vyhlášení" : "Připravuje se" };
+  const from = activityRange(a).from;
+  const [, m, d] = (from ?? "").split("-").map(Number);
+  return { kind: "chysta", label: from ? `Začne ${d}. ${m}.` : "Začne později" };
 }
