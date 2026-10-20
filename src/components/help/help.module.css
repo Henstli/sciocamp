@@ -285,6 +285,10 @@
 .frame[data-on] {
   opacity: 1;
 }
+/* Psaní: snímky se střídají okamžitě, bez prolínání (jinak text bliká). */
+.frame[data-instant] {
+  transition: none;
+}
 .ring {
   position: absolute;
   margin: -5px 0 0 -5px;
@@ -326,6 +330,12 @@
 }
 .hint[data-below] {
   transform: translate(-50%, 14px);
+}
+.hint[data-right] {
+  transform: translate(-100%, calc(-100% - 14px));
+}
+.hint[data-right][data-below] {
+  transform: translate(-100%, 14px);
 }
 .hint[data-on] {
   opacity: 1;

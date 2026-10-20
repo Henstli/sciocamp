@@ -139,12 +139,17 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
     kind = "type";
     await target.click();
     if (action.clear) await target.fill("");
-    // Píše se po kouscích, každý kousek = jeden snímek animace.
-    const words = action.type.split(/(?<=\s)/);
-    const parts = Math.min(5, words.length);
-    const per = Math.ceil(words.length / parts);
-    for (let i = 0; i < words.length; i += per) {
-      await target.pressSequentially(words.slice(i, i + per).join(""));
+    // Píše se po slovech (krátký text po písmenech), každý kousek = jeden
+    // snímek animace; nejvýš 16 snímků.
+    const text = action.type;
+    const words = text.split(/(?<=\s)/);
+    let pieces = words.length >= 4 ? words : (text.match(/[\s\S]{1,3}/g) ?? [text]);
+    if (pieces.length > 16) {
+      const per = Math.ceil(pieces.length / 16);
+      pieces = Array.from({ length: Math.ceil(pieces.length / per) }, (_, i) => pieces.slice(i * per, i * per + per).join(""));
+    }
+    for (const piece of pieces) {
+      await target.pressSequentially(piece);
       shots.push(await grab(page));
     }
     await grow();
@@ -183,11 +188,12 @@ async function main() {
   for (const guide of HELP_GUIDES) {
     if (only && guide.slug !== only) continue;
     console.log(`Návod: ${guide.title}`);
-    rmSync(`${OUT}/${guide.slug}`, { recursive: true, force: true });
-    mkdirSync(`${OUT}/${guide.slug}`, { recursive: true });
     const context = await browser.newContext({ viewport: VIEW, deviceScaleFactor: SCALE, locale: "cs-CZ", timezoneId: "Europe/Prague" });
     const page = await context.newPage();
     await login(page, guide.demoUser);
+    // Staré snímky smazat až po úspěšném přihlášení (když aplikace neběží, zůstanou).
+    rmSync(`${OUT}/${guide.slug}`, { recursive: true, force: true });
+    mkdirSync(`${OUT}/${guide.slug}`, { recursive: true });
     const steps: (ShotFrames | null)[] = [];
     for (const [i, step] of guide.steps.entries()) {
       if (!step.shot) {

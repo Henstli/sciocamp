@@ -36,7 +36,14 @@
     "/napoveda/profil/3-1.webp",
     "/napoveda/profil/3-2.webp",
     "/napoveda/profil/3-3.webp",
-    "/napoveda/profil/3-4.webp"
+    "/napoveda/profil/3-4.webp",
+    "/napoveda/profil/3-5.webp",
+    "/napoveda/profil/3-6.webp",
+    "/napoveda/profil/3-7.webp",
+    "/napoveda/profil/3-8.webp",
+    "/napoveda/profil/3-9.webp",
+    "/napoveda/profil/3-10.webp",
+    "/napoveda/profil/3-11.webp"
    ],
    "target": {
     "x": 0.04596412556053812,
@@ -128,7 +135,18 @@
    "h": 375,
    "frames": [
     "/napoveda/meet/4-0.webp",
-    "/napoveda/meet/4-1.webp"
+    "/napoveda/meet/4-1.webp",
+    "/napoveda/meet/4-2.webp",
+    "/napoveda/meet/4-3.webp",
+    "/napoveda/meet/4-4.webp",
+    "/napoveda/meet/4-5.webp",
+    "/napoveda/meet/4-6.webp",
+    "/napoveda/meet/4-7.webp",
+    "/napoveda/meet/4-8.webp",
+    "/napoveda/meet/4-9.webp",
+    "/napoveda/meet/4-10.webp",
+    "/napoveda/meet/4-11.webp",
+    "/napoveda/meet/4-12.webp"
    ],
    "target": {
     "x": 0.09495192307692307,
@@ -189,7 +207,10 @@
     "/napoveda/zadat-ukol/3-0.webp",
     "/napoveda/zadat-ukol/3-1.webp",
     "/napoveda/zadat-ukol/3-2.webp",
-    "/napoveda/zadat-ukol/3-3.webp"
+    "/napoveda/zadat-ukol/3-3.webp",
+    "/napoveda/zadat-ukol/3-4.webp",
+    "/napoveda/zadat-ukol/3-5.webp",
+    "/napoveda/zadat-ukol/3-6.webp"
    ],
    "target": {
     "x": 0.04149797570850203,
@@ -208,7 +229,12 @@
     "/napoveda/zadat-ukol/4-2.webp",
     "/napoveda/zadat-ukol/4-3.webp",
     "/napoveda/zadat-ukol/4-4.webp",
-    "/napoveda/zadat-ukol/4-5.webp"
+    "/napoveda/zadat-ukol/4-5.webp",
+    "/napoveda/zadat-ukol/4-6.webp",
+    "/napoveda/zadat-ukol/4-7.webp",
+    "/napoveda/zadat-ukol/4-8.webp",
+    "/napoveda/zadat-ukol/4-9.webp",
+    "/napoveda/zadat-ukol/4-10.webp"
    ],
    "target": {
     "x": 0.04149797570850203,
@@ -419,7 +445,10 @@
    "frames": [
     "/napoveda/pridat-uzivatele/2-0.webp",
     "/napoveda/pridat-uzivatele/2-1.webp",
-    "/napoveda/pridat-uzivatele/2-2.webp"
+    "/napoveda/pridat-uzivatele/2-2.webp",
+    "/napoveda/pridat-uzivatele/2-3.webp",
+    "/napoveda/pridat-uzivatele/2-4.webp",
+    "/napoveda/pridat-uzivatele/2-5.webp"
    ],
    "target": {
     "x": 0.038461538461538464,
@@ -434,7 +463,15 @@
    "h": 378,
    "frames": [
     "/napoveda/pridat-uzivatele/3-0.webp",
-    "/napoveda/pridat-uzivatele/3-1.webp"
+    "/napoveda/pridat-uzivatele/3-1.webp",
+    "/napoveda/pridat-uzivatele/3-2.webp",
+    "/napoveda/pridat-uzivatele/3-3.webp",
+    "/napoveda/pridat-uzivatele/3-4.webp",
+    "/napoveda/pridat-uzivatele/3-5.webp",
+    "/napoveda/pridat-uzivatele/3-6.webp",
+    "/napoveda/pridat-uzivatele/3-7.webp",
+    "/napoveda/pridat-uzivatele/3-8.webp",
+    "/napoveda/pridat-uzivatele/3-9.webp"
    ],
    "target": {
     "x": 0.3508666497975709,

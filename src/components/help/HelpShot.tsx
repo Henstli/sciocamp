@@ -19,7 +19,7 @@ const HINT: Record<HelpShotData["action"], string | null> = {
 };
 
 /** Kroky animace (ms od začátku). */
-const T = { show: 250, move: 450, press: 1450, result: 1800, typeStep: 420, hold: 2600 };
+const T = { show: 250, move: 450, press: 1450, result: 1800, typeStep: 170, hold: 2600 };
 
 function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -32,6 +32,8 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
   const [frame, setFrame] = useState(0);
   const [run, setRun] = useState(0);
   const [still, setStill] = useState(false);
+  // Animace začne, až jsou načtené všechny snímky kroku (jinak by při psaní problikávaly).
+  const [ready, setReady] = useState(false);
   const last = shot.frames.length - 1;
 
   // Přehrává se jen krok, který je vidět.
@@ -44,7 +46,19 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
   }, []);
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || ready) return;
+    let alive = true;
+    const imgs = Array.from(box.current?.querySelectorAll("img") ?? []);
+    void Promise.all(imgs.map((img) => img.decode().catch(() => undefined))).then(() => {
+      if (alive) setReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [visible, ready]);
+
+  useEffect(() => {
+    if (!visible || !ready) return;
     if (reducedMotion()) {
       const t = setTimeout(() => {
         setStill(true);
@@ -73,7 +87,7 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
     }
     at(end + T.hold, () => setRun((r) => r + 1));
     return () => timers.forEach(clearTimeout);
-  }, [visible, run, shot, last]);
+  }, [visible, ready, run, shot, last]);
 
   const t = shot.target;
   const cx = t ? (t.x + t.w / 2) * 100 : 50;
@@ -93,6 +107,8 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
   const showRing = t && phase !== "start" && !changed;
   // Bublina nad prvkem, u horního okraje pod ním.
   const hintBelow = t ? t.y < 0.18 : false;
+  // U širokých polí bublina vpravo nad polem, ať nezakrývá popisek vlevo.
+  const hintRight = t ? t.w > 0.3 || shot.action === "type" : false;
 
   return (
     <figure className={styles.shot} aria-label={label}>
@@ -109,8 +125,10 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
             alt={i === 0 ? label : ""}
             aria-hidden={i === 0 ? undefined : true}
             className={styles.frame}
-            data-on={i === frame || undefined}
-            loading="lazy"
+            // Při psaní zůstávají vidět i předchozí snímky pod aktuálním.
+            data-on={i === frame || (shot.action === "type" && i < frame) || undefined}
+            data-instant={(shot.action === "type" && i > 0) || undefined}
+            loading={i === 0 ? "lazy" : "eager"}
             decoding="async"
             draggable={false}
           />
@@ -129,7 +147,11 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
             className={styles.hint}
             data-on={showRing || undefined}
             data-below={hintBelow || undefined}
-            style={{ left: `${Math.min(Math.max(cx, 8), 92)}%`, top: `${(hintBelow ? t.y + t.h : t.y) * 100}%` }}
+            data-right={hintRight || undefined}
+            style={{
+              left: `${hintRight ? (t.x + t.w) * 100 : Math.min(Math.max(cx, 8), 92)}%`,
+              top: `${(hintBelow ? t.y + t.h : t.y) * 100}%`,
+            }}
             aria-hidden="true"
           >
             {hint}
