@@ -415,6 +415,11 @@ label.row:hover,
   display: grid;
   gap: 8px;
 }
+/* <legend> se do mřížky fieldsetu nepočítá (gap na něj nepůsobí) — mezeru dává sám */
+.colorPick > legend {
+  padding: 0;
+  margin-bottom: 10px;
+}
 .swatches {
   display: flex;
   flex-wrap: wrap;
