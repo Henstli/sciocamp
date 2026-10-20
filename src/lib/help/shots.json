@@ -33,17 +33,7 @@
    "h": 420,
    "frames": [
     "/napoveda/profil/3-0.webp",
-    "/napoveda/profil/3-1.webp",
-    "/napoveda/profil/3-2.webp",
-    "/napoveda/profil/3-3.webp",
-    "/napoveda/profil/3-4.webp",
-    "/napoveda/profil/3-5.webp",
-    "/napoveda/profil/3-6.webp",
-    "/napoveda/profil/3-7.webp",
-    "/napoveda/profil/3-8.webp",
-    "/napoveda/profil/3-9.webp",
-    "/napoveda/profil/3-10.webp",
-    "/napoveda/profil/3-11.webp"
+    "/napoveda/profil/3-1.webp"
    ],
    "target": {
     "x": 0.04596412556053812,
@@ -51,17 +41,29 @@
     "w": 0.9080717488789237,
     "h": 0.20238095238095238
    },
-   "action": "type"
+   "action": "type",
+   "typing": {
+    "text": "Učím literaturu a film. Ráda poradím s výběrem knih na maturitu.",
+    "box": {
+     "x": 0.06053811659192825,
+     "y": 0.425,
+     "w": 0.8789237668161435,
+     "h": 0.15
+    },
+    "fontSize": 0.01569506726457399,
+    "lineHeight": 0.023542600896860985,
+    "fontWeight": "400",
+    "color": "rgb(17, 26, 51)",
+    "background": "rgb(255, 255, 255)",
+    "multiline": true
+   }
   },
   {
    "w": 892,
    "h": 301,
    "frames": [
     "/napoveda/profil/4-0.webp",
-    "/napoveda/profil/4-1.webp",
-    "/napoveda/profil/4-2.webp",
-    "/napoveda/profil/4-3.webp",
-    "/napoveda/profil/4-4.webp"
+    "/napoveda/profil/4-1.webp"
    ],
    "target": {
     "x": 0.663291760089686,
@@ -69,7 +71,22 @@
     "w": 0.29074411434977576,
     "h": 0.1461794019933555
    },
-   "action": "type"
+   "action": "type",
+   "typing": {
+    "text": "+420 604 555 210",
+    "box": {
+     "x": 0.6778657511210763,
+     "y": 0.47093023255813954,
+     "w": 0.2615961322869955,
+     "h": 0.05813953488372093
+    },
+    "fontSize": 0.01569506726457399,
+    "lineHeight": 0.01961883408071749,
+    "fontWeight": "400",
+    "color": "rgb(17, 26, 51)",
+    "background": "rgb(255, 255, 255)",
+    "multiline": false
+   }
   },
   {
    "w": 892,
@@ -135,18 +152,7 @@
    "h": 375,
    "frames": [
     "/napoveda/meet/4-0.webp",
-    "/napoveda/meet/4-1.webp",
-    "/napoveda/meet/4-2.webp",
-    "/napoveda/meet/4-3.webp",
-    "/napoveda/meet/4-4.webp",
-    "/napoveda/meet/4-5.webp",
-    "/napoveda/meet/4-6.webp",
-    "/napoveda/meet/4-7.webp",
-    "/napoveda/meet/4-8.webp",
-    "/napoveda/meet/4-9.webp",
-    "/napoveda/meet/4-10.webp",
-    "/napoveda/meet/4-11.webp",
-    "/napoveda/meet/4-12.webp"
+    "/napoveda/meet/4-1.webp"
    ],
    "target": {
     "x": 0.09495192307692307,
@@ -154,7 +160,22 @@
     "w": 0.8110309829059829,
     "h": 0.11733333333333333
    },
-   "action": "type"
+   "action": "type",
+   "typing": {
+    "text": "https://meet.google.com/lit-film-tue",
+    "box": {
+     "x": 0.13768696581196582,
+     "y": 0.5830416666666667,
+     "w": 0.7255608974358975,
+     "h": 0.04666666666666667
+    },
+    "fontSize": 0.039886039886039885,
+    "lineHeight": 0.04985754985754986,
+    "fontWeight": "400",
+    "color": "rgb(17, 26, 51)",
+    "background": "rgb(244, 246, 251)",
+    "multiline": false
+   }
   },
   {
    "w": 351,
@@ -205,12 +226,7 @@
    "h": 441,
    "frames": [
     "/napoveda/zadat-ukol/3-0.webp",
-    "/napoveda/zadat-ukol/3-1.webp",
-    "/napoveda/zadat-ukol/3-2.webp",
-    "/napoveda/zadat-ukol/3-3.webp",
-    "/napoveda/zadat-ukol/3-4.webp",
-    "/napoveda/zadat-ukol/3-5.webp",
-    "/napoveda/zadat-ukol/3-6.webp"
+    "/napoveda/zadat-ukol/3-1.webp"
    ],
    "target": {
     "x": 0.04149797570850203,
@@ -218,23 +234,29 @@
     "w": 0.917004048582996,
     "h": 0.09977324263038549
    },
-   "action": "type"
+   "action": "type",
+   "typing": {
+    "text": "Recenze filmu Duna",
+    "box": {
+     "x": 0.05465587044534413,
+     "y": 0.4801587301587302,
+     "w": 0.8906882591093117,
+     "h": 0.03968253968253968
+    },
+    "fontSize": 0.01417004048582996,
+    "lineHeight": 0.01771255060728745,
+    "fontWeight": "400",
+    "color": "rgb(17, 26, 51)",
+    "background": "rgb(255, 255, 255)",
+    "multiline": false
+   }
   },
   {
    "w": 988,
    "h": 441,
    "frames": [
     "/napoveda/zadat-ukol/4-0.webp",
-    "/napoveda/zadat-ukol/4-1.webp",
-    "/napoveda/zadat-ukol/4-2.webp",
-    "/napoveda/zadat-ukol/4-3.webp",
-    "/napoveda/zadat-ukol/4-4.webp",
-    "/napoveda/zadat-ukol/4-5.webp",
-    "/napoveda/zadat-ukol/4-6.webp",
-    "/napoveda/zadat-ukol/4-7.webp",
-    "/napoveda/zadat-ukol/4-8.webp",
-    "/napoveda/zadat-ukol/4-9.webp",
-    "/napoveda/zadat-ukol/4-10.webp"
+    "/napoveda/zadat-ukol/4-1.webp"
    ],
    "target": {
     "x": 0.04149797570850203,
@@ -242,7 +264,22 @@
     "w": 0.917004048582996,
     "h": 0.3356009070294785
    },
-   "action": "type"
+   "action": "type",
+   "typing": {
+    "text": "Podívej se na film Duna (2021) a napiš recenzi na 1 stranu: co se ti líbilo, co ne a proč.",
+    "box": {
+     "x": 0.05465587044534413,
+     "y": 0.35714285714285715,
+     "w": 0.8906882591093117,
+     "h": 0.2857142857142857
+    },
+    "fontSize": 0.01417004048582996,
+    "lineHeight": 0.02125506072874494,
+    "fontWeight": "400",
+    "color": "rgb(17, 26, 51)",
+    "background": "rgb(255, 255, 255)",
+    "multiline": true
+   }
   },
   {
    "w": 988,
@@ -257,7 +294,22 @@
     "w": 0.2948823380566802,
     "h": 0.1896551724137931
    },
-   "action": "type"
+   "action": "type",
+   "typing": {
+    "text": "10",
+    "box": {
+     "x": 0.67677758097166,
+     "y": 0.6109913793103449,
+     "w": 0.26856654858299595,
+     "h": 0.07543103448275862
+    },
+    "fontSize": 0.01417004048582996,
+    "lineHeight": 0.01771255060728745,
+    "fontWeight": "400",
+    "color": "rgb(17, 26, 51)",
+    "background": "rgb(255, 255, 255)",
+    "multiline": false
+   }
   },
   {
    "w": 988,
@@ -345,7 +397,22 @@
     "w": 0.2849740932642487,
     "h": 0.08445297504798464
    },
-   "action": "type"
+   "action": "type",
+   "typing": {
+    "text": "18",
+    "box": {
+     "x": 0.13127428756476683,
+     "y": 0.4832053742802303,
+     "w": 0.21761658031088082,
+     "h": 0.03358925143953935
+    },
+    "fontSize": 0.03626943005181347,
+    "lineHeight": 0.04533678756476684,
+    "fontWeight": "600",
+    "color": "rgb(17, 26, 51)",
+    "background": "rgb(255, 255, 255)",
+    "multiline": false
+   }
   },
   {
    "w": 386,
@@ -444,11 +511,7 @@
    "h": 378,
    "frames": [
     "/napoveda/pridat-uzivatele/2-0.webp",
-    "/napoveda/pridat-uzivatele/2-1.webp",
-    "/napoveda/pridat-uzivatele/2-2.webp",
-    "/napoveda/pridat-uzivatele/2-3.webp",
-    "/napoveda/pridat-uzivatele/2-4.webp",
-    "/napoveda/pridat-uzivatele/2-5.webp"
+    "/napoveda/pridat-uzivatele/2-1.webp"
    ],
    "target": {
     "x": 0.038461538461538464,
@@ -456,22 +519,29 @@
     "w": 0.29823507085020245,
     "h": 0.1164021164021164
    },
-   "action": "type"
+   "action": "type",
+   "typing": {
+    "text": "Jana Nováková",
+    "box": {
+     "x": 0.05161943319838057,
+     "y": 0.44246031746031744,
+     "w": 0.2719192813765182,
+     "h": 0.046296296296296294
+    },
+    "fontSize": 0.01417004048582996,
+    "lineHeight": 0.01771255060728745,
+    "fontWeight": "500",
+    "color": "rgb(17, 26, 51)",
+    "background": "rgb(255, 255, 255)",
+    "multiline": false
+   }
   },
   {
    "w": 988,
    "h": 378,
    "frames": [
     "/napoveda/pridat-uzivatele/3-0.webp",
-    "/napoveda/pridat-uzivatele/3-1.webp",
-    "/napoveda/pridat-uzivatele/3-2.webp",
-    "/napoveda/pridat-uzivatele/3-3.webp",
-    "/napoveda/pridat-uzivatele/3-4.webp",
-    "/napoveda/pridat-uzivatele/3-5.webp",
-    "/napoveda/pridat-uzivatele/3-6.webp",
-    "/napoveda/pridat-uzivatele/3-7.webp",
-    "/napoveda/pridat-uzivatele/3-8.webp",
-    "/napoveda/pridat-uzivatele/3-9.webp"
+    "/napoveda/pridat-uzivatele/3-1.webp"
    ],
    "target": {
     "x": 0.3508666497975709,
@@ -479,7 +549,22 @@
     "w": 0.2982508856275304,
     "h": 0.1164021164021164
    },
-   "action": "type"
+   "action": "type",
+   "typing": {
+    "text": "jana.novakova@scioskola.cz",
+    "box": {
+     "x": 0.36402454453441296,
+     "y": 0.44246031746031744,
+     "w": 0.27193509615384615,
+     "h": 0.046296296296296294
+    },
+    "fontSize": 0.01417004048582996,
+    "lineHeight": 0.01771255060728745,
+    "fontWeight": "500",
+    "color": "rgb(17, 26, 51)",
+    "background": "rgb(255, 255, 255)",
+    "multiline": false
+   }
   },
   {
    "w": 988,

@@ -10,6 +10,17 @@ export type HelpShotData = {
   /** Prvek v podílech výřezu (0–1) */
   target: { x: number; y: number; w: number; h: number } | null;
   action: "click" | "point" | "type" | "select" | "none";
+  /** Psaní: obsah pole v podílech výřezu, písmo v podílech šířky výřezu */
+  typing?: {
+    text: string;
+    box: { x: number; y: number; w: number; h: number };
+    fontSize: number;
+    lineHeight: number;
+    fontWeight: string;
+    color: string;
+    background: string;
+    multiline: boolean;
+  };
 };
 
 const SHOTS = data as unknown as Record<string, (HelpShotData | null)[]>;

@@ -8,7 +8,18 @@ import { Icon } from "@/components/Icon";
 import { plural } from "@/lib/format";
 import styles from "./help.module.css";
 
-type Item = { slug: string; title: string; intro: string; minutes: number; steps: number; admin: boolean; cover: string | null; keywords: string };
+const AUDIENCE_LABEL = { all: "Všichni", staff: "Učitelé", admin: "Admin" } as const;
+
+/** Pro koho návod je: Všichni (zeleně), Učitelé (fialově), Admin (modře). */
+export function AudienceChip({ audience }: { audience: keyof typeof AUDIENCE_LABEL }) {
+  return (
+    <span className={styles.aud} data-a={audience}>
+      {AUDIENCE_LABEL[audience]}
+    </span>
+  );
+}
+
+type Item = { slug: string; title: string; intro: string; minutes: number; steps: number; audience: "all" | "staff" | "admin"; cover: string | null; keywords: string };
 const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 export function HelpIndex({ topics }: { topics: { key: string; title: string; guides: Item[] }[] }) {
@@ -37,7 +48,7 @@ export function HelpIndex({ topics }: { topics: { key: string; title: string; gu
           <div className={styles.cards}>
             {t.guides.map((g) => (
               <Link key={g.slug} href={`/napoveda/${g.slug}`} className={`card ${styles.guideCard}`}>
-                <span className={styles.cover} aria-hidden="true">
+                <span className={styles.cover} data-a={g.audience} aria-hidden="true">
                   {g.cover && (
                     // eslint-disable-next-line @next/next/no-img-element -- statický náhled
                     <img src={g.cover} alt="" loading="lazy" />
@@ -46,7 +57,7 @@ export function HelpIndex({ topics }: { topics: { key: string; title: string; gu
                 <span className={styles.guideText}>
                   <span className={styles.guideTitle}>
                     {g.title}
-                    {g.admin && <span className="chip chip-primary">Admin</span>}
+                    <AudienceChip audience={g.audience} />
                   </span>
                   <span className={styles.guideIntro}>{g.intro}</span>
                   <span className={styles.guideMeta}>

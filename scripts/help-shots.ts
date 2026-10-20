@@ -31,6 +31,21 @@ export type ShotFrames = {
   /** Prvek v procentech výřezu */
   target: { x: number; y: number; w: number; h: number } | null;
   action: "click" | "point" | "type" | "select" | "none";
+  /** Psaní: text a vzhled obsahu pole, prohlížeč ho pak dopisuje po písmenech */
+  typing?: HelpTyping;
+};
+type RawTyping = { text: string; box: Box; fontSize: number; lineHeight: number; fontWeight: string; color: string; background: string; multiline: boolean };
+export type HelpTyping = {
+  text: string;
+  /** Obsah pole (bez okraje a odsazení) v podílech výřezu */
+  box: { x: number; y: number; w: number; h: number };
+  /** Písmo v podílech šířky výřezu */
+  fontSize: number;
+  lineHeight: number;
+  fontWeight: string;
+  color: string;
+  background: string;
+  multiline: boolean;
 };
 
 function find(scope: Page | Locator, l: HelpLocator): Locator {
@@ -120,6 +135,7 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
   const shots = [await grab(page)];
   const action = shot.action ?? (target ? "point" : "none");
   let kind: ShotFrames["action"] = "none";
+  let rawTyping: RawTyping | null = null;
   const grow = async () => {
     const box = await area.boundingBox().catch(() => null);
     areaBox = union(areaBox, box);
@@ -139,19 +155,32 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
     kind = "type";
     await target.click();
     if (action.clear) await target.fill("");
-    // Píše se po slovech (krátký text po písmenech), každý kousek = jeden
-    // snímek animace; nejvýš 16 snímků.
-    const text = action.type;
-    const words = text.split(/(?<=\s)/);
-    let pieces = words.length >= 4 ? words : (text.match(/[\s\S]{1,3}/g) ?? [text]);
-    if (pieces.length > 16) {
-      const per = Math.ceil(pieces.length / 16);
-      pieces = Array.from({ length: Math.ceil(pieces.length / per) }, (_, i) => pieces.slice(i * per, i * per + per).join(""));
-    }
-    for (const piece of pieces) {
-      await target.pressSequentially(piece);
-      shots.push(await grab(page));
-    }
+    // Napíše se celý text a vyfotí výsledek. Postupné psaní po písmenech
+    // pak dělá přehrávač v prohlížeči nad tímto snímkem (stejné písmo a místo).
+    await target.pressSequentially(action.type, { delay: 5 });
+    rawTyping = await target.evaluate((el, text) => {
+      const cs = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      const px = (v: string) => parseFloat(v) || 0;
+      const left = px(cs.borderLeftWidth) + px(cs.paddingLeft);
+      const top = px(cs.borderTopWidth) + px(cs.paddingTop);
+      const right = px(cs.borderRightWidth) + px(cs.paddingRight);
+      const bottom = px(cs.borderBottomWidth) + px(cs.paddingBottom);
+      const lh = cs.lineHeight === "normal" ? px(cs.fontSize) * 1.25 : px(cs.lineHeight);
+      const multiline = el.tagName === "TEXTAREA";
+      const height = multiline ? r.height - top - bottom : lh;
+      return {
+        text,
+        box: { x: r.x + left, y: multiline ? r.y + top : r.y + (r.height - lh) / 2, width: r.width - left - right, height },
+        fontSize: px(cs.fontSize),
+        lineHeight: lh,
+        fontWeight: cs.fontWeight,
+        color: cs.color,
+        background: cs.backgroundColor,
+        multiline,
+      };
+    }, action.type);
+    shots.push(await grab(page));
     await grow();
   } else if (target && typeof action === "object" && "select" in action) {
     kind = "select";
@@ -179,7 +208,24 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
         h: tBox.height / clip.height,
       }
     : null;
-  return { w: clip.width, h: clip.height, frames, target: rel, action: kind };
+  const typing: HelpTyping | undefined = rawTyping
+    ? {
+        text: rawTyping.text,
+        box: {
+          x: (rawTyping.box.x - clip.x) / clip.width,
+          y: (rawTyping.box.y - clip.y) / clip.height,
+          w: rawTyping.box.width / clip.width,
+          h: rawTyping.box.height / clip.height,
+        },
+        fontSize: rawTyping.fontSize / clip.width,
+        lineHeight: rawTyping.lineHeight / clip.width,
+        fontWeight: rawTyping.fontWeight,
+        color: rawTyping.color,
+        background: rawTyping.background,
+        multiline: rawTyping.multiline,
+      }
+    : undefined;
+  return { w: clip.width, h: clip.height, frames, target: rel, action: kind, ...(typing ? { typing } : {}) };
 }
 
 async function main() {

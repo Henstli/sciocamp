@@ -30,7 +30,7 @@ export default async function HelpPage() {
               intro: g.intro,
               minutes: g.minutes,
               steps: g.steps.length,
-              admin: g.audience === "admin",
+              audience: g.audience,
               cover: coverFor(g.slug, g.cover)?.frames[0] ?? null,
               keywords: g.steps.map((s) => `${s.title} ${s.text}`).join(" "),
             })),

@@ -34,7 +34,10 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
   const [still, setStill] = useState(false);
   // Animace začne, až jsou načtené všechny snímky kroku (jinak by při psaní problikávaly).
   const [ready, setReady] = useState(false);
+  /** Kolik písmen je už „napsaných“ (null = překryv pro psaní není vidět) */
+  const [typed, setTyped] = useState<number | null>(null);
   const last = shot.frames.length - 1;
+  const typing = shot.action === "type" ? shot.typing : undefined;
 
   // Přehrává se jen krok, který je vidět.
   useEffect(() => {
@@ -71,6 +74,7 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
     const at = (ms: number, fn: () => void) => timers.push(setTimeout(fn, ms));
     at(0, () => {
       setFrame(0);
+      setTyped(null);
       setPhase("start");
     });
     at(T.move, () => setPhase("move"));
@@ -78,16 +82,25 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
     if (shot.target && shot.action !== "none") {
       at(T.press, () => setPhase("press"));
       at(T.result, () => setPhase("result"));
-      if (shot.action === "type") {
-        for (let i = 1; i <= last; i++) at(T.result + (i - 1) * T.typeStep, () => setFrame(i));
-        end = T.result + Math.max(0, last - 1) * T.typeStep;
+      if (typing) {
+        // Hotový snímek (pole s fokusem a celým textem) + překryv, ve kterém se
+        // text píše po písmenech; nakonec překryv zmizí a zůstane skutečný text.
+        const len = typing.text.length;
+        const step = Math.max(28, Math.min(70, 2400 / Math.max(len, 1)));
+        at(T.result, () => {
+          setFrame(last);
+          setTyped(0);
+        });
+        for (let i = 1; i <= len; i++) at(T.result + 250 + i * step, () => setTyped(i));
+        end = T.result + 250 + len * step + 500;
+        at(end, () => setTyped(null));
       } else if (last > 0) {
         at(T.result, () => setFrame(last));
       }
     }
     at(end + T.hold, () => setRun((r) => r + 1));
     return () => timers.forEach(clearTimeout);
-  }, [visible, ready, run, shot, last]);
+  }, [visible, ready, run, shot, last, typing]);
 
   const t = shot.target;
   const cx = t ? (t.x + t.w / 2) * 100 : 50;
@@ -125,14 +138,34 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
             alt={i === 0 ? label : ""}
             aria-hidden={i === 0 ? undefined : true}
             className={styles.frame}
-            // Při psaní zůstávají vidět i předchozí snímky pod aktuálním.
-            data-on={i === frame || (shot.action === "type" && i < frame) || undefined}
+            data-on={i === frame || undefined}
             data-instant={(shot.action === "type" && i > 0) || undefined}
             loading={i === 0 ? "lazy" : "eager"}
             decoding="async"
             draggable={false}
           />
         ))}
+        {typing && typed !== null && (
+          <span
+            className={styles.typing}
+            aria-hidden="true"
+            style={{
+              left: `${typing.box.x * 100}%`,
+              top: `${typing.box.y * 100}%`,
+              width: `${typing.box.w * 100}%`,
+              height: `${typing.box.h * 100}%`,
+              background: typing.background === "rgba(0, 0, 0, 0)" ? "#fff" : typing.background,
+              color: typing.color,
+              fontSize: `${typing.fontSize * 100}cqw`,
+              lineHeight: `${typing.lineHeight * 100}cqw`,
+              fontWeight: typing.fontWeight,
+              whiteSpace: typing.multiline ? "pre-wrap" : "pre",
+            }}
+          >
+            {typing.text.slice(0, typed)}
+            <i className={styles.caret} />
+          </span>
+        )}
         {t && (
           <span
             className={styles.ring}

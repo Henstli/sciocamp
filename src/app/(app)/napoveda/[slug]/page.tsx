@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { HelpFeedback } from "@/components/help/HelpFeedback";
 import { HelpShot } from "@/components/help/HelpShot";
+import { AudienceChip } from "@/components/help/HelpIndex";
 import { requireUser } from "@/lib/auth";
 import { isSupabase } from "@/lib/config";
 import { myHelpFeedback } from "@/lib/data-help";
@@ -55,6 +56,7 @@ export default async function HelpGuidePage({ params }: PageProps<"/napoveda/[sl
         <article className={`card ${styles.article}`}>
           <header className={styles.head}>
             <span className={styles.kicker}>
+              <AudienceChip audience={guide.audience} />
               {topic.title} · asi {guide.minutes} min
             </span>
             <h1 className={styles.title}>{guide.title}</h1>
