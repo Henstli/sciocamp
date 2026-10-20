@@ -5,7 +5,7 @@ import { MeetLink } from "@/components/MeetLink";
 import { PageHeader, Avatar } from "@/components/PageHeader";
 import { ScheduleWeek } from "@/components/ScheduleWeek";
 import { requireUser } from "@/lib/auth";
-import { homeTasks } from "@/lib/data-assignments";
+import { homeTasks, tasksForStudent } from "@/lib/data-assignments";
 import { unreadMessages } from "@/lib/data-communication";
 import { plural } from "@/lib/format";
 import { activitiesForUser, getUserById, getUsersByIds, listActivities } from "@/lib/data";
@@ -84,6 +84,19 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const messages = await unreadMessages(user);
   const senders = await getUsersByIds(messages.from.slice(0, 3));
   const teaching = canTeach(user.role);
+  // Úkoly, kterým do 24 hodin končí termín a nejsou odevzdané (jde vypnout v Nastavení).
+  const dueSoon =
+    !teaching && user.homeDueAlerts !== false
+      ? (await tasksForStudent(user))
+          .filter(
+            (t) =>
+              (t.state === "ceka" || t.state === "vraceno") &&
+              t.assignment.dueAt &&
+              new Date(t.assignment.dueAt).getTime() > nowValue &&
+              new Date(t.assignment.dueAt).getTime() - nowValue <= 24 * 3600 * 1000,
+          )
+          .sort((a, b) => a.assignment.dueAt!.localeCompare(b.assignment.dueAt!))
+      : [];
 
   return (
     <>
@@ -119,6 +132,37 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             label={upcoming.activity.teacherId === user.id ? "Zahájit Meet" : "Připojit se přes Meet"}
           />
         </div>
+      )}
+
+      {dueSoon.length > 0 && (
+        <section className={styles.dueAlert} aria-label="Blíží se termín">
+          <div className={styles.dueIcon}>
+            <Icon name="alert" size={22} />
+          </div>
+          <div className={styles.dueBody}>
+            <div className={styles.bannerTitle}>
+              {dueSoon.length === 1 ? "Blíží se termín úkolu" : `Blíží se termín ${dueSoon.length} ${plural(dueSoon.length, "úkolu", "úkolů", "úkolů")}`}
+            </div>
+            <ul className={styles.dueList}>
+              {dueSoon.slice(0, 4).map((t) => (
+                <li key={t.assignment.id}>
+                  <Link href={`/ukoly/${t.assignment.id}`} className={styles.dueItem}>
+                    <span className={styles.dueTitle}>{t.assignment.title}</span>
+                    <span className={styles.dueMeta}>
+                      {t.assignment.activityTitle}
+                      {t.state === "vraceno" ? " · vráceno k doplnění" : ""} · do {formatDue(t.assignment.dueAt!)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {dueSoon.length > 4 && (
+              <Link href="/ukoly" className={styles.dueMore}>
+                a další {dueSoon.length - 4} v Úkolech
+              </Link>
+            )}
+          </div>
+        </section>
       )}
 
       <section aria-label="Přehled" className={styles.stats}>

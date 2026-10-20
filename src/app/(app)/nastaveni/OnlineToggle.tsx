@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { setDueReminders, setShowOnline } from "@/lib/actions/profile";
+import { setDueReminders, setHomeDueAlerts, setShowOnline } from "@/lib/actions/profile";
 import styles from "@/components/manage/manage.module.css";
 
 const SETTINGS = {
@@ -11,9 +11,14 @@ const SETTINGS = {
     save: setShowOnline,
   },
   terminy: {
-    label: "Připomínat blížící se termín úkolu",
+    label: "Připomínat blížící se termín úkolu ve zvonečku",
     hint: "Den před termínem ti přijde upozornění ve zvonečku, pokud úkol ještě nemáš odevzdaný.",
     save: setDueReminders,
+  },
+  domov: {
+    label: "Ukazovat blížící se termíny na Domově",
+    hint: "Nahoře na Domově uvidíš úkoly, kterým do 24 hodin končí termín a ještě je nemáš odevzdané.",
+    save: setHomeDueAlerts,
   },
 } as const;
 
@@ -58,13 +63,23 @@ function SettingToggle({ kind, initial }: { kind: keyof typeof SETTINGS; initial
 }
 
 /** Nastavení → Upozornění a soukromí. */
-export function OnlineToggle({ initial, dueReminders }: { initial: boolean; /** Jen u studentů */ dueReminders?: boolean }) {
+export function OnlineToggle({
+  initial,
+  dueReminders,
+  homeDueAlerts,
+}: {
+  initial: boolean;
+  /** Jen u studentů */
+  dueReminders?: boolean;
+  homeDueAlerts?: boolean;
+}) {
   return (
     <section className={`card ${styles.form}`} aria-label="Upozornění a soukromí">
       <div>
         <h2 className="section-title">{dueReminders === undefined ? "Soukromí" : "Upozornění a soukromí"}</h2>
       </div>
       {dueReminders !== undefined && <SettingToggle kind="terminy" initial={dueReminders} />}
+      {homeDueAlerts !== undefined && <SettingToggle kind="domov" initial={homeDueAlerts} />}
       <SettingToggle kind="online" initial={initial} />
     </section>
   );

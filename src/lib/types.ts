@@ -23,6 +23,8 @@ export type User = {
   showOnline?: boolean;
   /** Připomínky blížícího se termínu úkolu (výchozí ano). */
   dueReminders?: boolean;
+  /** Pruh s blížícími se termíny na Domově (výchozí ano). */
+  homeDueAlerts?: boolean;
 };
 
 /** „ostatni“ se v aplikaci jmenuje Událost (třídnická konzultace, seminář…). */

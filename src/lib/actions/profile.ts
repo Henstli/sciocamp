@@ -100,3 +100,14 @@ export async function setDueReminders(on: boolean): Promise<ProfileState> {
   refresh();
   return { info: on ? "Připomínky termínů jsou zapnuté." : "Připomínky termínů jsou vypnuté." };
 }
+
+/** Pruh „Blíží se termín“ na Domově. */
+export async function setHomeDueAlerts(on: boolean): Promise<ProfileState> {
+  const user = await requireUser();
+  if (!isSupabase) return { info: "Ukázkový režim: nastavení se neukládá." };
+  const sb = await createClient();
+  const { error } = await sb.from("profiles").update({ home_due_alerts: on }).eq("id", user.id);
+  if (error) return { error: "Nastavení se nepodařilo uložit." };
+  refresh();
+  return { info: on ? "Termíny se na Domově ukazují." : "Termíny se na Domově neukazují." };
+}
