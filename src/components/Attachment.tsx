@@ -56,7 +56,7 @@ export function Attachment({
       <a href={url} target="_blank" rel="noopener noreferrer" className={styles.imageLink} title={`Otevřít ${file.name}`}>
         {/* Obrázky jsou za dočasným odkazem ze Storage, optimalizace Next.js tu nepomůže. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={url} alt={file.name} className={styles.image} loading="lazy" />
+        <img src={url} alt={file.name} className={styles.image} loading="lazy" decoding="async" />
       </a>
     ) : (
       <span className={styles.imagePlaceholder} aria-label={`Načítám obrázek ${file.name}`}>

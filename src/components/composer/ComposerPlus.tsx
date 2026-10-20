@@ -213,7 +213,7 @@ export function GifImage({ url }: { url: string }) {
   return (
     <a href={url} target="_blank" rel="noopener noreferrer" className={styles.gifMsg} aria-label="GIF">
       {/* eslint-disable-next-line @next/next/no-img-element -- GIF z Giphy */}
-      <img src={url} alt="GIF" loading="lazy" />
+      <img src={url} alt="GIF" loading="lazy" decoding="async" />
     </a>
   );
 }
