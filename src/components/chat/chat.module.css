@@ -400,3 +400,20 @@ button.quote:hover {
     height: 36px;
   }
 }
+
+/* Smazaná zpráva: „X zprávu smazal(a)“ */
+.deletedNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-muted);
+}
+.deletedNote[data-align="end"] {
+  align-self: flex-end;
+}

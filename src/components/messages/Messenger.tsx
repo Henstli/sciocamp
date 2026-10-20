@@ -13,9 +13,9 @@ import { isGifUrl } from "../composer/gif";
 import { MentionInput } from "../composer/MentionInput";
 import { MentionText } from "../composer/MentionText";
 import { encodeMentions } from "@/lib/mentions";
-import { applyReaction, editableText, messageSnippet } from "@/lib/chat";
-import { deleteChatMessage, editChatMessage, pinChatMessage, setReaction, useChatLive } from "@/lib/chat-client";
-import { ComposerContext, MessageTools, PinnedBar, Reactions, ReplyQuote, messageDomId } from "../chat/ChatBits";
+import { applyReaction, deletedLabel, editableText, messageSnippet } from "@/lib/chat";
+import { applyUpdate, deleteChatMessage, editChatMessage, markDeleted, pinChatMessage, setReaction, useChatLive } from "@/lib/chat-client";
+import { ComposerContext, DeletedNote, MessageTools, PinnedBar, Reactions, ReplyQuote, messageDomId } from "../chat/ChatBits";
 import chatStyles from "../chat/chat.module.css";
 import { Avatar, profileHref } from "../PageHeader";
 import { markConversationRead, startConversation } from "@/lib/actions/communication";
@@ -270,7 +270,7 @@ export function Messenger({
 
   // Úpravy, připnutí, smazání a reakce naživo.
   useChatLive("zpravy", convId, live, {
-    onUpdate: (u) => patch(u.id, (m) => ({ ...m, body: u.body, editedAt: u.editedAt, pinnedAt: u.pinnedAt, pinnedBy: u.pinnedBy })),
+    onUpdate: (u) => patch(u.id, (m) => applyUpdate(m, u)),
     onDelete: (id) => {
       if (byId.has(id)) setMessages((m) => m.filter((x) => x.id !== id));
     },
@@ -283,7 +283,8 @@ export function Messenger({
       const res = await deleteChatMessage("zpravy", id);
       if (res.error) return setError(res.error);
     }
-    setMessages((m) => m.filter((x) => x.id !== id));
+    if (replyTo === id) setReplyTo(null);
+    patch(id, (m) => markDeleted(m, me.id));
     if (live) router.refresh();
   }
 
@@ -506,10 +507,11 @@ export function Messenger({
 
   const replyTarget = (id: string) => {
     const t = byId.get(id);
-    return t ? { id: t.id, authorName: nameOf(t.authorId), snippet: messageSnippet(t.body, t.file?.name, 70) } : null;
+    if (!t) return null;
+    return { id: t.id, authorName: nameOf(t.authorId), snippet: t.deletedAt ? "smazaná zpráva" : messageSnippet(t.body, t.file?.name, 70) };
   };
   const pinnedItems = messages
-    .filter((m) => m.pinnedAt && !m.system)
+    .filter((m) => m.pinnedAt && !m.system && !m.deletedAt)
     .sort((a, b) => (b.pinnedAt ?? "").localeCompare(a.pinnedAt ?? ""))
     .map((m) => ({ id: m.id, authorName: nameOf(m.authorId), snippet: messageSnippet(m.body, m.file?.name) }));
   const replying = replyTo ? byId.get(replyTo) : null;
@@ -657,7 +659,7 @@ export function Messenger({
                 const showAuthor = !!activeGroup && !r.m.mine && !(prev?.kind === "msg" && !prev.m.system && prev.m.authorId === r.m.authorId);
                 const m = r.m;
                 const align = m.mine ? "end" : "start";
-                const tools = !m.pending && (
+                const tools = !m.pending && !m.deletedAt && (
                   <MessageTools
                     align={align}
                     myReactions={(m.reactions ?? []).filter((x) => x.userIds.includes(me.id)).map((x) => x.emoji)}
@@ -678,16 +680,19 @@ export function Messenger({
                 const content = (
                   <div className={styles.msgWrap} data-mine={m.mine}>
                     {showAuthor && <span className={styles.author}>{m.authorName}</span>}
-                    {m.replyTo && <ReplyQuote target={replyTarget(m.replyTo)} align={align} />}
+                    {m.replyTo && !m.deletedAt && <ReplyQuote target={replyTarget(m.replyTo)} align={align} />}
+                    {m.deletedAt && <DeletedNote label={deletedLabel(m.authorId, m.deletedBy, me.id, nameOf)} align={align} />}
                     {/* Lišta akcí sedí hned vedle bubliny (u mých zpráv vlevo). */}
-                    <div className={styles.bubbleRow}>
-                      {m.mine && tools}
-                      <div className={styles.bubbleCol}>
-                        {m.file && <Attachment bucket={BUCKET} file={m.file} live={live} />}
-                        {m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.bubble}><MentionText body={m.body} meId={me.id} /></div>)}
+                    {!m.deletedAt && (
+                      <div className={styles.bubbleRow}>
+                        {m.mine && tools}
+                        <div className={styles.bubbleCol}>
+                          {m.file && <Attachment bucket={BUCKET} file={m.file} live={live} />}
+                          {m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.bubble}><MentionText body={m.body} meId={me.id} /></div>)}
+                        </div>
+                        {!m.mine && tools}
                       </div>
-                      {!m.mine && tools}
-                    </div>
+                    )}
                     <Reactions reactions={m.reactions} meId={me.id} nameOf={nameOf} align={align} onToggle={(e, add) => void react(m, e, add)} />
                     <div className={styles.time}>
                       {m.pinnedAt && (
@@ -695,7 +700,7 @@ export function Messenger({
                           <Icon name="pushpin" size={11} /> připnuto ·{" "}
                         </span>
                       )}
-                      {m.editedAt && <span className={chatStyles.edited}>upraveno · </span>}
+                      {m.editedAt && !m.deletedAt && <span className={chatStyles.edited}>upraveno · </span>}
                       {/* U přečtené poslední zprávy stačí „Přečteno …“, čas odeslání se skryje. */}
                       {m.id === last?.id && status ? (
                         <span className={styles.status} data-seen={status.startsWith("Přečet")}>

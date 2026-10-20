@@ -16,7 +16,7 @@ export const CHAT_TABLE: Record<ChatKind, { table: string; room: string }> = {
 };
 
 /** Sloupce zprávy navíc (odpověď, úprava, připnutí). */
-export const CHAT_META_COLUMNS = "reply_to, edited_at, pinned_at, pinned_by";
+export const CHAT_META_COLUMNS = "reply_to, edited_at, pinned_at, pinned_by, deleted_at, deleted_by";
 
 /** Čtyři rychlé reakce; další emoji jdou vybrat z celého seznamu. */
 export const QUICK_REACTIONS = ["❤️", "👍", "👎", "😂"] as const;
@@ -57,6 +57,14 @@ export function messageSnippet(body: string, fileName?: string | null, max = 90)
   const text = mentionPlain(body).replace(/\s+/g, " ").trim();
   if (!text) return fileName ? `Příloha: ${fileName}` : "Příloha";
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+/** „Eliot zprávu smazal(a)“ / „Zprávu jsi smazal(a)“ / „Zprávu smazal(a) Tereza Hanková“. */
+export function deletedLabel(authorId: string, deletedBy: string | null | undefined, meId: string, nameOf: (id: string) => string): string {
+  const by = deletedBy ?? authorId;
+  if (by === meId) return "Zprávu jsi smazal(a)";
+  if (by === authorId) return `${nameOf(authorId)} zprávu smazal(a)`;
+  return `Zprávu smazal(a) ${nameOf(by)}`;
 }
 
 /** Text zprávy k úpravě: zmínky „@[Jméno](id)“ jako „@Jméno“ (při uložení se znovu označí). */

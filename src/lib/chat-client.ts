@@ -25,9 +25,10 @@ export async function editChatMessage(chat: ChatKind, id: string, body: string):
   return { editedAt: (data as { edited_at: string | null }).edited_at ?? new Date().toISOString() };
 }
 
+/** Smaže zprávu; v chatu zůstane „X zprávu smazal(a)“. */
 export async function deleteChatMessage(chat: ChatKind, id: string): Promise<Result> {
-  const { data, error } = await createClient().from(CHAT_TABLE[chat].table).delete().eq("id", id).select("id");
-  if (error || !data?.length) return { error: "Zprávu se nepodařilo smazat." };
+  const { error } = await createClient().rpc("delete_chat_message", { chat, message: id });
+  if (error) return { error: chatError(error.message, "Zprávu se nepodařilo smazat.") };
   return {};
 }
 
@@ -37,7 +38,35 @@ export async function pinChatMessage(chat: ChatKind, id: string, pin: boolean): 
   return {};
 }
 
-export type LiveMessageUpdate = { id: string; body: string; editedAt: string | null; pinnedAt: string | null; pinnedBy: string | null };
+export type LiveMessageUpdate = {
+  id: string;
+  body: string;
+  editedAt: string | null;
+  pinnedAt: string | null;
+  pinnedBy: string | null;
+  deletedAt: string | null;
+  deletedBy: string | null;
+};
+
+/** Změna zprávy (úprava, připnutí, smazání) promítnutá do zprávy v seznamu. */
+export function applyUpdate<T extends { body: string; file: unknown; reactions?: unknown[] }>(m: T, u: LiveMessageUpdate): T {
+  const deleted = !!u.deletedAt;
+  return {
+    ...m,
+    body: u.body,
+    editedAt: u.editedAt,
+    pinnedAt: u.pinnedAt,
+    pinnedBy: u.pinnedBy,
+    deletedAt: u.deletedAt,
+    deletedBy: u.deletedBy,
+    ...(deleted ? { file: null, reactions: [] } : {}),
+  };
+}
+
+/** Zpráva smazaná u mě (hned, než přijde potvrzení z Realtime). */
+export function markDeleted<T extends { body: string; file: unknown }>(m: T, by: string): T {
+  return { ...m, body: "", file: null, reactions: [], pinnedAt: null, pinnedBy: null, deletedAt: new Date().toISOString(), deletedBy: by };
+}
 
 /**
  * Živé změny v jednom chatu: úprava a připnutí zprávy, smazání zprávy,
@@ -67,8 +96,24 @@ export function useChatLive(
     const channel = sb
       .channel(`akce-${chat}-${room}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table, filter: `${column}=eq.${room}` }, (payload) => {
-        const r = payload.new as { id: string; body: string; edited_at: string | null; pinned_at: string | null; pinned_by: string | null };
-        ref.current.onUpdate({ id: r.id, body: r.body, editedAt: r.edited_at, pinnedAt: r.pinned_at, pinnedBy: r.pinned_by });
+        const r = payload.new as {
+          id: string;
+          body: string;
+          edited_at: string | null;
+          pinned_at: string | null;
+          pinned_by: string | null;
+          deleted_at: string | null;
+          deleted_by: string | null;
+        };
+        ref.current.onUpdate({
+          id: r.id,
+          body: r.body,
+          editedAt: r.edited_at,
+          pinnedAt: r.pinned_at,
+          pinnedBy: r.pinned_by,
+          deletedAt: r.deleted_at ?? null,
+          deletedBy: r.deleted_by ?? null,
+        });
       })
       // Smazání nejde filtrovat; přijde jen id a chat si ho najde (cizí id ignoruje).
       .on("postgres_changes", { event: "DELETE", schema: "public", table }, (payload) => {

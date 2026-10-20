@@ -38,7 +38,8 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
 
   const list: ConversationView[] = conversations
     .map((c): ConversationView | null => {
-      const text = isGifUrl(c.lastBody) ? "GIF" : mentionPlain(c.lastBody ?? "") || (c.lastHasFile ? "Příloha" : "");
+      // Prázdná poslední zpráva bez přílohy = smazaná.
+      const text = isGifUrl(c.lastBody) ? "GIF" : mentionPlain(c.lastBody ?? "") || (c.lastHasFile ? "Příloha" : "Zpráva byla smazána");
       const time = formatListTime(c.lastAt, now);
       if (c.isGroup) {
         const preview = c.lastSystem || !c.lastAuthor ? text : `${c.lastMine ? "Ty" : firstName(c.lastAuthor)}: ${text}`;
@@ -102,6 +103,8 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
           pinnedAt: m.pinnedAt ?? null,
           pinnedBy: m.pinnedBy ?? null,
           reactions: m.reactions ?? [],
+          deletedAt: m.deletedAt ?? null,
+          deletedBy: m.deletedBy ?? null,
         };
       })
     : [];

@@ -235,6 +235,9 @@ export type ChatMeta = {
   pinnedAt?: string | null;
   pinnedBy?: string | null;
   reactions?: ChatReaction[];
+  /** Smazaná zpráva (zůstane jen „X zprávu smazal(a)“) */
+  deletedAt?: string | null;
+  deletedBy?: string | null;
 };
 
 export type ClassMessage = { id: string; authorId: string; body: string; createdAt: string; file: SubmissionFile | null } & ChatMeta;

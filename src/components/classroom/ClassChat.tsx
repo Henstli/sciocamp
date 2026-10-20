@@ -16,9 +16,9 @@ import { isGifUrl } from "../composer/gif";
 import { MentionInput } from "../composer/MentionInput";
 import { MentionText } from "../composer/MentionText";
 import { encodeMentions } from "@/lib/mentions";
-import { applyReaction, editableText, messageSnippet, type ChatKind } from "@/lib/chat";
-import { deleteChatMessage, editChatMessage, pinChatMessage, setReaction, useChatLive } from "@/lib/chat-client";
-import { ComposerContext, MessageTools, PinnedBar, Reactions, ReplyQuote, messageDomId } from "../chat/ChatBits";
+import { applyReaction, deletedLabel, editableText, messageSnippet, type ChatKind } from "@/lib/chat";
+import { applyUpdate, deleteChatMessage, editChatMessage, markDeleted, pinChatMessage, setReaction, useChatLive } from "@/lib/chat-client";
+import { ComposerContext, DeletedNote, MessageTools, PinnedBar, Reactions, ReplyQuote, messageDomId } from "../chat/ChatBits";
 import chatStyles from "../chat/chat.module.css";
 import { UNKNOWN_PERSON, toneFor, type Person } from "./people";
 import styles from "./classroom.module.css";
@@ -37,6 +37,8 @@ type Row = {
   edited_at?: string | null;
   pinned_at?: string | null;
   pinned_by?: string | null;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
 };
 
 /** Chat třídy, nebo chat jednoho týmu. */
@@ -44,7 +46,7 @@ const KINDS = {
   class: { table: "class_messages", column: "activity_id", bucket: "chat", placeholder: "Zpráva pro celou třídu…", chat: "trida" as ChatKind },
   team: { table: "team_messages", column: "team_id", bucket: "tymy", placeholder: "Zpráva pro tým…", chat: "tym" as ChatKind },
 } as const;
-const COLUMNS = "id, author_id, body, file_path, file_name, file_size, created_at, reply_to, edited_at, pinned_at, pinned_by";
+const COLUMNS = "id, author_id, body, file_path, file_name, file_size, created_at, reply_to, edited_at, pinned_at, pinned_by, deleted_at, deleted_by";
 
 const toLine = (r: Row): ChatLine => ({
   id: r.id,
@@ -58,6 +60,8 @@ const toLine = (r: Row): ChatLine => ({
   pinnedAt: r.pinned_at ?? null,
   pinnedBy: r.pinned_by ?? null,
   reactions: [],
+  deletedAt: r.deleted_at ?? null,
+  deletedBy: r.deleted_by ?? null,
 });
 
 /** Chat třídy nebo týmu. Naostro se nové zprávy objevují samy (Supabase Realtime). */
@@ -116,7 +120,7 @@ export function ClassChat({
 
   // Úpravy, připnutí, smazání a reakce ostatních naživo.
   useChatLive(cfg.chat, activityDbId, realtime, {
-    onUpdate: (u) => patch(u.id, (m) => ({ ...m, body: u.body, editedAt: u.editedAt, pinnedAt: u.pinnedAt, pinnedBy: u.pinnedBy })),
+    onUpdate: (u) => patch(u.id, (m) => applyUpdate(m, u)),
     onDelete: (id) => setMessages((m) => m.filter((x) => x.id !== id)),
     onReaction: (id, emoji, userId, add) => patch(id, (m) => ({ ...m, reactions: applyReaction(m.reactions, emoji, userId, add) })),
   });
@@ -214,7 +218,8 @@ export function ClassChat({
       const res = await deleteChatMessage(cfg.chat, id);
       if (res.error) return setError(res.error);
     }
-    setMessages((m) => m.filter((x) => x.id !== id));
+    if (replyTo === id) setReplyTo(null);
+    patch(id, (m) => markDeleted(m, me.id));
   }
 
   async function react(m: ChatLine, emoji: string, add: boolean) {
@@ -281,10 +286,11 @@ export function ClassChat({
 
   const replyTarget = (id: string) => {
     const t = byId.get(id);
-    return t ? { id: t.id, authorName: nameOf(t.authorId), snippet: messageSnippet(t.body, t.file?.name, 70) } : null;
+    if (!t) return null;
+    return { id: t.id, authorName: nameOf(t.authorId), snippet: t.deletedAt ? "smazaná zpráva" : messageSnippet(t.body, t.file?.name, 70) };
   };
   const pinnedItems = messages
-    .filter((m) => m.pinnedAt)
+    .filter((m) => m.pinnedAt && !m.deletedAt)
     .sort((a, b) => (b.pinnedAt ?? "").localeCompare(a.pinnedAt ?? ""))
     .map((m) => ({ id: m.id, authorName: nameOf(m.authorId), snippet: messageSnippet(m.body, m.file?.name) }));
   const replying = replyTo ? byId.get(replyTo) : null;
@@ -314,7 +320,7 @@ export function ClassChat({
                   <span className={styles.strong}>{author.name}</span>
                   <span className={styles.meta}>
                     {m.when}
-                    {m.editedAt && <span className={chatStyles.edited}> · upraveno</span>}
+                    {m.editedAt && !m.deletedAt && <span className={chatStyles.edited}> · upraveno</span>}
                     {m.pinnedAt && (
                       <span className={chatStyles.pinMark}>
                         {" "}· <Icon name="pushpin" size={12} /> připnuto
@@ -322,7 +328,12 @@ export function ClassChat({
                     )}
                   </span>
                 </div>
-                {m.replyTo && (
+                {m.deletedAt && (
+                  <div className={styles.msgQuote}>
+                    <DeletedNote label={deletedLabel(m.authorId, m.deletedBy, me.id, nameOf)} />
+                  </div>
+                )}
+                {m.replyTo && !m.deletedAt && (
                   <div className={styles.msgQuote}>
                     <ReplyQuote target={replyTarget(m.replyTo)} />
                   </div>
@@ -337,7 +348,7 @@ export function ClassChat({
                   <Reactions reactions={m.reactions} meId={me.id} nameOf={nameOf} onToggle={(e, add) => void react(m, e, add)} />
                 </div>
               </div>
-              {!local && (
+              {!local && !m.deletedAt && (
                 <MessageTools
                   align="end"
                   myReactions={(m.reactions ?? []).filter((r) => r.userIds.includes(me.id)).map((r) => r.emoji)}

@@ -214,6 +214,19 @@ export function MessageTools({
 }
 
 // ---------------------------------------------------------------------------
+// Smazaná zpráva
+// ---------------------------------------------------------------------------
+
+export function DeletedNote({ label, align = "start" }: { label: string; align?: "start" | "end" }) {
+  return (
+    <div className={styles.deletedNote} data-align={align}>
+      <Icon name="trash" size={13} />
+      {label}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Reakce pod zprávou
 // ---------------------------------------------------------------------------
 

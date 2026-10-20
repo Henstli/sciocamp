@@ -76,6 +76,7 @@ export const DEMO_MESSAGES: Record<string, DirectMessage[]> = {
   "k-skupina": [
     { id: "g0", authorId: "u-liska", body: "Šimon Samuel Liška založil(a) skupinu „Projekt Cestománie“", file: null, createdAt: "2026-10-19T08:30:00Z", system: true },
     { id: "g1", authorId: "u-liska", body: "Ahoj, kdy se sejdeme kvůli prezentaci?", file: null, createdAt: "2026-10-19T08:31:00Z" },
+    { id: "g1b", authorId: "u-komarek", body: "", file: null, createdAt: "2026-10-19T08:40:00Z", deletedAt: "2026-10-19T08:41:00Z", deletedBy: "u-komarek" },
     {
       id: "g2",
       authorId: "u-kolarova",

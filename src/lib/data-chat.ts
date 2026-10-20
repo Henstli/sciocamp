@@ -6,7 +6,15 @@ import { groupReactions, type ChatKind, type ReactionRow } from "./chat";
 import { createClient } from "./supabase/server";
 import type { ChatMeta } from "./types";
 
-export type MetaRow = { id: string; reply_to?: string | null; edited_at?: string | null; pinned_at?: string | null; pinned_by?: string | null };
+export type MetaRow = {
+  id: string;
+  reply_to?: string | null;
+  edited_at?: string | null;
+  pinned_at?: string | null;
+  pinned_by?: string | null;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
+};
 
 /** Reakce v místnosti a převod řádku zprávy na `ChatMeta`. */
 export async function chatMetaFor(chat: ChatKind, room: string): Promise<(r: MetaRow) => ChatMeta> {
@@ -19,5 +27,7 @@ export async function chatMetaFor(chat: ChatKind, room: string): Promise<(r: Met
     pinnedAt: r.pinned_at ?? null,
     pinnedBy: r.pinned_by ?? null,
     reactions: reactions.get(r.id) ?? [],
+    deletedAt: r.deleted_at ?? null,
+    deletedBy: r.deleted_by ?? null,
   });
 }
