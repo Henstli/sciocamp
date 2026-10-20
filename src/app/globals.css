@@ -250,14 +250,16 @@ p {
   color: var(--primary-text);
 }
 
+/* Bílé tlačítko na barevné hlavičce (třída, profil) — stejné ve světlém i tmavém
+   režimu, jinak by světle modrý text tmavého režimu na bílé zanikal. */
 .btn-white {
   background: #fff;
-  color: var(--primary-text);
+  color: #1f4fb8;
   font-weight: 800;
 }
 .btn-white:hover {
-  background: var(--primary-tint);
-  color: var(--primary-hover-text);
+  background: #e8effd;
+  color: #163c8f;
 }
 
 .chip {
