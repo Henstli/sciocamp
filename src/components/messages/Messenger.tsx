@@ -15,6 +15,7 @@ import { markConversationRead, startConversation } from "@/lib/actions/communica
 import { createClient } from "@/lib/supabase/client";
 import { formatClock, formatDayLabel } from "@/lib/time";
 import type { Role, SubmissionFile } from "@/lib/types";
+import { useStickToBottom } from "@/lib/use-stick-to-bottom";
 import { isCompressibleImage } from "@/lib/image-compress";
 import { tooBigMessage, uploadFilesDetailed, uploadLimit } from "@/lib/upload";
 import styles from "./messages.module.css";
@@ -93,7 +94,8 @@ export function Messenger({
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingSentAt = useRef(0);
   const typingChannel = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
-  const listEnd = useRef<HTMLDivElement>(null);
+  const thread = useRef<HTMLDivElement>(null);
+  const stickToBottom = useStickToBottom(thread, activeId ?? activePerson?.id ?? null);
   const draftInput = useRef<HTMLInputElement>(null);
 
   const unreadHere = conversations.find((c) => c.id === activeId)?.unread ?? 0;
@@ -200,10 +202,6 @@ export function Messenger({
     void ch.send({ type: "broadcast", event: "typing", payload: { userId: me.id, stop } });
   };
 
-  useEffect(() => {
-    listEnd.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, typing]);
-
   const found = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("cs");
     if (!q) return [];
@@ -214,6 +212,7 @@ export function Messenger({
 
   /** Odešle rozepsanou zprávu, nebo rovnou GIF (`gif` = odkaz). */
   async function send(gif?: string) {
+    stickToBottom();
     const body = gif ?? draft.trim();
     const file_ = gif ? null : file;
     const clear = () => {
@@ -403,7 +402,7 @@ export function Messenger({
               </div>
             </header>
 
-            <div className={styles.messages} aria-live="polite">
+            <div className={styles.messages} aria-live="polite" ref={thread}>
               {rows.length === 0 && <p className={styles.emptyThread}>Napiš první zprávu.</p>}
               {rows.map((r, i) =>
                 r.kind === "day" ? (
@@ -436,7 +435,6 @@ export function Messenger({
                   </div>
                 </div>
               )}
-              <div ref={listEnd} />
             </div>
 
             {file && (

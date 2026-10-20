@@ -7,6 +7,7 @@ import { Avatar, profileHref } from "../PageHeader";
 import { createClient } from "@/lib/supabase/client";
 import { formatStamp } from "@/lib/time";
 import type { SubmissionFile } from "@/lib/types";
+import { useStickToBottom } from "@/lib/use-stick-to-bottom";
 import { isCompressibleImage } from "@/lib/image-compress";
 import { tooBigMessage, uploadFilesDetailed, uploadLimit } from "@/lib/upload";
 import { Attachment } from "../Attachment";
@@ -108,14 +109,12 @@ export function ClassChat({
     };
   }, [realtime, activityDbId, cfg.table, cfg.column]);
 
-  // Držet seznam dole u nejnovější zprávy.
-  useEffect(() => {
-    const el = list.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [messages.length]);
+  // Chat začíná dole a drží se dole (pokud si člověk neodroluje nahoru).
+  const stickToBottom = useStickToBottom(list, activityDbId);
 
   /** Odešle rozepsanou zprávu, nebo rovnou GIF (`gif` = odkaz). */
   async function send(gif?: string) {
+    stickToBottom();
     const body = gif ?? draft.trim();
     const file_ = gif ? null : file;
     const clear = () => {
