@@ -1542,8 +1542,12 @@ await test("odznaky: udělení, úrovně, oznámení, vystavení", async () => {
   const shown = await as(student, `select badge, tier from public.shown_badges_of($1)`, [kid]);
   assert.deepEqual(shown.map((r) => r.badge), ["zakladatel", "pracant"]);
   assert.equal((await as(student, `select 1 from public.user_badges where user_id = $1`, [kid])).length, 0, "cizí sbírku nevidí");
-  // Vyučující odznaky nedostává.
-  assert.deepEqual((await as(teacher, `select badge from public.refresh_my_badges()`)), []);
+  // Vyučující dostává společné a učitelské odznaky (Zakladatel, Mentor…), ne studentské.
+  const t = (await as(teacher, `select badge from public.refresh_my_badges()`)).map((r) => r.badge);
+  assert.ok(t.includes("zakladatel"), "společný");
+  assert.ok(!t.includes("pracant") && !t.includes("prvni-krok"), "studentské ne");
+  const tm = (await as(teacher, `select badge from public.my_badges()`)).map((r) => r.badge);
+  assert.ok(tm.includes("mentor") && !tm.includes("pracant"), "sbírka vyučujícího");
   await db.query(`delete from public.assignments where id = any($1)`, [ids]);
   await db.query(`delete from auth.users where id = $1`, [kid]);
 });

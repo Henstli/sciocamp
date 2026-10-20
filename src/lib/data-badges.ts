@@ -2,17 +2,22 @@
 
 import "server-only";
 import { cache } from "react";
-import { BADGES, isBadgeKey, type BadgeProgress, type EarnedBadge } from "./badges";
+import { BADGES, badgeForRole, isBadgeKey, type BadgeProgress, type EarnedBadge } from "./badges";
 import { isSupabase } from "./config";
 import { DEMO_BADGE_PROGRESS, DEMO_SHOWN_BADGES } from "./demo-badges";
 import { createClient } from "./supabase/server";
 import type { User } from "./types";
 
-/** Moje odznaky i s postupem k dalším (jen studenti; jinak prázdné). */
+/** Moje odznaky i s postupem k dalším (jen ty, které moje role může získat). */
 async function myBadgeProgressUncached(user: User): Promise<BadgeProgress[]> {
-  if (user.role !== "student") return [];
   if (!isSupabase) {
-    return user.id === "u-liska" ? DEMO_BADGE_PROGRESS : BADGES.map((b) => ({ key: b.key, value: 0, tier: b.key === "zakladatel" ? 1 : 0, earnedAt: null }));
+    if (user.id === "u-liska") return DEMO_BADGE_PROGRESS;
+    return BADGES.filter((b) => badgeForRole(b, user.role)).map((b) => ({
+      key: b.key,
+      value: b.key === "mentor" ? 64 : 0,
+      tier: b.key === "zakladatel" || b.key === "mentor" ? 1 : 0,
+      earnedAt: b.key === "zakladatel" || b.key === "mentor" ? "2026-10-20T08:00:00Z" : null,
+    }));
   }
   const sb = await createClient();
   const { data, error } = await sb.rpc("my_badges");

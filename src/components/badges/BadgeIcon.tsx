@@ -11,6 +11,7 @@ const CATEGORY: Record<BadgeCategory, [string, string]> = {
   uceni: ["#2F5FCC", "#6D95EE"],
   dobro: ["#0F6B5F", "#2FA594"],
   komunita: ["#5B4BC4", "#8C7EE6"],
+  vyuka: ["#9A5B00", "#E0A43C"],
   tajne: ["#111A33", "#3A4560"],
 };
 const METAL: Record<BadgeMetal, [string, string]> = {

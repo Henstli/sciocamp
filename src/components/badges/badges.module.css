@@ -345,6 +345,9 @@
 .dot[data-cat="komunita"] {
   background: #5b4bc4;
 }
+.dot[data-cat="vyuka"] {
+  background: #b87100;
+}
 .dot[data-cat="tajne"] {
   background: var(--text);
 }
@@ -413,6 +416,9 @@
 }
 .bar[data-cat="komunita"] span {
   background: #5b4bc4;
+}
+.bar[data-cat="vyuka"] span {
+  background: #b87100;
 }
 .bar[data-cat="start"] span,
 .bar[data-cat="tajne"] span {

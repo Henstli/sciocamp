@@ -24,7 +24,7 @@ export default async function PersonPage({ params }: PageProps<"/lide/[id]">) {
     activitiesForUser(person),
     getPhone(viewer, person.id),
     getSocials(person.id),
-    person.role === "student" ? shownBadges(person.id) : Promise.resolve([]),
+    shownBadges(person.id),
   ]);
   return (
     <>

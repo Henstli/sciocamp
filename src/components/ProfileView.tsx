@@ -83,7 +83,7 @@ export function ProfileView({
           )}
         </div>
         {person.bio && <p className={styles.bio}>{person.bio}</p>}
-        {student && (shownBadges.length > 0 || isMe) && (
+        {(shownBadges.length > 0 || (isMe && !!badgeProgress?.length)) && (
           <div className={styles.badges}>
             {shownBadges.length > 0 ? (
               <ShownBadges badges={shownBadges} />

@@ -1,7 +1,7 @@
 // Odznaky: katalog (názvy, popisy, ikony, úrovně) a výpočty pro zobrazení.
 // Hranice úrovní musí odpovídat tabulce badge_levels v databázi.
 
-export type BadgeCategory = "start" | "uceni" | "dobro" | "komunita" | "tajne";
+export type BadgeCategory = "start" | "uceni" | "dobro" | "komunita" | "vyuka" | "tajne";
 export type BadgeKey =
   | "vitej"
   | "prvni-krok"
@@ -21,7 +21,14 @@ export type BadgeKey =
   | "snilek"
   | "zvidavy"
   | "anketar"
-  | "na-vlne";
+  | "na-vlne"
+  | "mentor"
+  | "pruvodce"
+  | "mistr-dilny"
+  | "konzultant";
+
+/** Kdo odznak může získat (musí sedět s `badge_levels.audience`). */
+export type BadgeAudience = "student" | "staff" | "all";
 
 export type BadgeDef = {
   key: BadgeKey;
@@ -39,6 +46,8 @@ export type BadgeDef = {
   secret?: string;
   /** Jednotka u postupu („úkolů“) */
   unit?: string;
+  /** Výchozí: jen studenti */
+  audience?: BadgeAudience;
 };
 
 export const BADGE_CATEGORIES: { key: BadgeCategory; title: string; hint: string }[] = [
@@ -46,13 +55,14 @@ export const BADGE_CATEGORIES: { key: BadgeCategory; title: string; hint: string
   { key: "uceni", title: "Učení", hint: "úkoly a hodnocení" },
   { key: "dobro", title: "Dobrodružství", hint: "expedice, ateliéry a kurzy" },
   { key: "komunita", title: "Komunita", hint: "návrhy, přání a konzultace" },
+  { key: "vyuka", title: "Výuka", hint: "hodnocení, výpravy a konzultace" },
   { key: "tajne", title: "Tajné", hint: "odhalí se až po získání" },
 ];
 
 export const BADGES: BadgeDef[] = [
-  { key: "vitej", name: "Vítej v Campu", desc: "Vyplněný profil: fotka a O mně", category: "start", icon: "M3 20 12 4l9 16zM9.5 20 12 15.5 14.5 20", levels: [1] },
+  { key: "vitej", name: "Vítej v Campu", desc: "Vyplněný profil: fotka a O mně", category: "start", icon: "M3 20 12 4l9 16zM9.5 20 12 15.5 14.5 20", levels: [1], audience: "all" },
   { key: "prvni-krok", name: "První krok", desc: "První odevzdaný úkol", category: "start", icon: "M5 19 19 5M9 5h10v10", levels: [1] },
-  { key: "zakladatel", name: "Zakladatel", desc: "Byl(a) jsi v aplikaci v jejím prvním roce", category: "start", icon: "M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z", levels: [1], rare: true },
+  { key: "zakladatel", name: "Zakladatel", desc: "Byl(a) jsi v aplikaci v jejím prvním roce", category: "start", icon: "M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z", levels: [1], rare: true, audience: "all" },
   { key: "pracant", name: "Pracant", desc: "Odevzdané úkoly", category: "uceni", icon: "M9 3.5h6v3H9zM7 5H5.5v15.5h13V5H17M8.5 13l2.5 2.5 4.5-5", levels: [15, 100, 300], unit: "úkolů" },
   { key: "vcas", name: "Včas", desc: "Úkoly odevzdané před termínem", category: "uceni", icon: "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7.5V12l3 2", levels: [15, 75, 200], unit: "úkolů" },
   { key: "spolehlivy", name: "Spolehlivý", desc: "Celé pololetí splněné všechny úkoly ze zapsaných aktivit", category: "uceni", icon: "M12 3 4.5 6v6c0 4.5 3.2 7.6 7.5 9 4.3-1.4 7.5-4.5 7.5-9V6zM8.5 12l2.5 2.5 4.5-5", levels: [1] },
@@ -62,14 +72,24 @@ export const BADGES: BadgeDef[] = [
   { key: "vypravnik", name: "Výpravník", desc: "Absolvované expedice", category: "dobro", icon: "M3 20 10 7l4 7 2-3 5 9z", levels: [1, 10, 25], unit: "expedic" },
   { key: "tvurce", name: "Tvůrce", desc: "Dokončené ateliéry", category: "dobro", icon: "M7.5 3.5a4 4 0 1 0 0 8a4 4 0 1 0 0-8zM13 13h8v8h-8zM17 3l4 7h-8z", levels: [2, 7, 14], unit: "ateliérů" },
   { key: "zvedavec", name: "Zvědavec", desc: "Kurzy u různých vyučujících", category: "dobro", icon: "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM15.5 8.5l-2 5-5 2 2-5z", levels: [6], unit: "vyučujících" },
-  { key: "hlas-skoly", name: "Hlas školy", desc: "Hlasování v návrzích", category: "komunita", icon: "M4 20h16M6 4h12v12H6zM9 10l2 2 4-4", levels: [10, 50, 150], unit: "hlasů" },
-  { key: "iniciator", name: "Iniciátor", desc: "Vlastní návrh dosáhl potřebného počtu hlasů", category: "komunita", icon: "M9 18h6M10 21h4M12 3a7 7 0 0 0-4 12.7V16h8v-1.3A7 7 0 0 0 12 3z", levels: [1] },
-  { key: "menim-skolu", name: "Měním školu", desc: "Vlastní návrh byl schválený", category: "komunita", icon: "M5 21V4M5 4h11l-2 4 2 4H5", levels: [1], rare: true },
-  { key: "snilek", name: "Snílek", desc: "Vlastní přání se proměnilo ve skutečný ateliér nebo expedici", category: "komunita", icon: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z", levels: [1] },
+  { key: "hlas-skoly", name: "Hlas školy", desc: "Hlasování v návrzích", category: "komunita", icon: "M4 20h16M6 4h12v12H6zM9 10l2 2 4-4", levels: [10, 50, 150], unit: "hlasů", audience: "all" },
+  { key: "iniciator", name: "Iniciátor", desc: "Vlastní návrh dosáhl potřebného počtu hlasů", category: "komunita", icon: "M9 18h6M10 21h4M12 3a7 7 0 0 0-4 12.7V16h8v-1.3A7 7 0 0 0 12 3z", levels: [1], audience: "all" },
+  { key: "menim-skolu", name: "Měním školu", desc: "Vlastní návrh byl schválený", category: "komunita", icon: "M5 21V4M5 4h11l-2 4 2 4H5", levels: [1], rare: true, audience: "all" },
+  { key: "snilek", name: "Snílek", desc: "Vlastní přání se proměnilo ve skutečný ateliér nebo expedici", category: "komunita", icon: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z", levels: [1], audience: "all" },
   { key: "zvidavy", name: "Zvídavý", desc: "Absolvované konzultace", category: "komunita", icon: "M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12zM10 9.5a2 2 0 1 1 2.5 2c-.5.2-.5.5-.5 1M12 15.5v.01", levels: [5], unit: "konzultací" },
-  { key: "anketar", name: "Anketář", desc: "Tvoje anketa, ve které hlasovalo aspoň 20 lidí", category: "tajne", icon: "M4 20V10M10 20V4M16 20v-7M22 20H2", levels: [20], secret: "Stačí se správně zeptat…" },
+  { key: "anketar", name: "Anketář", desc: "Tvoje anketa, ve které hlasovalo aspoň 20 lidí", category: "tajne", icon: "M4 20V10M10 20V4M16 20v-7M22 20H2", levels: [20], secret: "Stačí se správně zeptat…", audience: "all" },
   { key: "na-vlne", name: "Na vlně", desc: "4 týdny v řadě všechno odevzdáno včas", category: "tajne", icon: "M2 12c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1.5M2 17c2.5-3 5-3 7.5 0s5 3 7.5 0 3.5-2 5-1.5", levels: [4], secret: "Vydrž v jednom tempu." },
+  { key: "mentor", name: "Mentor", desc: "Ohodnocené práce", category: "vyuka", icon: "M4 20h4L19 9l-4-4L4 16zM13 7l4 4", levels: [50, 300, 1000], unit: "prací", audience: "staff" },
+  { key: "pruvodce", name: "Průvodce", desc: "Vedené expedice", category: "vyuka", icon: "M3 20 10 7l4 7 2-3 5 9zM10 7V3l4 1.5L10 6", levels: [1, 5, 15], unit: "expedic", audience: "staff" },
+  { key: "mistr-dilny", name: "Mistr dílny", desc: "Vedené ateliéry", category: "vyuka", icon: "M14 4l6 6-8 8H6v-6zM4 20l2-2", levels: [1, 5, 15], unit: "ateliérů", audience: "staff" },
+  { key: "konzultant", name: "Konzultant", desc: "Vedené konzultace", category: "vyuka", icon: "M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12zM8.5 11h.01M12 11h.01M15.5 11h.01", levels: [10, 50, 150], unit: "konzultací", audience: "staff" },
 ];
+
+/** Může člověk s danou rolí odznak získat? */
+export function badgeForRole(def: BadgeDef, role: string): boolean {
+  const a = def.audience ?? "student";
+  return a === "all" || (role === "student" ? a === "student" : a === "staff");
+}
 
 export const BADGE_BY_KEY = new Map(BADGES.map((b) => [b.key, b]));
 export const isBadgeKey = (k: string): k is BadgeKey => BADGE_BY_KEY.has(k as BadgeKey);

@@ -64,7 +64,7 @@ async function UserSidebar() {
       <PresenceTracker userId={user.id} live={isSupabase} visible={user.showOnline !== false} />
       <LiveRefresh userId={user.id} live={isSupabase} />
       {isSupabase && <ThemeSync pref={user.theme ?? "light"} />}
-      {user.role === "student" && <BadgeCelebration live={isSupabase} />}
+      <BadgeCelebration live={isSupabase} />
       <Sidebar
         user={{
           name: user.name,

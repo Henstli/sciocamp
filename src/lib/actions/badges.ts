@@ -12,7 +12,6 @@ import { createClient } from "../supabase/server";
 /** Přepočítá moje odznaky a vrátí ty, jejichž animaci jsem ještě neviděl(a). */
 export async function refreshBadges(): Promise<EarnedBadge[]> {
   const user = await requireUser();
-  if (user.role !== "student") return [];
   if (!isSupabase) return user.id === "u-liska" ? DEMO_NEW_BADGES : [];
   const sb = await createClient();
   const { data, error } = await sb.rpc("refresh_my_badges");
