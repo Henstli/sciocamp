@@ -8,6 +8,7 @@ import { ClassChat, type ChatLine } from "./ClassChat";
 import { MeetEditor } from "./MeetEditor";
 import { type Person } from "./people";
 import { Stream, type StreamEntry } from "./Stream";
+import { SignupBoards, type SignupsView } from "../signups/SignupBoards";
 import styles from "./classroom.module.css";
 
 export type ClassView = {
@@ -40,18 +41,24 @@ export type ClassView = {
   dbId?: string;
   live: boolean;
   kindLabel: string;
+  /** Rozdělení (pokoje, služby) — jen u expedic */
+  signups?: SignupsView;
 };
 
-const TABS = [
+const BASE_TABS = [
   ["stream", "Nástěnka"],
   ["work", "Úkoly a materiály"],
   ["people", "Lidé"],
   ["chat", "Chat třídy"],
 ] as const;
-type Tab = (typeof TABS)[number][0];
+type Tab = (typeof BASE_TABS)[number][0] | "rozdeleni";
 
 
 export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: string }) {
+  // Expedice má navíc záložku Rozdělení (pokoje, vaření, úklid…).
+  const TABS: (readonly [Tab, string])[] = view.signups
+    ? [BASE_TABS[0], ["rozdeleni", "Rozdělení"], ...BASE_TABS.slice(1)]
+    : [...BASE_TABS];
   const [tab, setTab] = useState<Tab>(TABS.some(([k]) => k === initialTab) ? (initialTab as Tab) : "stream");
 
   return (
@@ -76,6 +83,16 @@ export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: 
         {tab === "stream" && <StreamTab view={view} />}
         {tab === "work" && <Work work={view.work} />}
         {tab === "people" && <People view={view} />}
+        {tab === "rozdeleni" && view.signups && (
+          <SignupBoards
+            view={view.signups}
+            me={view.me}
+            students={view.students}
+            canManage={view.canManage}
+            activitySlug={view.slug}
+            live={view.live}
+          />
+        )}
         {tab === "chat" && (
           <ClassChat
             initial={view.chat}

@@ -1282,4 +1282,42 @@ await test("oznámení na Domově: zakládá jen admin, vidí cílová skupina, 
   await as(admin, `delete from public.announcements where id = any($1)`, [[all.id, staff.id]]);
 });
 
+await test("rozdělení na expedici: kapacita, limit na studenta, uzavření, jména a vyučující", async () => {
+  // Třída = kurz z testů; zapsaní student a student2, outsider ne.
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2), ($1, $3) on conflict do nothing`, [course.id, student, student2]);
+  await assert.rejects(() => as(student, `insert into public.signup_boards (activity_id, title) values ($1, 'Podvrh')`, [course.id]));
+  const [board] = await as(teacher, `insert into public.signup_boards (activity_id, title, show_names) values ($1, 'Pokoje', false) returning id`, [course.id]);
+  const [r1] = await as(teacher, `insert into public.signup_options (board_id, label, capacity) values ($1, 'Pokoj 1', 1) returning id`, [board.id]);
+  const [r2] = await as(teacher, `insert into public.signup_options (board_id, label, capacity) values ($1, 'Pokoj 2', 3) returning id`, [board.id]);
+  assert.equal((await db.query(`select 1 from public.notifications where user_id = $1 and kind = 'rozdeleni'`, [student])).rows.length >= 1, true);
+  // Přihlášení, plno, limit 1 na studenta, outsider ne.
+  await as(student, `select public.signup_join($1)`, [r1.id]);
+  await assert.rejects(() => as(student2, `select public.signup_join($1)`, [r1.id]), /plné/);
+  await assert.rejects(() => as(student, `select public.signup_join($1)`, [r2.id]), /jinde/);
+  await assert.rejects(() => as(outsider, `select public.signup_join($1)`, [r2.id]), /zapsaní/);
+  await as(student2, `select public.signup_join($1)`, [r2.id]);
+  // Bez „ukazovat jména“ vidí student jen sebe, počty ale všechny.
+  assert.equal((await as(student, `select * from public.signup_entries where board_id = $1`, [board.id])).length, 1);
+  assert.equal((await as(teacher, `select * from public.signup_entries where board_id = $1`, [board.id])).length, 2);
+  const counts = await as(student, `select * from public.signup_counts($1)`, [course.id]);
+  assert.equal(counts.find((c) => c.option_id === r2.id).taken, 1);
+  assert.equal((await as(outsider, `select * from public.signup_counts($1)`, [course.id])).length, 0);
+  // Uzavřeno → student nic nezmění, vyučující přiřadí i nad kapacitu.
+  await as(teacher, `update public.signup_boards set locked = true where id = $1`, [board.id]);
+  await assert.rejects(() => as(student, `select public.signup_leave($1)`, [r1.id]), /uzavřené/);
+  await assert.rejects(() => as(student, `update public.signup_boards set locked = false where id = $1 returning 1`, [board.id]).then((r) => { if (!r.length) throw new Error("bez změny"); }));
+  await as(teacher, `select public.signup_assign($1, $2)`, [r1.id, student2]);
+  assert.equal(counts.length, 2);
+  assert.equal((await as(teacher, `select count(*)::int c from public.signup_entries where option_id = $1`, [r1.id]))[0].c, 2);
+  await assert.rejects(() => as(student, `select public.signup_assign($1, $2)`, [r2.id, student]), /vyučující/);
+  await as(teacher, `select public.signup_unassign($1, $2)`, [r1.id, student2]);
+  // Termín přihlašování v minulosti = taky zavřeno.
+  await as(teacher, `update public.signup_boards set locked = false, closes_at = now() - interval '1 minute' where id = $1`, [board.id]);
+  await assert.rejects(() => as(student2, `select public.signup_leave($1)`, [r2.id]), /uzavřené/);
+  // Odepsaný student z rozdělení vypadne.
+  await db.query(`delete from public.enrollments where activity_id = $1 and student_id = $2`, [course.id, student2]);
+  assert.equal((await db.query(`select 1 from public.signup_entries where student_id = $1 and board_id = $2`, [student2, board.id])).rows.length, 0);
+  await as(teacher, `delete from public.signup_boards where id = $1`, [board.id]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

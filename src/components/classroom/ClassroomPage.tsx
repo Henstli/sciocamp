@@ -18,6 +18,8 @@ import { STATE_CHIP, STATE_LABEL, isHandedIn, isOpen, needsReview, workState } f
 import { assignmentsForActivity, workMap } from "@/lib/data-assignments";
 import { formatDue, formatStamp } from "@/lib/time";
 import type { Activity, ActivityKind, User } from "@/lib/types";
+import { signupBoards } from "@/lib/data-signups";
+import { tripDays } from "@/lib/signups";
 import styles from "./classroom.module.css";
 
 /** Detail třídy ve stylu Google Classroomu (návrh: design/Trida.dc.html). */
@@ -122,6 +124,10 @@ export async function ClassroomPage({
     dbId: activity.dbId,
     live: isSupabase,
     kindLabel: activity.kind === "atelier" ? "ateliéru" : "kurzu",
+    signups:
+      activity.kind === "expedice"
+        ? { boards: await signupBoards(activity), days: tripDays(activity.startsOn, activity.endsOn) }
+        : undefined,
   };
 
   return (
