@@ -1038,4 +1038,79 @@ await test("návrhy: povinné hlasování posílá jen admin, oznámení dostano
   await assert.rejects(() => as(student, `update public.proposals set mandatory_at = now() where id = $1`, [p.id]));
 });
 
+// Nejbližší pátek, který je aspoň zítra (aby čas ještě neproběhl), a pátek za víc než dva týdny.
+const [{ fri, far }] = (await db.query(`
+  select (d + ((5 - extract(isodow from d)::int + 7) % 7))::text as fri,
+         (d + ((5 - extract(isodow from d)::int + 7) % 7) + 21)::text as far
+  from (select public.prague_today() + 1 as d) x`)).rows;
+
+await test("konzultace: zápis, spojení bloků, kolize a nedostupnost", async () => {
+  // Jen student se zapisuje; učitel u učitele ne.
+  await assert.rejects(() => as(teacher2, `select public.book_consultation($1, $2, '09:00', '09:15')`, [teacher, fri]));
+  await assert.rejects(() => as(student, `select public.book_consultation($1, $2, '09:00', '09:15')`, [teacher, far]), /dva týdny/);
+  await assert.rejects(() => as(student, `select public.book_consultation($1, $2, '07:45', '08:00')`, [teacher, fri]));
+  await assert.rejects(() => as(student, `select public.book_consultation($1, $2, '09:05', '09:20')`, [teacher, fri]));
+  const [{ book_consultation: c1 }] = await as(student, `select public.book_consultation($1, $2, '09:00', '09:15')`, [teacher, fri]);
+  const [{ book_consultation: c2 }] = await as(student, `select public.book_consultation($1, $2, '09:30', '09:45')`, [teacher, fri]);
+  assert.notEqual(c1, c2);
+  // Prostřední blok spojí obě do jedné 9:00–9:45.
+  await as(student, `select public.book_consultation($1, $2, '09:15', '09:30')`, [teacher, fri]);
+  const rows = (await db.query(`select starts_at::text, ends_at::text from public.consultations where student_id = $1 and teacher_id = $2`, [student, teacher])).rows;
+  assert.deepEqual(rows, [{ starts_at: "09:00:00", ends_at: "09:45:00" }]);
+  // Učitel má obsazeno → jiný student ne; student nemůže mít dva učitele naráz.
+  await assert.rejects(() => as(student2, `select public.book_consultation($1, $2, '09:30', '10:00')`, [teacher, fri]), /Vyučující má/);
+  await assert.rejects(() => as(student, `select public.book_consultation($1, $2, '09:15', '09:30')`, [teacher2, fri]), /Kříží se ti/);
+  // Pravidelná a jednorázová nedostupnost.
+  await as(teacher2, `insert into public.consultation_rules (teacher_id, slot) values ($1, '10:00')`, [teacher2]);
+  await assert.rejects(() => as(student2, `select public.book_consultation($1, $2, '10:00', '10:15')`, [teacher2, fri]), /nenabízí/);
+  await as(teacher2, `insert into public.consultation_blocks (teacher_id, day, slot) values ($1, $2, null)`, [teacher2, fri]);
+  await assert.rejects(() => as(student2, `select public.book_consultation($1, $2, '11:00', '11:15')`, [teacher2, fri]), /nenabízí/);
+  await as(teacher2, `delete from public.consultation_blocks where teacher_id = $1`, [teacher2]);
+  // Cizí nedostupnost nikdo nenastaví.
+  await assert.rejects(() => as(student, `insert into public.consultation_rules (teacher_id, slot) values ($1, '11:00')`, [teacher]));
+  await assert.rejects(() => as(teacher, `insert into public.consultation_rules (teacher_id, slot) values ($1, '11:00')`, [teacher2]));
+  // Oznámení učiteli.
+  assert.ok((await db.query(`select 1 from public.notifications where user_id = $1 and kind = 'konzultace'`, [teacher])).rows.length >= 1);
+});
+
+await test("konzultace: rozvrh a expedice blokují jen ty, koho se týkají", async () => {
+  // Kurz učitele v pátek 11:00–12:00 v období, které zahrnuje pátek.
+  const [k] = await as(admin, `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on, published)
+    values ('patecni-kurz', 'kurz', 'Páteční kurz', $1, $2::date - 30, $2::date + 30, true) returning id`, [teacher, fri]);
+  await db.query(`insert into public.activity_slots (activity_id, weekday, starts_at, ends_at) values ($1, 5, '11:00', '12:00')`, [k.id]);
+  await assert.rejects(() => as(student2, `select public.book_consultation($1, $2, '11:15', '11:30')`, [teacher, fri]), /Páteční kurz/);
+  // Expedice v týdnu toho pátku: učitel na ní je → nedostupný; jiný učitel ano.
+  const [x] = await as(admin, `insert into public.activities (slug, kind, title, teacher_id, starts_on, ends_on, published)
+    values ('vylet-tyden', 'expedice', 'Výlet', $1, $2::date - 4, $2::date, true) returning id`, [admin, fri]);
+  await assert.rejects(() => as(student2, `select public.book_consultation($1, $2, '08:30', '08:45')`, [admin, fri]), /expedici/);
+  // V týdnu expedic se kurz nekoná → u učitele, který na expedici není, 11:15 projde.
+  await as(student2, `select public.book_consultation($1, $2, '11:15', '11:30')`, [teacher, fri]);
+  await db.query(`delete from public.activities where id in ($1, $2)`, [k.id, x.id]);
+});
+
+await test("konzultace: pozvání, Meet, viditelnost a zrušení", async () => {
+  const [c] = (await db.query(`select id from public.consultations where student_id = $1 and teacher_id = $2 and day = $3`, [student, teacher, fri])).rows;
+  // Cizí konzultaci nikdo nevidí; obsazenost bez jmen ano.
+  assert.equal((await as(student2, `select * from public.consultations where id = $1`, [c.id])).length, 0);
+  assert.ok((await as(student2, `select * from public.consultation_board($1, $1)`, [fri])).some((r) => r.teacher_id === teacher));
+  await assert.rejects(() => as(student2, `select public.set_consultation_meet($1, 'https://meet.google.com/abc-defg-hij')`, [c.id]));
+  await as(student, `select public.set_consultation_meet($1, 'https://meet.google.com/abc-defg-hij')`, [c.id]);
+  await assert.rejects(() => as(student, `select public.set_consultation_meet($1, 'https://zoom.us/x')`, [c.id]));
+  // Pozvání: kdo má v tu dobu jinou konzultaci, pozvat nejde.
+  await as(student, `select public.invite_to_consultation($1, $2)`, [c.id, teacher2]);
+  assert.equal((await as(teacher2, `select * from public.consultations where id = $1`, [c.id])).length, 1);
+  const [{ book_consultation: busyId }] = await as(student2, `select public.book_consultation($1, $2, '09:00', '09:15')`, [admin, fri]);
+  const [other] = (await db.query(`select id from public.consultations where student_id = $1 and day = $2 and teacher_id = $3`, [student2, fri, teacher])).rows;
+  await assert.rejects(() => as(student, `select public.invite_to_consultation($1, $2)`, [c.id, student2]), /má v tu dobu/);
+  // Pozvaný učitel je pak obsazený i pro ostatní.
+  await assert.rejects(() => as(student2, `select public.book_consultation($1, $2, '09:00', '09:15')`, [teacher2, fri]), /Vyučující má/);
+  await as(teacher2, `select public.remove_consultation_guest($1, $2)`, [c.id, teacher2]);
+  // Zrušit smí student, vyučující nebo admin — cizí ne.
+  await assert.rejects(() => as(student2, `select public.cancel_consultation($1)`, [c.id]));
+  await as(teacher, `select public.cancel_consultation($1)`, [c.id]);
+  assert.equal((await db.query(`select 1 from public.notifications where user_id = $1 and title = 'Konzultace zrušena'`, [student])).rows.length, 1);
+  await as(student2, `select public.cancel_consultation($1)`, [other.id]);
+  await as(admin, `select public.cancel_consultation($1)`, [busyId]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

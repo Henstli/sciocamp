@@ -127,6 +127,10 @@
   background: var(--wait-bg);
   color: var(--wait);
 }
+.entry[data-kind="konzultace"] {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
 .entry[data-kind="expedice"] {
   background: var(--other-bg);
   color: var(--other);
@@ -181,6 +185,9 @@
   width: 10px;
   height: 10px;
   border-radius: 3px;
+}
+.legend i[data-kind="konzultace"] {
+  background: #bfe3d0;
 }
 .legend i[data-kind="kurz"] {
   background: var(--primary-line);

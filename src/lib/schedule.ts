@@ -29,7 +29,41 @@ export type ScheduleEntry = {
   date: PlainDate;
   live: boolean;
   past: boolean;
+  /** Vlastní odkaz (konzultace) místo detailu aktivity */
+  href?: string;
+  /** Vlastní barva bloku (konzultace) místo druhu aktivity */
+  styleKind?: string;
 };
+
+/** Konzultace jako bloky v týdenním rozvrhu (pátek). */
+export function consultationEntries(
+  items: { id: string; day: string; start: string; end: string; title: string; meetUrl: string | null }[],
+  monday: PlainDate,
+  now: PragueNow,
+): ScheduleEntry[] {
+  return items
+    .filter((c) => c.day >= toIso(monday) && c.day <= toIso(addDays(monday, 4)))
+    .map((c) => {
+      const slot: Slot = { day: 5, start: c.start, end: c.end };
+      const date = addDays(monday, 4);
+      const activity: Activity = {
+        id: `konzultace-${c.id}`,
+        kind: "ostatni",
+        title: c.title,
+        teacherId: "",
+        location: null,
+        period: null,
+        startsOn: c.day,
+        endsOn: c.day,
+        meetUrl: c.meetUrl,
+        allowedGrades: null,
+        slots: [slot],
+        studentIds: [],
+        tone: "teal",
+      };
+      return { activity, slot, date, ...status(date, slot, now), href: "/konzultace", styleKind: "konzultace" };
+    });
+}
 
 /** Hodiny pro pracovní týden začínající pondělím `monday`. */
 export function weekEntries(activities: Activity[], monday: PlainDate, now: PragueNow, blocked: DayBlocker = NO_BLOCK): ScheduleEntry[] {

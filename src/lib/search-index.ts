@@ -83,6 +83,7 @@ export async function buildSearchIndex(user: User): Promise<SearchItem[]> {
     ["Úkoly", "/ukoly", "odevzdani hodnoceni body"],
     ["Hlasování", "/hlasovani", "prani chci to"],
     ["Zprávy", "/zpravy", "chat konverzace napsat"],
+    ["Konzultace", "/konzultace", "patek pruvodce zapsat konzultaci"],
     ["Kurzy", "/kurzy", ""],
     ["Ateliéry", "/ateliery", ""],
     ["Události", "/udalosti", "konzultace seminar"],

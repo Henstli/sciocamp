@@ -115,9 +115,9 @@ export function ScheduleWeek({
                   return (
                     <Link
                       key={`${e.activity.id}-${e.slot.day}-${e.slot.start}`}
-                      href={activityHref(e.activity)}
+                      href={e.href ?? activityHref(e.activity)}
                       className={styles.entry}
-                      data-kind={e.activity.kind}
+                      data-kind={e.styleKind ?? e.activity.kind}
                       data-live={e.live}
                       // Velikost bloku: malé ukážou jen název (čas je v bublině), nejmenší (15 min) menším písmem.
                       data-size={h < 30 ? "tiny" : h < 50 ? "small" : h <= 60 ? "short" : "normal"}
@@ -143,6 +143,7 @@ export function ScheduleWeek({
         <span><i data-kind="atelier" />Ateliér</span>
         <span><i data-kind="ostatni" />Událost</span>
         <span><i data-kind="expedice" />Expedice</span>
+        <span><i data-kind="konzultace" />Konzultace</span>
         <span><i data-kind="live" />Právě probíhá</span>
       </div>
     </section>

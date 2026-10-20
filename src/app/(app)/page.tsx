@@ -11,7 +11,8 @@ import { plural } from "@/lib/format";
 import { activitiesForUser, getUserById, getUsersByIds, listActivities } from "@/lib/data";
 import { activityHref } from "@/lib/links";
 import { canTeach, firstNameVocative, initials } from "@/lib/roles";
-import { blockedWeekdays, currentOrNext, expeditionBlocker, weekAllDay, weekEntries } from "@/lib/schedule";
+import { blockedWeekdays, consultationEntries, currentOrNext, expeditionBlocker, weekAllDay, weekEntries } from "@/lib/schedule";
+import { myConsultations } from "@/lib/data-consultations";
 import {
   DAYS_SHORT,
   defaultWeekStart,
@@ -19,11 +20,13 @@ import {
   formatRange,
   formatDue,
   isoWeekdayOf,
+  addDays,
   mondayOf,
   nowMs,
   parseIso,
   pragueNow,
   sameDate,
+  toIso,
 } from "@/lib/time";
 import styles from "./home.module.css";
 import { HomeSearch } from "@/components/search/HomeSearch";
@@ -43,7 +46,21 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const activities = await activitiesForUser(user);
   // Týden expedic platí pro celou školu — počítá se ze všech expedic.
   const blocked = expeditionBlocker(await listActivities());
-  const entries = weekEntries(activities, monday, now, blocked);
+  // Konzultace (pátek) v týdnu — student, vyučující i pozvaní.
+  const consults = await myConsultations(user, toIso(monday), toIso(addDays(monday, 4)));
+  const consultPeople = await getUsersByIds([...new Set(consults.flatMap((c) => [c.teacherId, c.studentId]))]);
+  const personName = (id: string) => consultPeople.find((u) => u.id === id)?.name ?? "";
+  const entries = [
+    ...weekEntries(activities, monday, now, blocked),
+    ...consultationEntries(
+      consults.map((c) => ({
+        ...c,
+        title: `Konzultace: ${personName(c.teacherId === user.id ? c.studentId : c.teacherId)}`,
+      })),
+      monday,
+      now,
+    ),
+  ];
   const allDay = weekAllDay(activities, monday);
   const blockedDays = blockedWeekdays(monday, blocked, allDay);
   const upcoming = currentOrNext(activities, now, blocked);
