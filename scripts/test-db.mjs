@@ -1623,4 +1623,28 @@ await test("nápověda: odpověď „pomohl návod“ jen svoje, souhrn vidí ad
   await db.query(`delete from public.help_feedback`);
 });
 
+await test("statistiky: data celé školy jen pro vyučující a admina, bez naplánovaných", async () => {
+  const { rows: [task] } = await db.query(
+    `insert into public.assignments (activity_id, title, due_at, max_points, created_by) values ($1, 'Stat úkol', now() - interval '1 day', 10, $2) returning id`,
+    [course.id, teacher]);
+  const { rows: [later] } = await db.query(
+    `insert into public.assignments (activity_id, title, due_at, publish_at, created_by) values ($1, 'Stat plán', now() + interval '9 days', now() + interval '2 days', $2) returning id`,
+    [course.id, teacher]);
+  await db.query(`insert into public.submissions (assignment_id, student_id, status, submitted_at) values ($1, $2, 'odevzdano', now() - interval '2 days')`, [task.id, student]);
+  await db.query(`insert into public.reviews (assignment_id, student_id, result, points, feedback, reviewed_by) values ($1, $2, 'splneno', 8, 'Dobře', $3)`, [task.id, student, teacher]);
+  await assert.rejects(() => as(student, `select public.stats_work(now() - interval '30 days')`), /jen vyučující a admin/);
+  for (const who of [teacher, admin]) {
+    const d = (await as(who, `select public.stats_work(now() - interval '30 days') as d`))[0].d;
+    const ids = d.assignments.map((a) => a.id);
+    assert.ok(ids.includes(task.id));
+    assert.ok(!ids.includes(later.id), "naplánovaný úkol se nepočítá");
+    const w = d.work.find((x) => x.a === task.id && x.s === student);
+    assert.equal(w.st, "odevzdano");
+    assert.equal(w.r, "splneno");
+    assert.equal(w.p, 8);
+    assert.equal(w.rt, false);
+  }
+  await db.query(`delete from public.assignments where id in ($1, $2)`, [task.id, later.id]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

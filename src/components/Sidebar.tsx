@@ -49,7 +49,10 @@ export function Sidebar({ user, showTeach, showAdmin, badges }: SidebarProps) {
   if (showTeach) {
     groups.push({
       title: "Výuka",
-      items: [{ href: "/ucitel", label: "Moje třídy", icon: "monitor", badge: badges.vyuka, badgeTone: "accent" }],
+      items: [
+        { href: "/ucitel", label: "Moje třídy", icon: "monitor", badge: badges.vyuka, badgeTone: "accent" },
+        { href: "/statistiky", label: "Statistiky studentů", icon: "chart" },
+      ],
     });
   }
   if (showAdmin) {

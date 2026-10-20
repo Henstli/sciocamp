@@ -94,6 +94,7 @@ export async function buildSearchIndex(user: User): Promise<SearchItem[]> {
     ["Nastavení", "/nastaveni", "fotka telefon instagram barva o mne"],
   ];
   if (canTeach(user.role)) pages.push(["Moje třídy", "/ucitel", "vyuka nova aktivita"]);
+  if (canTeach(user.role)) pages.push(["Statistiky studentů", "/statistiky", "prospech odevzdavani vysledky prehled studentu"]);
   if (isAdmin(user.role)) pages.push(["Uživatelé a škola", "/admin", "sprava pozvanka kurzova obdobi terminy"]);
   for (const [title, href, keywords] of pages) items.push({ kind: "page", title, sub: "Stránka", href, keywords });
   items.push({ kind: "page", title: "Nápověda", sub: "Stránka", href: "/napoveda", keywords: "navod jak na to pomoc" });
