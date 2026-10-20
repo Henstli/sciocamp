@@ -177,6 +177,13 @@
     height: 100vh;
     overflow-y: auto;
   }
+  /* Karta s profilem je pro všechny role vždy dole na stejném místě. */
+  .nav {
+    min-height: 100%;
+  }
+  .userCard {
+    margin-top: auto;
+  }
 }
 
 @media (max-width: 900px) {
