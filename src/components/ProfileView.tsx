@@ -77,6 +77,9 @@ export function ProfileView({
         {person.bio && <p className={styles.bio}>{person.bio}</p>}
       </section>
 
+      {/* Volba vzhledu hned pod hlavičkou, ať ji každý najde bez rolování. */}
+      {isMe && appearance}
+
       <div className={styles.stats}>
         {student ? (
           <>
@@ -144,7 +147,6 @@ export function ProfileView({
           </div>
         </section>
       </div>
-      {isMe && appearance}
     </div>
   );
 }
