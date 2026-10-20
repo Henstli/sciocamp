@@ -39,7 +39,7 @@ const PATHS = {
   send: <><path d="M21 3 10 14" /><path d="M21 3l-7 18-4-7-7-4z" /></>,
   edit: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13 7 4 4" /></>,
   smile: <><circle cx="12" cy="12" r="9" /><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0" /><path d="M9 9.5h.01M15 9.5h.01" /></>,
-  gif: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M10 10H8.5a1.5 1.5 0 0 0-1.5 1.5v1A1.5 1.5 0 0 0 8.5 14H10v-2H9M12.5 10v4M15 14v-4h2.5M15 12h2" /></>,
+  gif: <><path d="M10 8.2a4.6 4.6 0 1 0 0 7.6V12.3H7.5" /><path d="M13.2 7v10" /><path d="M16.6 17V7h4.6M16.6 12h3.8" /></>,
   reply: <><path d="M9 14 4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 6 6v5" /></>,
   more: <><circle cx="5" cy="12" r="1.4" /><circle cx="12" cy="12" r="1.4" /><circle cx="19" cy="12" r="1.4" /></>,
   pushpin: <><path d="M9 3.5h6l-1 5.5 3.5 3.5V14h-11v-1.5L10 9z" /><path d="M12 14v6.5" /></>,
