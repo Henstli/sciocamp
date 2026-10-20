@@ -125,3 +125,19 @@
   place-items: center;
   color: #fff;
 }
+
+/* Zelená tečka „online“ u avataru */
+.presence {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.onlineDot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  border-radius: 50%;
+  background: #22a06b;
+  border: 2px solid var(--card);
+  box-sizing: content-box;
+}

@@ -13,6 +13,7 @@ import { isGifUrl } from "../composer/gif";
 import { Avatar, profileHref } from "../PageHeader";
 import { markConversationRead, startConversation } from "@/lib/actions/communication";
 import { plural } from "@/lib/format";
+import { useIsOnline, useOnlineCount } from "@/lib/presence";
 import { createClient } from "@/lib/supabase/client";
 import { formatClock, formatDayLabel } from "@/lib/time";
 import type { Role, SubmissionFile } from "@/lib/types";
@@ -406,7 +407,7 @@ export function Messenger({
             {found.map((p) => (
               <li key={p.id}>
                 <Link href={`/zpravy?s=${p.id}`} className={styles.row} onClick={() => setQuery("")} scroll={false}>
-                  <Avatar initials={p.initials} userId={p.id} size={42} tone={tone(p.role)} />
+                  <Avatar presence initials={p.initials} userId={p.id} size={42} tone={tone(p.role)} />
                   <span className={styles.rowMain}>
                     <span className={styles.rowName}>{p.name}</span>
                     <span className={styles.rowPreview}>{p.caption}</span>
@@ -432,7 +433,7 @@ export function Messenger({
                   {c.group ? (
                     <GroupAvatar initials={c.group.initials} size={42} />
                   ) : (
-                    <Avatar initials={c.person!.initials} userId={c.person!.id} size={42} tone={tone(c.person!.role)} />
+                    <Avatar presence initials={c.person!.initials} userId={c.person!.id} size={42} tone={tone(c.person!.role)} />
                   )}
                   <span className={styles.rowMain}>
                     <span className={styles.rowTop}>
@@ -472,7 +473,8 @@ export function Messenger({
                   <button type="button" className={styles.headButton} onClick={() => setPanel((v) => !v)} aria-expanded={panel}>
                     <span className={styles.headName}>{activeGroup.title}</span>
                     <span className={styles.headCaption}>
-                      {activeGroup.members.length} {plural(activeGroup.members.length, "člen", "členové", "členů")} · {panel ? "zpět do chatu" : "zobrazit členy"}
+                      {activeGroup.members.length} {plural(activeGroup.members.length, "člen", "členové", "členů")}
+                      <GroupOnline ids={activeGroup.members.filter((m) => !m.me).map((m) => m.id)} /> · {panel ? "zpět do chatu" : "zobrazit členy"}
                     </span>
                   </button>
                   <button
@@ -489,10 +491,10 @@ export function Messenger({
               ) : (
                 activePerson && (
                   <>
-                    <Avatar initials={activePerson.initials} size={42} tone={tone(activePerson.role)} href={profileHref(activePerson.id)} title={activePerson.name} />
+                    <Avatar presence initials={activePerson.initials} size={42} tone={tone(activePerson.role)} href={profileHref(activePerson.id)} title={activePerson.name} />
                     <div>
                       <div className={styles.headName}>{activePerson.name}</div>
-                      <div className={styles.headCaption}>{activePerson.caption}</div>
+                      <PersonCaption id={activePerson.id} caption={activePerson.caption} />
                     </div>
                   </>
                 )
@@ -542,7 +544,7 @@ export function Messenger({
                 return (
                   <div key={r.m.id} className={styles.msgLine}>
                     <span className={styles.authorAvatar}>
-                      {showAuthor && <Avatar initials={r.m.authorInitials} size={32} tone={tone(r.m.authorRole)} href={profileHref(r.m.authorId)} title={r.m.authorName} />}
+                      {showAuthor && <Avatar presence initials={r.m.authorInitials} size={32} tone={tone(r.m.authorRole)} href={profileHref(r.m.authorId)} title={r.m.authorName} />}
                     </span>
                     {content}
                   </div>
@@ -619,6 +621,18 @@ export function Messenger({
       </section>
     </div>
   );
+}
+
+/** Pod jménem v hlavičce: „Online“, jinak role. */
+function PersonCaption({ id, caption }: { id: string; caption: string }) {
+  const online = useIsOnline(id);
+  return online ? <div className={`${styles.headCaption} ${styles.online}`}>Online</div> : <div className={styles.headCaption}>{caption}</div>;
+}
+
+/** „ · 2 online“ u skupiny (bez mě). */
+function GroupOnline({ ids }: { ids: string[] }) {
+  const n = useOnlineCount(ids);
+  return n > 0 ? <span className={styles.online}> · {n} online</span> : null;
 }
 
 /** Kulaté logo skupiny s iniciálami názvu. */

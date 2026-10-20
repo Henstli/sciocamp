@@ -68,7 +68,7 @@ function PeoplePicker({
           <li key={p.id}>
             <label className={styles.pickRow}>
               <input type="checkbox" checked={picked.includes(p.id)} onChange={() => onToggle(p.id)} />
-              <Avatar initials={p.initials} userId={p.id} size={34} tone={tone(p.role)} />
+              <Avatar presence initials={p.initials} userId={p.id} size={34} tone={tone(p.role)} />
               <span className={styles.rowMain}>
                 <span className={styles.rowName}>{p.name}</span>
                 <span className={styles.rowPreview}>{p.caption}</span>
@@ -241,7 +241,7 @@ export function GroupPanel({ group, people, live }: { group: GroupView; people: 
         <ul className={styles.memberList}>
           {group.members.map((m) => (
             <li key={m.id} className={styles.memberRow}>
-              <Avatar initials={m.initials} size={38} tone={m.me ? "me" : tone(m.role)} href={m.id ? profileHref(m.id) : undefined} title={m.name} />
+              <Avatar presence initials={m.initials} size={38} tone={m.me ? "me" : tone(m.role)} href={m.id ? profileHref(m.id) : undefined} title={m.name} />
               <span className={styles.rowMain}>
                 <span className={styles.rowName}>
                   {m.name}

@@ -808,3 +808,7 @@
 .addBox .pickList {
   max-height: 240px;
 }
+.online {
+  color: #17704a;
+  font-weight: 700;
+}

@@ -190,7 +190,7 @@ export function ClassChat({
           const author = people[m.authorId] ?? (m.authorId === me.id ? me : UNKNOWN_PERSON);
           return (
             <div key={m.id} className={styles.msg}>
-              <Avatar initials={author.initials} size={36} tone={toneFor(author, me.id)} href={author.id !== "?" ? profileHref(author.id) : undefined} title={author.name} />
+              <Avatar presence initials={author.initials} size={36} tone={toneFor(author, me.id)} href={author.id !== "?" ? profileHref(author.id) : undefined} title={author.name} />
               <div className={styles.grow}>
                 <div className={styles.msgHead}>
                   <span className={styles.strong}>{author.name}</span>

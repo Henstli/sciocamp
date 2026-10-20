@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAvatarColor, useAvatarSrc } from "@/lib/avatar-store";
+import { useIsOnline } from "@/lib/presence";
 import styles from "./ui.module.css";
 
 /**
@@ -17,6 +18,7 @@ export function Avatar({
   href,
   title,
   userId,
+  presence = false,
 }: {
   initials: string;
   size?: number;
@@ -25,8 +27,11 @@ export function Avatar({
   href?: string;
   title?: string;
   userId?: string;
+  /** Ukázat zelenou tečku, když je člověk online */
+  presence?: boolean;
 }) {
   const id = userId ?? href?.match(/^\/lide\/([^/?#]+)/)?.[1];
+  const online = useIsOnline(presence ? id : null);
   const src = useAvatarSrc(id, tone === "me");
   const color = useAvatarColor(id, tone === "me");
   const [broken, setBroken] = useState<string | null>(null);
@@ -48,14 +53,20 @@ export function Avatar({
   ) : (
     initials
   );
-  if (href) {
-    return (
-      <Link href={href} {...props} className={`${props.className} ${styles.avatarLink}`} aria-label={title ? `Profil: ${title}` : "Profil"} title={title}>
-        {inner}
-      </Link>
-    );
-  }
-  return <span {...props}>{inner}</span>;
+  const avatar = href ? (
+    <Link href={href} {...props} className={`${props.className} ${styles.avatarLink}`} aria-label={title ? `Profil: ${title}` : "Profil"} title={title}>
+      {inner}
+    </Link>
+  ) : (
+    <span {...props}>{inner}</span>
+  );
+  if (!presence) return avatar;
+  return (
+    <span className={styles.presence}>
+      {avatar}
+      {online && <span className={styles.onlineDot} style={{ width: size >= 40 ? 12 : 10, height: size >= 40 ? 12 : 10 }} role="img" aria-label="Online" title="Online" />}
+    </span>
+  );
 }
 
 /** Fotka přihlášeného (v hlavičce a v menu), jinak jeho iniciály. */

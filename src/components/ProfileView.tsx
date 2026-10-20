@@ -53,7 +53,7 @@ export function ProfileView({
         </div>
         <div className={styles.identity}>
           <div className={styles.bigAvatar}>
-            <Avatar initials={initials(person.name)} userId={person.id} tone={isMe ? "me" : "student"} size={94} />
+            <Avatar presence initials={initials(person.name)} userId={person.id} tone={isMe ? "me" : "student"} size={94} />
           </div>
           <div className={styles.idText}>
             <h1 className={styles.name}>{person.name}</h1>
