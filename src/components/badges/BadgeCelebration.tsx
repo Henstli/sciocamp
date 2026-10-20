@@ -135,7 +135,7 @@ export function BadgeCelebration({ live }: { live: boolean }) {
         )}
         <div className={styles.stage}>
           <div className={styles.rays} aria-hidden="true">
-            <div className={styles.raysInner} style={{ background: `repeating-conic-gradient(from 0deg, ${glow} 0deg 8deg, transparent 8deg 22deg)` }} />
+            <div className={styles.raysInner} style={{ background: `repeating-conic-gradient(from 0deg, ${glow} 0deg 6deg, transparent 6deg 15deg)` }} />
           </div>
           <div className={styles.glow} style={{ background: `radial-gradient(circle, ${glow} 0%, transparent 70%)` }} aria-hidden="true" />
           {PARTICLES.map((p, i) => (

@@ -40,12 +40,16 @@
   position: relative;
   width: 200px;
   height: 200px;
+  margin-bottom: 10px;
   display: grid;
   place-items: center;
 }
 .rays {
   position: absolute;
-  inset: -18px;
+  inset: -14px;
+  /* Paprsky ke krajům zeslábnou, ať nezasahují do textu pod odznakem */
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 55%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 55%, transparent 100%);
   animation: raysIn 0.8s ease-out 0.7s both;
 }
 .raysInner {
