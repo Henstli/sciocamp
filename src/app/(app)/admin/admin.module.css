@@ -465,3 +465,10 @@
   justify-content: center;
   text-align: center;
 }
+
+/* Student bez ročníku — upozornit, ať ho admin zařadí */
+.select[data-missing] {
+  border-color: var(--wait, #8a5300);
+  background-color: #fdf1dc;
+  color: #8a5300;
+}

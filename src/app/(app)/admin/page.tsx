@@ -135,6 +135,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           email: u.email,
           role: u.role,
           group: u.group,
+          grade: u.grade ?? null,
           active: u.active,
           initials: initials(u.name),
         }))}

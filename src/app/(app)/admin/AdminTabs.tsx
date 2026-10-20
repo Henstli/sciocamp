@@ -5,11 +5,20 @@ import Link from "next/link";
 import { useActionState, useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { Avatar, profileHref } from "@/components/PageHeader";
-import { changeRole, inviteUser, renameUser, type InviteState } from "@/lib/actions/users";
+import { changeRole, inviteUser, renameUser, setGrade, type InviteState } from "@/lib/actions/users";
 import type { ActivityKind, Role } from "@/lib/types";
 import styles from "./admin.module.css";
 
-type AdminUser = { id: string; name: string; email: string; role: Role; group: string; active: boolean; initials: string };
+type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  group: string;
+  grade: number | null;
+  active: boolean;
+  initials: string;
+};
 type AdminCourse = {
   id: string;
   /** Adresa třídy (detail) */
@@ -70,6 +79,7 @@ export function AdminTabs({
   const [filter, setFilter] = useState<(typeof FILTERS)[number][0]>("all");
   const [query, setQuery] = useState("");
   const [roles, setRoles] = useState<Record<string, Role>>({});
+  const [grades, setGrades] = useState<Record<string, number | null>>({});
   const [roleMsg, setRoleMsg] = useState<{ error?: string; info?: string }>({});
   const [, startTransition] = useTransition();
   const [inviting, setInviting] = useState(false);
@@ -83,15 +93,24 @@ export function AdminTabs({
     });
   };
 
+  const onGrade = (id: string, grade: number, previous: number | null) => {
+    setGrades((g) => ({ ...g, [id]: grade }));
+    startTransition(async () => {
+      const res = await setGrade(id, grade);
+      setRoleMsg(res);
+      if (res.error) setGrades((g) => ({ ...g, [id]: previous }));
+    });
+  };
+
   const shown = useMemo(() => {
     const q = fold(query.trim());
     return users
-      .map((u) => ({ ...u, role: roles[u.id] ?? u.role }))
+      .map((u) => ({ ...u, role: roles[u.id] ?? u.role, grade: u.id in grades ? grades[u.id] : u.grade }))
       .filter((u) => filter === "all" || u.role === filter)
       .filter((u) => !q || fold(u.name).includes(q) || u.email.includes(q));
-  }, [users, roles, filter, query]);
+  }, [users, roles, grades, filter, query]);
 
-  const changed = Object.keys(roles).length > 0;
+  const changed = Object.keys(roles).length + Object.keys(grades).length > 0;
 
   return (
     <>
@@ -162,7 +181,28 @@ export function AdminTabs({
                     <option value="ucitel">Učitel</option>
                     <option value="admin">Admin</option>
                   </select>
-                  <div className={styles.group}>{u.group}</div>
+                  {u.role === "student" ? (
+                    <select
+                      aria-label={`Ročník studenta ${u.name}`}
+                      value={u.grade ?? ""}
+                      onChange={(e) => onGrade(u.id, Number(e.target.value), u.grade)}
+                      className={styles.select}
+                      data-missing={!u.grade || undefined}
+                    >
+                      {!u.grade && (
+                        <option value="" disabled>
+                          Vyber ročník
+                        </option>
+                      )}
+                      {[1, 2, 3, 4].map((g) => (
+                        <option key={g} value={g}>
+                          {g}. ročník
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className={styles.group}>{roles[u.id] && roles[u.id] !== "student" ? "Vyučující" : u.group}</div>
+                  )}
                   <span className={`chip ${u.active ? "chip-ok" : "chip-wait"}`} style={{ justifySelf: "start" }}>
                     {u.active ? "Aktivní" : "Pozvánka odeslána"}
                   </span>

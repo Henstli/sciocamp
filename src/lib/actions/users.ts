@@ -74,6 +74,24 @@ export async function changeRole(userId: string, role: Role): Promise<RoleState>
   return { info: "Role je uložená." };
 }
 
+/** Admin zařadí studenta do ročníku (1.–4.). */
+export async function setGrade(userId: string, grade: number): Promise<RoleState> {
+  await requireAdmin();
+  if (![1, 2, 3, 4].includes(grade)) return { error: "Ročník musí být 1.–4." };
+  if (!isSupabase) return { info: "Ukázkový režim: změny se neukládají." };
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("profiles")
+    .update({ grade })
+    .eq("id", userId)
+    .eq("role", "student")
+    .select("id");
+  if (error || !data?.length) return { error: "Ročník se nepodařilo uložit." };
+  refresh();
+  return { info: "Ročník je uložený." };
+}
+
 /** Admin upraví jméno a příjmení uživatele. */
 export async function renameUser(userId: string, fullName: string): Promise<RoleState> {
   await requireAdmin();
