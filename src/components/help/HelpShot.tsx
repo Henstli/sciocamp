@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import type { HelpShotData } from "@/lib/help/shots";
 import styles from "./help.module.css";
 
-type Phase = "start" | "move" | "press" | "result" | "hold";
+type Phase = "start" | "show" | "move" | "press" | "result" | "hold" | "end";
 
 
 /** Kroky animace (ms od začátku). */
@@ -70,10 +70,12 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
       setTyped(null);
       setPhase("start");
     });
+    at(T.show, () => setPhase("show"));
     at(T.move, () => setPhase("move"));
     let end = T.result;
     if (shot.target && shot.action !== "none") {
-      at(T.press, () => setPhase("press"));
+      // „Ukázat“ = kurzor jen najede (bez kliknutí, nic se nemění).
+      if (shot.action !== "point") at(T.press, () => setPhase("press"));
       at(T.result, () => setPhase("result"));
       if (typing) {
         // Hotový snímek (pole s fokusem a celým textem) + překryv, ve kterém se
@@ -91,6 +93,8 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
         at(T.result, () => setFrame(last));
       }
     }
+    // Před opakováním kurzor a zvýraznění plynule zmizí, pak vše začne znovu.
+    at(end + T.hold - 400, () => setPhase("end"));
     at(end + T.hold, () => setRun((r) => r + 1));
     return () => timers.forEach(clearTimeout);
   }, [visible, ready, run, shot, last, typing]);
@@ -99,7 +103,7 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
   const cx = t ? (t.x + t.w / 2) * 100 : 50;
   const cy = t ? (t.y + t.h / 2) * 100 : 50;
   // Kurzor startuje vpravo dole od prvku a dojede doprostřed.
-  const away = phase === "start";
+  const away = phase === "start" || phase === "show";
   // Po kliknutí se změní obrazovka (rozbalení) → zvýraznění zmizí. Při psaní
   // kurzor uhne, ať nezakrývá text.
   const changed = (phase === "result" || phase === "hold") && shot.action === "click" && last > 0;
@@ -107,9 +111,11 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
   const cursor = {
     left: `${away ? Math.min(cx + 18, 92) : aside ? Math.min((t.x + t.w) * 100 + 2, 96) : cx}%`,
     top: `${away ? Math.min(cy + 22, 92) : aside ? Math.min((t.y + t.h) * 100 + 4, 96) : cy}%`,
-    opacity: changed ? 0 : 1,
+    opacity: phase === "start" || phase === "end" ? 0 : 1,
+    // Na začátku kurzor skočí na výchozí místo neviditelně (bez přejezdu).
+    ...(phase === "start" ? { transition: "none" } : {}),
   };
-  const showRing = t && phase !== "start" && !changed;
+  const showRing = t && phase !== "start" && phase !== "show" && phase !== "end" && !changed;
 
   return (
     <figure className={styles.shot} aria-label={label}>
@@ -127,7 +133,8 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
             aria-hidden={i === 0 ? undefined : true}
             className={styles.frame}
             data-on={i === frame || undefined}
-            data-instant={(shot.action === "type" && i > 0) || undefined}
+            // Po kliknutí se obrazovka změní hned (jako ve skutečnosti), bez prolínání dvou rozvržení.
+            data-instant={(i > 0 && (shot.action === "type" || shot.action === "click")) || undefined}
             loading={i === 0 ? "lazy" : "eager"}
             decoding="async"
             draggable={false}
