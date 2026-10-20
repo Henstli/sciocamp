@@ -55,6 +55,7 @@ export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">
               <span className={`chip ${chip.tone}`}>{chip.label}</span>
               <span className="chip chip-info">{GOAL_LABEL[p.goal]}</span>
               <span className="chip chip-info">{CATEGORY_LABEL[p.category]}</span>
+              {votingOpen(p, now.getTime()) && p.mandatoryAt && <span className="chip chip-primary">Povinné hlasování</span>}
               {votingOpen(p, now.getTime()) && <DaysLeftChip days={votingDaysLeft(p.votingEndsAt, now.getTime())} />}
             </div>
             <h1 className={styles.title} style={{ fontSize: 22 }}>
@@ -106,6 +107,8 @@ export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">
             needPercentProposed={p.needPercentProposed}
             members={members}
             admin={admin}
+            mandatory={!!p.mandatoryAt}
+            votingRunning={votingOpen(p, now.getTime())}
           />
         )}
 

@@ -27,6 +27,8 @@ export type Proposal = {
   createdAt: string;
   /** Do kdy se hlasuje (7 dní od podání) */
   votingEndsAt: string;
+  /** Kdy admin poslal hlasování všem (povinné), jinak null */
+  mandatoryAt: string | null;
   commentCount: number;
   /** Jak hlasoval přihlášený (null = nehlasoval) */
   myChoice: VoteChoice | null;

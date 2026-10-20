@@ -119,6 +119,13 @@ export async function withdrawProposal(id: string): Promise<ActionResult> {
   return run((sb) => sb.rpc("withdraw_proposal", { proposal: id }), "Návrh se nepodařilo stáhnout.");
 }
 
+/** Admin pošle hlasování všem (povinné), nebo povinnost zruší. */
+export async function setProposalMandatory(id: string, on: boolean): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!isAdmin(user.role)) return { error: "Hlasování všem posílá jen admin." };
+  return run((sb) => sb.rpc("set_proposal_mandatory", { proposal: id, on_: on }), "Nepodařilo se to uložit.");
+}
+
 export async function reopenProposal(id: string): Promise<ActionResult> {
   const user = await requireUser();
   if (!canTeach(user.role)) return { error: "Jen vyučující nebo admin." };

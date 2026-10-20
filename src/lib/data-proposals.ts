@@ -11,7 +11,7 @@ import { nowMs } from "./time";
 import type { User } from "./types";
 
 const PROPOSAL_COLUMNS =
-  "id, author_id, title, body, category, goal, need_percent_proposed, need_percent, status, resolution, resolved_by, resolved_at, pro_count, against_count, neutral_count, reached_at, created_at, voting_ends_at";
+  "id, author_id, title, body, category, goal, need_percent_proposed, need_percent, status, resolution, resolved_by, resolved_at, pro_count, against_count, neutral_count, reached_at, created_at, voting_ends_at, mandatory_at";
 
 type ProposalRow = {
   id: string;
@@ -32,6 +32,7 @@ type ProposalRow = {
   reached_at: string | null;
   created_at: string;
   voting_ends_at: string;
+  mandatory_at: string | null;
 };
 
 function toProposal(r: ProposalRow, commentCount: number, myChoice: VoteChoice | null): Proposal {
@@ -54,6 +55,7 @@ function toProposal(r: ProposalRow, commentCount: number, myChoice: VoteChoice |
     reachedAt: r.reached_at,
     createdAt: r.created_at,
     votingEndsAt: r.voting_ends_at,
+    mandatoryAt: r.mandatory_at,
     commentCount,
     myChoice,
   };
@@ -77,6 +79,14 @@ export async function closeExpiredProposals(): Promise<void> {
   if (!isSupabase) return;
   const sb = await createClient();
   await sb.rpc("close_expired_proposals");
+}
+
+/** Návrhy s povinným hlasováním, o kterých přihlášený ještě nehlasoval (nejstarší první). */
+export async function pendingMandatory(user: User): Promise<Proposal[]> {
+  const now = nowMs();
+  return (await listProposals(user))
+    .filter((p) => p.mandatoryAt && p.status === "open" && Date.parse(p.votingEndsAt) > now && !p.myChoice)
+    .sort((a, b) => (a.mandatoryAt ?? "").localeCompare(b.mandatoryAt ?? ""));
 }
 
 /** Kolik lidí ve škole může hlasovat (základ pro procenta). */

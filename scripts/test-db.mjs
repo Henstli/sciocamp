@@ -1024,4 +1024,18 @@ await test("návrhy: hlasuje se 7 dní, pak bez dost hlasů neprošlo", async ()
   assert.equal((await as(admin, `delete from public.proposals where id = $1 returning 1`, [q.id])).length, 1);
 });
 
+await test("návrhy: povinné hlasování posílá jen admin, oznámení dostanou nehlasující", async () => {
+  const [p] = await as(student, `insert into public.proposals (title, goal, need_percent_proposed) values ('Povinná porada', 'shromazdeni', 50) returning id`);
+  await assert.rejects(() => as(teacher, `select public.set_proposal_mandatory($1, true)`, [p.id]));
+  await as(admin, `select public.set_proposal_mandatory($1, true)`, [p.id]);
+  assert.ok((await db.query(`select mandatory_at from public.proposals where id = $1`, [p.id])).rows[0].mandatory_at);
+  const got = (await db.query(`select user_id from public.notifications where title = 'Hlasuj o návrhu: Povinná porada'`)).rows.map((r) => r.user_id);
+  assert.ok(got.includes(student2) && got.includes(teacher));
+  assert.ok(!got.includes(student), "autor už hlasoval");
+  await as(admin, `select public.set_proposal_mandatory($1, false)`, [p.id]);
+  assert.equal((await db.query(`select mandatory_at from public.proposals where id = $1`, [p.id])).rows[0].mandatory_at, null);
+  // Mandatory_at si nikdo nenastaví přímo.
+  await assert.rejects(() => as(student, `update public.proposals set mandatory_at = now() where id = $1`, [p.id]));
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

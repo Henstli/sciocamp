@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { listUsers } from "@/lib/data";
 import { wishesWaiting } from "@/lib/data-proposals";
 import { AvatarState } from "@/components/AvatarState";
+import { MandatoryVote } from "@/components/proposals/MandatoryVote";
 import { bannerSwatch } from "@/lib/banner";
 import { homeTasks } from "@/lib/data-assignments";
 import { unreadMessages } from "@/lib/data-communication";
@@ -25,6 +26,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className={styles.main}>
         <div className={styles.inner}>
           <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
+          {/* Povinná hlasování o návrzích: okno, dokud člověk nehlasuje */}
+          <Suspense fallback={null}>
+            <MandatoryVote />
+          </Suspense>
         </div>
       </main>
     </div>

@@ -6,6 +6,7 @@ import {
   deleteProposal,
   reopenProposal,
   resolveProposal,
+  setProposalMandatory,
   setProposalNeed,
   withdrawProposal,
   type ActionResult,
@@ -32,7 +33,13 @@ export function StaffPanel({
   needPercentProposed,
   members,
   admin,
+  mandatory,
+  votingRunning,
 }: {
+  /** Admin poslal hlasování všem */
+  mandatory: boolean;
+  /** Hlasování ještě běží */
+  votingRunning: boolean;
   id: string;
   goal: ProposalGoal;
   status: ProposalStatus;
@@ -132,6 +139,30 @@ export function StaffPanel({
           </button>
           <span className={f.hint}>Pro případ, že se rozhodnutí uložilo omylem.</span>
         </div>
+      )}
+      {admin && open && votingRunning && (
+        <>
+          <h3>Povinné hlasování</h3>
+          <div className={styles.inline}>
+            {mandatory ? (
+              <>
+                <span className="chip chip-primary">Hlasování je povinné pro všechny</span>
+                <button type="button" className="btn btn-outline" disabled={pending} onClick={() => act(() => setProposalMandatory(id, false))}>
+                  Zrušit povinnost
+                </button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-primary" disabled={pending} onClick={() => act(() => setProposalMandatory(id, true))}>
+                Poslat hlasování všem
+              </button>
+            )}
+          </div>
+          <span className={f.hint} style={{ marginTop: -6 }}>
+            {mandatory
+              ? "Kdo ještě nehlasoval, uvidí po přihlášení okno s návrhem, dokud nehlasuje."
+              : "Všichni, kdo ještě nehlasovali, dostanou oznámení a po přihlášení jim vyskočí okno s návrhem, dokud nehlasují (do konce hlasování)."}
+          </span>
+        </>
       )}
       {admin && <DeleteProposal id={id} closed={!open} afterDelete="/navrhy" />}
       <Message res={res} />

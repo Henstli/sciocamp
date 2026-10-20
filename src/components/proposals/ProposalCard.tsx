@@ -32,6 +32,7 @@ export function ProposalCard({
           <span className={`chip ${chip.tone}`}>{chip.label}</span>
           <span className="chip chip-info">{GOAL_LABEL[p.goal]}</span>
           <span className="chip chip-info">{CATEGORY_LABEL[p.category]}</span>
+          {voting && p.mandatoryAt && <span className="chip chip-primary">Povinné hlasování</span>}
           {voting && <DaysLeftChip days={votingDaysLeft(p.votingEndsAt, now.getTime())} />}
         </div>
         <Link href={`/navrhy/${p.id}`} className={styles.title}>

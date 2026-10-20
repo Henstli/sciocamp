@@ -645,3 +645,41 @@ a.title:hover {
   width: 96px;
   flex: none;
 }
+
+/* Povinné hlasování: okno přes celou aplikaci */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(17, 26, 51, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.dialog {
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 24px 60px rgba(17, 26, 51, 0.25);
+}
+.dialog:focus {
+  outline: none;
+}
+.dialogBody {
+  max-height: 30vh;
+  overflow: auto;
+}
+.dialogNote {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.choice:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -34,6 +34,7 @@ export const DEMO_PROPOSALS: DemoProposal[] = [
     reachedAt: null,
     createdAt: ago(3),
     votingEndsAt: plus7(ago(3)),
+    mandatoryAt: null,
     votes: V(["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna"], ["u-maly", "u-pietraszek"], ["u-svobodova"]),
   },
   {
@@ -52,6 +53,7 @@ export const DEMO_PROPOSALS: DemoProposal[] = [
     reachedAt: ago(5),
     createdAt: ago(8),
     votingEndsAt: plus7(ago(8)),
+    mandatoryAt: null,
     votes: V(["u-hankova", "u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jakubcova", "u-pavel"], ["u-jaukner", "u-kubicek"], ["u-maly", "u-benes"]),
   },
   {
@@ -70,6 +72,7 @@ export const DEMO_PROPOSALS: DemoProposal[] = [
     reachedAt: null,
     createdAt: ago(6, 14),
     votingEndsAt: plus7(ago(6, 14)),
+    mandatoryAt: ago(1),
     votes: V(["u-komarek", "u-cerny", "u-jaukner"]),
   },
   {
@@ -88,6 +91,7 @@ export const DEMO_PROPOSALS: DemoProposal[] = [
     reachedAt: ago(14),
     createdAt: ago(19),
     votingEndsAt: plus7(ago(19)),
+    mandatoryAt: null,
     votes: V(["u-jaukner", "u-maly", "u-svobodova", "u-benes", "u-dvorakova", "u-kral"], ["u-pietraszek", "u-kubesova"]),
   },
 ];
