@@ -20,6 +20,7 @@ import {
   formatDue,
   isoWeekdayOf,
   mondayOf,
+  nowMs,
   parseIso,
   pragueNow,
   sameDate,
@@ -27,8 +28,8 @@ import {
 import styles from "./home.module.css";
 import { HomeSearch } from "@/components/search/HomeSearch";
 import { buildSearchIndex } from "@/lib/search-index";
-import { listWishes } from "@/lib/data-proposals";
-import { WISH_KIND_LABEL } from "@/lib/proposals";
+import { listProposals, listWishes, memberCount } from "@/lib/data-proposals";
+import { CHOICE_LABEL, percentOf, votingDaysLeft, votingOpen } from "@/lib/proposals";
 
 export const metadata: Metadata = { title: "Domov" };
 
@@ -50,6 +51,18 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const wishes = await listWishes(user);
   const openWishes = wishes.filter((w) => w.status === "open");
   const wishWaiting = openWishes.filter((w) => !w.voted).length;
+  // Návrhy, o kterých se právě hlasuje: povinné a nehlasované nahoru, pak podle konce hlasování.
+  const [proposals, members] = await Promise.all([listProposals(user), memberCount()]);
+  const nowValue = nowMs();
+  const votingNow = proposals
+    .filter((p) => votingOpen(p, nowValue))
+    .sort(
+      (a, b) =>
+        Number(!!b.mandatoryAt && !b.myChoice) - Number(!!a.mandatoryAt && !a.myChoice) ||
+        Number(!b.myChoice) - Number(!a.myChoice) ||
+        a.votingEndsAt.localeCompare(b.votingEndsAt),
+    );
+  const proposalsWaiting = votingNow.filter((p) => !p.myChoice).length;
   const tasks = await homeTasks(user);
   const messages = await unreadMessages(user);
   const senders = await getUsersByIds(messages.from.slice(0, 3));
@@ -182,32 +195,43 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             })}
           </section>
 
-          {openWishes.length > 0 && (
-            <section aria-label="Nejžádanější přání" className={`card ${styles.panel}`}>
-              <div className={styles.panelHead}>
-                <h2 className="section-title">Hlasování</h2>
-                <Link href="/hlasovani">Vše</Link>
-              </div>
-              {openWishes.slice(0, 3).map((w) => (
-                <div key={w.id} className={styles.vote}>
+          <section aria-label="Návrhy k hlasování" className={`card ${styles.panel}`}>
+            <div className={styles.panelHead}>
+              <h2 className="section-title">Návrhy</h2>
+              <Link href="/navrhy">Vše</Link>
+            </div>
+            {votingNow.length === 0 && <p className={styles.itemMeta}>Teď se o žádném návrhu nehlasuje. Máš nápad, co ve škole zlepšit?</p>}
+            {votingNow.slice(0, 3).map((p) => {
+              const share = (n: number) => `${(n / Math.max(members, 1)) * 100}%`;
+              const days = votingDaysLeft(p.votingEndsAt, nowValue);
+              return (
+                <Link key={p.id} href={`/navrhy/${p.id}`} className={styles.vote}>
                   <div className={styles.voteHead}>
-                    <div className={styles.itemTitle}>{w.title}</div>
-                    <span className="chip chip-info">{WISH_KIND_LABEL[w.kind]}</span>
+                    <div className={styles.itemTitle}>{p.title}</div>
+                    {p.mandatoryAt ? (
+                      <span className="chip chip-primary">Povinné</span>
+                    ) : (
+                      <span className={`chip ${days === 0 ? "chip-late" : days <= 3 ? "chip-wait" : "chip-info"}`}>
+                        {days === 0 ? "dnes končí" : `${days} ${plural(days, "den", "dny", "dní")}`}
+                      </span>
+                    )}
                   </div>
-                  <div className={styles.progress}>
-                    <div style={{ width: `${Math.round((w.voteCount / openWishes[0].voteCount) * 100)}%` }} />
+                  <div className={styles.pollBar}>
+                    <span style={{ width: share(p.proCount), background: "var(--primary)" }} />
+                    <span style={{ width: share(p.neutralCount), background: "#c3cad8" }} />
+                    <span style={{ width: share(p.againstCount), background: "#c93b3b" }} />
                   </div>
                   <div className={styles.itemMeta}>
-                    {w.voteCount} {plural(w.voteCount, "člověk to chce", "lidé to chtějí", "lidí to chce")}
-                    {w.voted ? " · ty taky" : ""}
+                    Pro {percentOf(p.proCount, members)} % · proti {percentOf(p.againstCount, members)} % ·{" "}
+                    {p.myChoice ? `tvůj hlas: ${CHOICE_LABEL[p.myChoice].toLowerCase()}` : "ty zatím ne"}
                   </div>
-                </div>
-              ))}
-              <Link href="/hlasovani" className="btn btn-primary">
-                {wishWaiting > 0 ? "Jít hlasovat" : "Přidat přání"}
-              </Link>
-            </section>
-          )}
+                </Link>
+              );
+            })}
+            <Link href="/navrhy" className="btn btn-primary">
+              {proposalsWaiting > 0 ? "Jít hlasovat" : "Podat návrh"}
+            </Link>
+          </section>
         </div>
       </div>
     </>
