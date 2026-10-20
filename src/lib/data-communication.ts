@@ -205,9 +205,10 @@ export async function conversationMembers(conversationId: string): Promise<Conve
   }));
 }
 
-/** Kolik nepřečtených zpráv a od koho (pro menu a Domov). */
+/** Kolik nepřečtených zpráv a od koho (pro menu a Domov; bez celoškolního chatu). */
 export async function unreadMessages(user: User): Promise<{ unread: number; from: string[] }> {
-  const list = (await conversationsFor(user)).filter((c) => c.unread > 0);
+  // Celoškolní chat se do čísla v menu nepočítá (nepřečtené má jen v seznamu konverzací).
+  const list = (await conversationsFor(user)).filter((c) => c.unread > 0 && !c.isSchool);
   const from = list.map((c) => c.otherId ?? c.lastAuthor).filter((id): id is string => !!id && id !== user.id);
   return { unread: list.reduce((n, c) => n + c.unread, 0), from: [...new Set(from)] };
 }

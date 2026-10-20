@@ -114,7 +114,8 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
   // Stav ostatních členů (Doručeno / Přečteno).
   const memberStates = members.filter((m) => m.userId !== user.id).map((m) => ({ userId: m.userId, deliveredAt: m.deliveredAt, readAt: m.readAt }));
 
-  const unread = list.reduce((n, c) => n + c.unread, 0);
+  // Stejně jako číslo v menu: bez celoškolního chatu.
+  const unread = list.filter((c) => !c.group?.school).reduce((n, c) => n + c.unread, 0);
   const people = users
     .filter((u) => u.id !== user.id && u.active !== false)
     .sort((a, b) => a.name.localeCompare(b.name, "cs"))
