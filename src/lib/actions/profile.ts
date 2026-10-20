@@ -78,3 +78,14 @@ export async function setAvatar(path: string | null): Promise<ProfileState> {
   refresh();
   return { info: path ? "Fotka uložena." : "Fotka odstraněna." };
 }
+
+/** Ukazovat ostatním, že jsem online (zelená tečka). */
+export async function setShowOnline(show: boolean): Promise<ProfileState> {
+  const user = await requireUser();
+  if (!isSupabase) return { info: "Ukázkový režim: nastavení se neukládá." };
+  const sb = await createClient();
+  const { error } = await sb.from("profiles").update({ show_online: show }).eq("id", user.id);
+  if (error) return { error: "Nastavení se nepodařilo uložit." };
+  refresh();
+  return { info: show ? "Ostatní uvidí, když jsi online." : "Ostatní neuvidí, když jsi online." };
+}

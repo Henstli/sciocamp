@@ -19,6 +19,8 @@ export type User = {
   avatarPath?: string | null;
   /** Barva pruhu v profilu (BANNER_COLORS v src/lib/banner.ts), výchozí modrá. */
   bannerColor?: string;
+  /** Ukazovat ostatním, že je online (výchozí ano). */
+  showOnline?: boolean;
 };
 
 /** „ostatni“ se v aplikaci jmenuje Událost (třídnická konzultace, seminář…). */

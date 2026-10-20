@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { getPhone, getSocials } from "@/lib/data";
 import { initials } from "@/lib/roles";
 import { AvatarUpload } from "./AvatarUpload";
+import { OnlineToggle } from "./OnlineToggle";
 import { ProfileForm } from "./ProfileForm";
 
 export const metadata: Metadata = { title: "Nastavení" };
@@ -20,6 +21,7 @@ export default async function SettingsPage() {
           instagram={socials?.instagram ?? ""}
           banner={user.bannerColor ?? "modra"}
         />
+        <OnlineToggle initial={user.showOnline !== false} />
       </div>
     </>
   );

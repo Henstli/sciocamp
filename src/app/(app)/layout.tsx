@@ -59,7 +59,7 @@ async function UserSidebar() {
   return (
     <>
       <AvatarState map={avatars} colors={colors} meId={user.id} />
-      <PresenceTracker userId={user.id} live={isSupabase} />
+      <PresenceTracker userId={user.id} live={isSupabase} visible={user.showOnline !== false} />
       <LiveRefresh userId={user.id} live={isSupabase} />
       <Sidebar
         user={{
