@@ -30,6 +30,8 @@ export function BadgeCelebration({ live }: { live: boolean }) {
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const lastRun = useRef(0);
+  /** Po zavření animace obnovit stránku (zvoneček, menu) — během animace ne, sekala by se. */
+  const refreshAfter = useRef(false);
 
   useEffect(() => {
     const now = Date.now();
@@ -47,8 +49,8 @@ export function BadgeCelebration({ live }: { live: boolean }) {
       if (cancelled || list.length === 0) return;
       setQueue((q) => (q.length > 0 ? q : list));
       setIndex(0);
-      // Nová oznámení o odznacích ve zvonečku a čísla v menu.
-      if (live) router.refresh();
+      // Nová oznámení o odznacích ve zvonečku: až po zavření animace.
+      refreshAfter.current = live;
     });
     return () => {
       cancelled = true;
@@ -77,7 +79,14 @@ export function BadgeCelebration({ live }: { live: boolean }) {
     else {
       setQueue([]);
       setIndex(0);
+      afterClose();
     }
+  }
+
+  function afterClose() {
+    if (!refreshAfter.current) return;
+    refreshAfter.current = false;
+    router.refresh();
   }
 
   function skipAll() {
@@ -85,6 +94,7 @@ export function BadgeCelebration({ live }: { live: boolean }) {
     setQueue([]);
     setIndex(0);
     setNote(null);
+    afterClose();
   }
 
   async function exhibit() {
