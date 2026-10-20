@@ -18,6 +18,7 @@ export default async function SettingsPage() {
         <AvatarUpload userId={user.id} initials={initials(user.name)} hasPhoto={!!user.avatarPath} />
         <ProfileForm name={user.name} email={user.email} phone={phone ?? ""} bio={user.bio ?? ""} isStudent={user.role === "student"}
           instagram={socials?.instagram ?? ""}
+          banner={user.bannerColor ?? "modra"}
         />
       </div>
     </>

@@ -11,11 +11,41 @@
   overflow: hidden;
 }
 .banner {
+  --b0: var(--primary);
+  --b1: #4a7be6;
+  --b2: #5a88ec;
   height: 120px;
-  background: var(--primary);
+  background: var(--b0);
   position: relative;
   overflow: hidden;
 }
+/* Barvy pruhu: stejná stavba jako modrá — základ a dva o stupeň světlejší kruhy */
+.banner[data-color="fialova"] {
+  --b0: #6b57da;
+  --b1: #7865df;
+  --b2: #8574e4;
+}
+.banner[data-color="ruzova"] {
+  --b0: #d64d97;
+  --b1: #dc5ea3;
+  --b2: #e170ae;
+}
+.banner[data-color="cervena"] {
+  --b0: #d9524c;
+  --b1: #df635d;
+  --b2: #e4746f;
+}
+.banner[data-color="zluta"] {
+  --b0: #e3a21a;
+  --b1: #e8ad31;
+  --b2: #ecb849;
+}
+.banner[data-color="zelena"] {
+  --b0: #21946a;
+  --b1: #33a079;
+  --b2: #46ac88;
+}
+
 .b1,
 .b2 {
   position: absolute;
@@ -24,14 +54,14 @@
 .b1 {
   width: 260px;
   height: 260px;
-  background: #4a7be6;
+  background: var(--b1);
   right: -40px;
   top: -120px;
 }
 .b2 {
   width: 120px;
   height: 120px;
-  background: #5a88ec;
+  background: var(--b2);
   right: 260px;
   top: 40px;
 }

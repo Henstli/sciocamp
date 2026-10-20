@@ -44,7 +44,7 @@ export function ProfileView({
   return (
     <div className={styles.wrap}>
       <section className={`card ${styles.cover}`}>
-        <div aria-hidden="true" className={styles.banner}>
+        <div aria-hidden="true" className={styles.banner} data-color={person.bannerColor ?? "modra"}>
           <div className={styles.b1} />
           <div className={styles.b2} />
         </div>

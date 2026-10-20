@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { saveProfile, type ProfileState } from "@/lib/actions/profile";
+import { BANNER_COLORS } from "@/lib/banner";
 import { keepForm } from "@/lib/use-keep-form";
 import styles from "@/components/manage/manage.module.css";
 
@@ -12,7 +13,9 @@ export function ProfileForm({
   bio,
   isStudent,
   instagram,
+  banner,
 }: {
+  banner: string;
   instagram: string;
   name: string;
   email: string;
@@ -72,6 +75,19 @@ export function ProfileForm({
           <textarea name="bio" defaultValue={bio} rows={3} maxLength={600} className={styles.textarea} placeholder="Co tě baví, na čem právě pracuješ…" />
         </label>
       </div>
+      <fieldset className={styles.colorPick}>
+        <legend className={styles.label}>Barva profilu</legend>
+        <div className={styles.swatches}>
+          {BANNER_COLORS.map((c) => (
+            <label key={c.id} className={styles.swatch} title={c.label}>
+              <input type="radio" name="banner" value={c.id} defaultChecked={banner === c.id} />
+              <span style={{ background: c.swatch }} aria-hidden="true" />
+              <span className="sr-only">{c.label}</span>
+            </label>
+          ))}
+        </div>
+        <span className={styles.hint}>Barva horního pruhu ve tvém profilu.</span>
+      </fieldset>
       {(state.error || state.info) && (
         <p role="status" className={state.error ? styles.formError : styles.formInfo}>
           {state.error ?? state.info}

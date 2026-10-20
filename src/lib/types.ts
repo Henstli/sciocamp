@@ -17,6 +17,8 @@ export type User = {
   bio?: string;
   /** Profilová fotka v úložišti (bucket avatary), jinak null. */
   avatarPath?: string | null;
+  /** Barva pruhu v profilu (BANNER_COLORS v src/lib/banner.ts), výchozí modrá. */
+  bannerColor?: string;
 };
 
 /** „ostatni“ se v aplikaci jmenuje Událost (třídnická konzultace, seminář…). */

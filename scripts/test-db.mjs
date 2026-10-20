@@ -873,4 +873,11 @@ await test("profilové fotky: každý nahraje a nastaví jen svou, vidí je ško
   await assert.rejects(() => as(student, `update public.profiles set role = 'admin' where id = $1`, [student]));
 });
 
+await test("barva profilu: každý mění jen svou a jen z nabídky", async () => {
+  await as(student, `update public.profiles set banner_color = 'ruzova' where id = $1`, [student]);
+  await assert.rejects(() => as(student, `update public.profiles set banner_color = 'neon' where id = $1`, [student]));
+  const r = await as(student, `update public.profiles set banner_color = 'zelena' where id = $1 returning id`, [teacher]);
+  assert.equal(r.length, 0);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

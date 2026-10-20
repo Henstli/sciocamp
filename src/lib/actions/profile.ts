@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { requireUser } from "../auth";
 import { isSupabase } from "../config";
+import { isBannerColor } from "../banner";
 import { createClient } from "../supabase/server";
 
 export type ProfileState = { error?: string; info?: string; fieldErrors?: Record<string, string> };
@@ -39,11 +40,13 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
   if (phoneRaw && !phone) fieldErrors.phone = "Napiš telefon jako 777 123 456 nebo +420 777 123 456.";
   const instagram = normalizeInstagram(String(formData.get("instagram") ?? ""));
   if (instagram === null) fieldErrors.instagram = "Napiš uživatelské jméno z Instagramu, např. jana.novakova.";
+  const bannerRaw = formData.get("banner");
+  const banner = isBannerColor(bannerRaw) ? bannerRaw : "modra";
   if (Object.keys(fieldErrors).length) return { error: "Zkontroluj zvýrazněná pole.", fieldErrors };
   if (!isSupabase) return { info: "Ukázkový režim: změny se neukládají." };
 
   const sb = await createClient();
-  const { error } = await sb.from("profiles").update({ bio }).eq("id", user.id);
+  const { error } = await sb.from("profiles").update({ bio, banner_color: banner }).eq("id", user.id);
   if (error) return { error: "Profil se nepodařilo uložit." };
   const res = phone
     ? await sb.from("profile_contacts").upsert({ user_id: user.id, phone, updated_at: new Date().toISOString() })

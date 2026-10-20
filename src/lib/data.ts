@@ -24,9 +24,10 @@ type ProfileRow = {
   activated: boolean;
   blocked: boolean;
   avatar_path: string | null;
+  banner_color: string | null;
 };
 
-const PROFILE_COLUMNS = "id, email, full_name, role, grade, staff_note, bio, activated, blocked, avatar_path";
+const PROFILE_COLUMNS = "id, email, full_name, role, grade, staff_note, bio, activated, blocked, avatar_path, banner_color";
 
 export function toUser(r: ProfileRow): User {
   return {
@@ -39,6 +40,7 @@ export function toUser(r: ProfileRow): User {
     active: r.activated,
     bio: r.bio ?? undefined,
     avatarPath: r.avatar_path ?? null,
+    bannerColor: r.banner_color ?? "modra",
   };
 }
 

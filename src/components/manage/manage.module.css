@@ -406,3 +406,45 @@ label.row:hover,
 .quickChip:hover {
   background: #dce6fc;
 }
+
+/* Výběr barvy profilu */
+.colorPick {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.swatch {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.swatch input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.swatch span[aria-hidden] {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px transparent;
+  transition: box-shadow 0.15s;
+}
+.swatch input:checked + span {
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--text);
+}
+.swatch input:focus-visible + span {
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--primary);
+}
