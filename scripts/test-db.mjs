@@ -1113,4 +1113,19 @@ await test("konzultace: pozvání, Meet, viditelnost a zrušení", async () => {
   await as(admin, `select public.cancel_consultation($1)`, [busyId]);
 });
 
+await test("konzultace: zrušený pátek zruší zapsané konzultace a oznámí to", async () => {
+  const [{ book_consultation: id }] = await as(student, `select public.book_consultation($1, $2, '10:30', '10:45')`, [teacher2, fri]);
+  await as(student, `select public.invite_to_consultation($1, $2)`, [id, student2]);
+  // Učitel je navíc pozvaný na cizí konzultaci téhož dne.
+  const [{ book_consultation: other }] = await as(student2, `select public.book_consultation($1, $2, '11:00', '11:15')`, [admin, fri]);
+  await as(student2, `select public.invite_to_consultation($1, $2)`, [other, teacher2]);
+  await as(teacher2, `insert into public.consultation_blocks (teacher_id, day, slot) values ($1, $2, null)`, [teacher2, fri]);
+  assert.equal((await db.query(`select 1 from public.consultations where id = $1`, [id])).rows.length, 0);
+  assert.equal((await db.query(`select 1 from public.consultation_guests where consultation_id = $1 and user_id = $2`, [other, teacher2])).rows.length, 0);
+  const n = (await db.query(`select user_id from public.notifications where body like '%Tereza Hanková v tu dobu nemůže'`)).rows.map((r) => r.user_id);
+  assert.ok(n.includes(student) && n.includes(student2));
+  await as(teacher2, `delete from public.consultation_blocks where teacher_id = $1`, [teacher2]);
+  await as(admin, `select public.cancel_consultation($1)`, [other]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

@@ -31,6 +31,7 @@ export function TeacherAvailability({
   rules: string[];
 }) {
   const [fi, setFi] = useState(0);
+  const [confirmDay, setConfirmDay] = useState<string | null>(null);
   const [res, setRes] = useState<ConsultResult>({});
   const [pending, start] = useTransition();
   const [optRules, setOptRules] = useOptimistic(rules);
@@ -44,6 +45,8 @@ export function TeacherAvailability({
   const day = fridays[fi]?.day;
   const row = cells[fi] ?? [];
   const wholeDay = row.some((c) => c.k === "day");
+  // Kolik různých zapsaných konzultací v pátek je (sousední bloky stejného studenta = jedna).
+  const booked = row.filter((c, i) => c.k === "booked" && !c.past && !(row[i - 1]?.k === "booked" && (row[i - 1] as { who: string }).who === c.who)).length;
 
   return (
     <>
@@ -64,17 +67,42 @@ export function TeacherAvailability({
           <p className={styles.muted}>Teď není žádný pátek, na který by se studenti mohli zapsat.</p>
         ) : (
           <>
-            <div className={styles.inline}>
-              <button
-                type="button"
-                className={wholeDay ? "btn btn-primary" : "btn btn-outline"}
-                disabled={pending}
-                onClick={() => act(() => setConsultationBlock(day, null, !wholeDay))}
-              >
-                {wholeDay ? "Obnovit konzultace v tento pátek" : "Tento pátek nemůžu (zrušit celý)"}
-              </button>
-              <span className={styles.small}>Zapsané konzultace zůstanou — zruš je zvlášť v Mých konzultacích.</span>
-            </div>
+            {confirmDay === day ? (
+              <div className={styles.inline}>
+                <span className={styles.small}>
+                  V tento pátek {booked === 1 ? "máš 1 zapsanou konzultaci" : `máš zapsané konzultace (${booked})`}. Zruší se a studenti dostanou
+                  oznámení.
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  style={{ color: "var(--late)", borderColor: "#e7b4b4" }}
+                  disabled={pending}
+                  onClick={() => {
+                    setConfirmDay(null);
+                    act(() => setConsultationBlock(day, null, true));
+                  }}
+                >
+                  Ano, zrušit celý pátek
+                </button>
+                <button type="button" className="btn btn-soft" onClick={() => setConfirmDay(null)}>
+                  Zpět
+                </button>
+              </div>
+            ) : (
+              <div className={styles.inline}>
+                <button
+                  type="button"
+                  className={wholeDay ? "btn btn-primary" : "btn btn-outline"}
+                  disabled={pending}
+                  onClick={() =>
+                    !wholeDay && booked > 0 ? setConfirmDay(day) : act(() => setConsultationBlock(day, null, !wholeDay))
+                  }
+                >
+                  {wholeDay ? "Obnovit konzultace v tento pátek" : "Tento pátek nemůžu (zrušit celý)"}
+                </button>
+              </div>
+            )}
             <ul className={styles.slots}>
               {slots.map((slot, si) => {
                 const c = row[si] ?? { k: "past" };
