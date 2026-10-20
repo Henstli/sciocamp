@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth";
 import { getUsersByIds } from "@/lib/data";
 import { closeExpiredProposals, getProposal, memberCount } from "@/lib/data-proposals";
 import { CATEGORY_LABEL, GOAL_LABEL, proposalChip, votingDaysLeft, votingOpen } from "@/lib/proposals";
-import { DaysLeftChip } from "@/components/proposals/ProposalCard";
+import { ProposalHeadChips, ProposalStatusLine } from "@/components/proposals/ProposalCard";
 import { canTeach, initials, isAdmin } from "@/lib/roles";
 import { formatStamp, nowMs } from "@/lib/time";
 import styles from "../navrhy.module.css";
@@ -51,20 +51,18 @@ export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">
         <article className={`card ${styles.item}`} style={{ padding: "22px 24px" }}>
 
           <div className={styles.body} style={{ gap: 10 }}>
-            <div className={styles.chips}>
-              <span className={`chip ${chip.tone}`}>{chip.label}</span>
-              <span className="chip chip-info">{GOAL_LABEL[p.goal]}</span>
-              <span className="chip chip-info">{CATEGORY_LABEL[p.category]}</span>
-              {votingOpen(p, now.getTime()) && p.mandatoryAt && <span className="chip chip-primary">Povinné hlasování</span>}
-              {votingOpen(p, now.getTime()) && <DaysLeftChip days={votingDaysLeft(p.votingEndsAt, now.getTime())} />}
-            </div>
-            <h1 className={styles.title} style={{ fontSize: 22 }}>
-              {p.title}
-            </h1>
-            <div className={styles.meta}>
-              <span>
-                <Link href={`/lide/${p.authorId}`}>{nameOf(p.authorId)}</Link> · {formatStamp(p.createdAt, now)}
-              </span>
+            <div className={styles.cardHead}>
+              <div className={styles.cardTitle}>
+                <h1 className={styles.title} style={{ fontSize: 22 }}>
+                  {p.title}
+                </h1>
+                <div className={styles.meta}>
+                  <span>
+                    <Link href={`/lide/${p.authorId}`}>{nameOf(p.authorId)}</Link> · {formatStamp(p.createdAt, now)} · {CATEGORY_LABEL[p.category]}
+                  </span>
+                </div>
+              </div>
+              <ProposalHeadChips p={p} chip={chip} voting={votingOpen(p, now.getTime())} now={now} />
             </div>
             {p.body ? <p className={styles.desc}>{p.body}</p> : <p className={styles.empty}>Bez popisu.</p>}
             {p.status !== "stazeno" && (
@@ -78,6 +76,11 @@ export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">
                 open={votingOpen(p, now.getTime())}
                 isAuthor={p.authorId === user.id}
               />
+            )}
+            {p.status === "open" && (
+              <div className={styles.cardFoot}>
+                <ProposalStatusLine p={p} chip={chip} />
+              </div>
             )}
             {outcome && (
               <div className={styles.outcome} data-tone={outcome.tone}>

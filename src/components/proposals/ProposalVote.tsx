@@ -4,6 +4,7 @@ import { useOptimistic, useState, useTransition } from "react";
 import { voteProposal } from "@/lib/actions/proposals";
 import { plural } from "@/lib/format";
 import { CHOICE_LABEL, percentOf, type VoteChoice } from "@/lib/proposals";
+import { Icon } from "@/components/Icon";
 import styles from "@/app/(app)/navrhy/navrhy.module.css";
 
 type Counts = { pro: number; jedno: number; proti: number };
@@ -11,7 +12,7 @@ const ORDER: VoteChoice[] = ["pro", "jedno", "proti"];
 
 /**
  * Hlasování o návrhu (pro / je mi to jedno / proti) a průběžný výsledek:
- * podíly z celé školy, ryska na prahu, kolik lidí hlasovalo.
+ * podíly z celé školy, ryska na prahu, kolik lidí hlasovalo. Můj hlas = zvýrazněný díl lišty.
  */
 export function ProposalVote({
   id,
@@ -74,6 +75,7 @@ export function ProposalVote({
               onClick={() => pick(c)}
               title={state.mine === c && !isAuthor ? "Klikni znovu pro zrušení hlasu" : undefined}
             >
+              {state.mine === c && <Icon name="tick" size={14} strokeWidth={3} />}
               {CHOICE_LABEL[c]}
             </button>
           ))}
@@ -86,20 +88,13 @@ export function ProposalVote({
           ))}
           <i className={styles.mark} data-reached={reached} style={{ left: `${needPercent}%` }} title={`Práh ${needPercent} % pro`} />
         </div>
-        <div className={styles.legend}>
-          <span data-choice="pro">Pro {pct(state.counts.pro)} %</span>
-          <span data-choice="jedno">Je mi to jedno {pct(state.counts.jedno)} %</span>
-          <span data-choice="proti">Proti {pct(state.counts.proti)} %</span>
-          <span data-choice="none">Nehlasovali {Math.max(0, 100 - pct(state.counts.pro) - pct(state.counts.jedno) - pct(state.counts.proti))} %</span>
-        </div>
-        <div className={styles.meta}>
+        <div className={styles.summary}>
           <span>
-            Hlasovalo {voted} z {members} {plural(members, "člověka", "lidí", "lidí")}
+            Pro {pct(state.counts.pro)} % · jedno {pct(state.counts.jedno)} % · proti {pct(state.counts.proti)} %
           </span>
           <span>
-            Práh: {needPercent} % školy pro{needConfirmed ? "" : " (navrženo autorem, čeká na potvrzení)"}
+            Práh {needPercent} %{needConfirmed ? "" : " (navržený)"} · {plural(voted, "hlasoval", "hlasovali", "hlasovalo")} {voted} z {members}
           </span>
-          {state.mine && open && <span>Tvůj hlas: {CHOICE_LABEL[state.mine].toLowerCase()}</span>}
         </div>
       </div>
       {message && (
