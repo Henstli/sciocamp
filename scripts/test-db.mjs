@@ -1227,4 +1227,32 @@ await test("skupinové chaty: založení, správci, vyhození, odchod a smazán�
   await assert.rejects(() => as(student, `select public.delete_group($1)`, [pair]));
 });
 
+await test("připomínky termínu: jen neodevzdané úkoly do 24 h, jednou, a jde vypnout", async () => {
+  const mk = async (title, hours) => (await db.query(
+    `insert into public.assignments (activity_id, title, due_at, created_by) values ($1, $2, now() + ($3 || ' hours')::interval, $4) returning id`,
+    [course.id, title, String(hours), teacher])).rows[0].id;
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2) on conflict do nothing`, [course.id, student]);
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2) on conflict do nothing`, [course.id, student2]);
+  const soon = await mk("Brzy", 5);
+  const later = await mk("Pozdeji", 48);
+  const done = await mk("Hotovo", 3);
+  await db.query(`insert into public.submissions (assignment_id, student_id, status, submitted_at) values ($1, $2, 'odevzdano', now())`, [done, student]);
+  await db.query(`update public.profiles set due_reminders = false where id = $1`, [student2]);
+  await db.query(`select public.send_due_reminders()`);
+  const got = async (who) => (await db.query(`select href from public.notifications where user_id = $1 and kind = 'termin'`, [who])).rows.map((r) => r.href);
+  const mine = await got(student);
+  assert.ok(mine.includes(`/ukoly/${soon}`));
+  assert.ok(!mine.includes(`/ukoly/${later}`));
+  assert.ok(!mine.includes(`/ukoly/${done}`));
+  assert.equal((await got(student2)).length, 0, "vypnuté připomínky");
+  // Podruhé už nic.
+  await db.query(`select public.send_due_reminders()`);
+  assert.equal((await got(student)).filter((h) => h === `/ukoly/${soon}`).length, 1);
+  // Uživatelé funkci spustit nemůžou, tabulku nevidí; svoje nastavení změní.
+  await assert.rejects(() => as(student, `select public.send_due_reminders()`));
+  assert.equal((await as(student, `select * from public.due_reminders`).catch(() => [])).length, 0);
+  await as(student2, `update public.profiles set due_reminders = true where id = $1`, [student2]);
+  await db.query(`delete from public.assignments where id = any($1)`, [[soon, later, done]]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

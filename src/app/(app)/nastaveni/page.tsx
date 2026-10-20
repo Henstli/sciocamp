@@ -21,7 +21,7 @@ export default async function SettingsPage() {
           instagram={socials?.instagram ?? ""}
           banner={user.bannerColor ?? "modra"}
         />
-        <OnlineToggle initial={user.showOnline !== false} />
+        <OnlineToggle initial={user.showOnline !== false} dueReminders={user.role === "student" ? user.dueReminders !== false : undefined} />
       </div>
     </>
   );

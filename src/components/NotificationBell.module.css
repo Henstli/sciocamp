@@ -126,6 +126,10 @@
   background: var(--wait-bg);
   color: var(--wait);
 }
+.icon[data-kind="termin"] {
+  background: var(--late-bg);
+  color: var(--late);
+}
 .text {
   flex: 1;
   min-width: 0;

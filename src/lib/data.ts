@@ -26,9 +26,10 @@ type ProfileRow = {
   avatar_path: string | null;
   banner_color: string | null;
   show_online?: boolean;
+  due_reminders?: boolean;
 };
 
-const PROFILE_COLUMNS = "id, email, full_name, role, grade, staff_note, bio, activated, blocked, avatar_path, banner_color, show_online";
+const PROFILE_COLUMNS = "id, email, full_name, role, grade, staff_note, bio, activated, blocked, avatar_path, banner_color, show_online, due_reminders";
 
 export function toUser(r: ProfileRow): User {
   return {
@@ -43,6 +44,7 @@ export function toUser(r: ProfileRow): User {
     avatarPath: r.avatar_path ?? null,
     bannerColor: r.banner_color ?? "modra",
     showOnline: r.show_online !== false,
+    dueReminders: r.due_reminders !== false,
   };
 }
 

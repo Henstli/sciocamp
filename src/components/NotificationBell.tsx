@@ -23,6 +23,7 @@ const KIND_ICON: Record<string, IconName> = {
   navrh: "bulb",
   prani: "vote",
   konzultace: "clock",
+  termin: "alert",
 };
 
 type Row = { id: string; kind: string; title: string; body: string | null; href: string | null; created_at: string; read_at: string | null };

@@ -21,6 +21,8 @@ export type User = {
   bannerColor?: string;
   /** Ukazovat ostatním, že je online (výchozí ano). */
   showOnline?: boolean;
+  /** Připomínky blížícího se termínu úkolu (výchozí ano). */
+  dueReminders?: boolean;
 };
 
 /** „ostatni“ se v aplikaci jmenuje Událost (třídnická konzultace, seminář…). */

@@ -89,3 +89,14 @@ export async function setShowOnline(show: boolean): Promise<ProfileState> {
   refresh();
   return { info: show ? "Ostatní uvidí, když jsi online." : "Ostatní neuvidí, když jsi online." };
 }
+
+/** Připomínky blížícího se termínu úkolu (24 h předem). */
+export async function setDueReminders(on: boolean): Promise<ProfileState> {
+  const user = await requireUser();
+  if (!isSupabase) return { info: "Ukázkový režim: nastavení se neukládá." };
+  const sb = await createClient();
+  const { error } = await sb.from("profiles").update({ due_reminders: on }).eq("id", user.id);
+  if (error) return { error: "Nastavení se nepodařilo uložit." };
+  refresh();
+  return { info: on ? "Připomínky termínů jsou zapnuté." : "Připomínky termínů jsou vypnuté." };
+}
