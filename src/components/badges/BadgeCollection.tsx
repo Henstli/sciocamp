@@ -3,7 +3,7 @@
 // Moje sbírka odznaků v profilu: všechny odznaky po kategoriích, postup
 // k další úrovni a výběr až 3 odznaků, které se vystaví na kartě profilu.
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { setShownBadges } from "@/lib/actions/badges";
 import {
   BADGE_BY_KEY,
@@ -115,19 +115,53 @@ export function BadgeCollection({ progress, shown, live }: { progress: BadgeProg
   );
 }
 
-/** Vystavené odznaky na kartě profilu (vlastní i cizí). */
+/**
+ * Vystavené odznaky na kartě profilu (vlastní i cizí): jen odznaky, název,
+ * úroveň a popis se ukážou při najetí myší, fokusu nebo po klepnutí.
+ */
 export function ShownBadges({ badges }: { badges: { key: string; tier: number }[] }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const box = useRef<HTMLUListElement>(null);
+
+  // Klepnutí mimo nebo Esc bublinu zavře.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (box.current && !box.current.contains(e.target as Node)) setOpen(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(null);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
-    <ul className={styles.shown} aria-label="Vystavené odznaky" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+    <ul ref={box} className={styles.shown} aria-label="Vystavené odznaky">
       {badges.map((b) => {
         const def = BADGE_BY_KEY.get(b.key as BadgeProgress["key"]);
         if (!def) return null;
+        const tipId = `odznak-tip-${b.key}`;
         return (
           <li key={b.key} className={styles.shownItem}>
-            <BadgeIcon def={def} tier={b.tier} size={44} />
-            <span className={styles.shownText}>
-              <span className={styles.shownName}>{badgeTitle(def, b.tier)}</span>
-              <span className={styles.shownTier}>{tierLabel(def, b.tier)}</span>
+            <button
+              type="button"
+              className={styles.shownBtn}
+              aria-describedby={tipId}
+              aria-expanded={open === b.key}
+              aria-label={badgeTitle(def, b.tier)}
+              onClick={() => setOpen((cur) => (cur === b.key ? null : b.key))}
+            >
+              <BadgeIcon def={def} tier={b.tier} size={46} />
+            </button>
+            <span id={tipId} role="tooltip" className={styles.tip} data-open={open === b.key}>
+              <span className={styles.tipName}>{badgeTitle(def, b.tier)}</span>
+              <span className={styles.tipTier}>{tierLabel(def, b.tier)}</span>
+              <span className={styles.tipDesc}>{badgeDescription(def)}</span>
             </span>
           </li>
         );
