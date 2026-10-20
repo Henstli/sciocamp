@@ -236,13 +236,13 @@ export function ActivityForm({
           {usesTerms && (termId || !allowCustomDates)
             ? kind === "atelier"
               ? "Souběžné ateliéry ve stejném termínu si student vybírá mezi sebou — může být jen v jednom."
-              : "V týdnu expedic se ostatní výuka v rozvrhu nezobrazuje. Student může být jen na jedné expedici naráz."
+              : null
             : kind === "atelier"
             ? "Vyplň, od kdy do kdy ateliér běží. Student může být v jednu dobu jen v jednom ateliéru."
             : kind === "ostatni"
               ? "Pravidelná událost (např. každý pátek): vyplň rozvrh a klikni na „Celý školní rok“. Jednorázová: stejné datum Od i Do."
               : kind === "expedice"
-                ? "Expedice běží celé dny (obvykle po–pá). V těch dnech se ostatní výuka v rozvrhu nezobrazuje. Student může být jen na jedné expedici naráz."
+                ? "Expedice běží celé dny (obvykle po–pá)."
                 : null}
         </span>
       </fieldset>
