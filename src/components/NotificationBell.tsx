@@ -27,6 +27,16 @@ const KIND_ICON: Record<string, IconName> = {
 
 type Row = { id: string; kind: string; title: string; body: string | null; href: string | null; created_at: string; read_at: string | null };
 
+/** Je odkaz notifikace právě otevřená stránka? (např. /zpravy?k=<konverzace>) */
+function isOpenHere(href: string | null): boolean {
+  if (!href || typeof window === "undefined") return false;
+  const target = new URL(href, window.location.origin);
+  const here = new URL(window.location.href);
+  if (target.pathname !== here.pathname) return false;
+  for (const [key, value] of target.searchParams) if (here.searchParams.get(key) !== value) return false;
+  return true;
+}
+
 export function NotificationBell() {
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
@@ -69,11 +79,30 @@ export function NotificationBell() {
       { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${session.userId}` },
       (payload) => {
         const r = payload.new as Row;
+        // Zpráva z konverzace, kterou má člověk právě otevřenou, už je přečtená
+        // (Zprávy ji v databázi označí samy) — do zvonečku se nepočítá.
+        const read = !!r.read_at || isOpenHere(r.href);
         setItems((list) =>
           list.some((x) => x.id === r.id)
             ? list
-            : [{ id: r.id, kind: r.kind, title: r.title, body: r.body, href: r.href, when: formatStamp(r.created_at, new Date()), read: false }, ...list],
+            : [{ id: r.id, kind: r.kind, title: r.title, body: r.body, href: r.href, when: formatStamp(r.created_at, new Date()), read }, ...list],
         );
+      },
+    ).on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "notifications", filter: `user_id=eq.${session.userId}` },
+      (payload) => {
+        // Přečteno jinde (otevřená konverzace, jiná karta prohlížeče) → srovnat zvoneček.
+        const r = payload.new as Row;
+        if (r.read_at) setItems((list) => list.map((x) => (x.id === r.id ? { ...x, read: true } : x)));
+      },
+    ).on(
+      "postgres_changes",
+      { event: "DELETE", schema: "public", table: "notifications" },
+      (payload) => {
+        // Starší notifikaci o téže konverzaci nahradí nová.
+        const id = (payload.old as { id?: string }).id;
+        if (id) setItems((list) => list.filter((x) => x.id !== id));
       },
     );
     void sb.auth.getSession().then(({ data }) => {
