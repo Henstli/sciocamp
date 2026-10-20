@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Icon } from "@/components/Icon";
 import { MyActivities } from "@/components/MyActivities";
 import { requireUser } from "@/lib/auth";
 import { plural } from "@/lib/format";
@@ -17,9 +18,16 @@ export default async function CoursesPage() {
       title="Kurzy"
       subtitle={(n) => `${n} ${plural(n, "kurz", "kurzy", "kurzů")}, ${teacher ? "které učíš nebo do kterých chodíš" : "do kterých chodíš"}`}
       action={
-        <Link href="/zapisy" className="btn btn-outline-primary">
-          Celá nabídka a zápis
-        </Link>
+        teacher ? (
+          <Link href="/ucitel/nova?typ=kurz" className="btn btn-outline-primary">
+            <Icon name="plus" size={16} strokeWidth={2.8} />
+            Nový kurz
+          </Link>
+        ) : (
+          <Link href="/zapisy" className="btn btn-outline-primary">
+            Celá nabídka a zápis
+          </Link>
+        )
       }
       emptyText={teacher ? "Teď neučíš žádný kurz." : "Zatím nemáš žádné kurzy. Zapsat se můžeš v sekci Zápisy."}
       pastLabel="Proběhlé kurzy"
