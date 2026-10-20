@@ -302,7 +302,7 @@
   bottom: calc(100% + 6px);
   z-index: 20;
   width: max-content;
-  max-width: 240px;
+  max-width: 220px;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
@@ -324,6 +324,24 @@
   opacity: 1;
   visibility: visible;
   transform: translate(-50%, 0);
+}
+/* Krajní odznaky: bublina zarovnaná k okraji řady, ať nepřeteče z karty. */
+.shownItem:first-child .tip {
+  left: 0;
+  transform: translate(0, 4px);
+}
+.shownItem:last-child:not(:first-child) .tip {
+  left: auto;
+  right: 0;
+  transform: translate(0, 4px);
+}
+.shownItem:first-child .shownBtn:hover + .tip,
+.shownItem:first-child .shownBtn:focus-visible + .tip,
+.shownItem:first-child .tip[data-open="true"],
+.shownItem:last-child:not(:first-child) .shownBtn:hover + .tip,
+.shownItem:last-child:not(:first-child) .shownBtn:focus-visible + .tip,
+.shownItem:last-child:not(:first-child) .tip[data-open="true"] {
+  transform: translate(0, 0);
 }
 .tipName {
   font-size: 14px;
