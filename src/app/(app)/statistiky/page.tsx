@@ -3,8 +3,9 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
-import { CompletionCard, CountCell, LinkTabs, RateCell, StatTile, WeeklyChart } from "@/components/stats/StatBits";
+import { CompletionCard, LinkTabs, RateCell, StatTile, WeeklyChart } from "@/components/stats/StatBits";
 import { StudentPicker } from "@/components/stats/StudentPicker";
+import { CompletionTable } from "@/components/stats/CompletionTable";
 import styles from "@/components/stats/stats.module.css";
 import { requireTeacher } from "@/lib/auth";
 import { canOpenActivity, isTeacherOf, listActivities } from "@/lib/data";
@@ -172,52 +173,23 @@ export default async function StatsPage({ searchParams }: PageProps<"/statistiky
               Studenti
               <span className={styles.panelNote}>splněno / nesplněno / čeká na hodnocení</span>
             </h2>
-            <div className={`${styles.tableWrap} ${styles.tall}`}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Student</th>
-                    {COMPLETION_KINDS.map((k) => (
-                      <th key={k.kind}>{k.label}</th>
-                    ))}
-                    <th>Úkoly</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[1, 2, 3, 4, 0].flatMap((g) => {
-                    const list = (gradeStudents.get(g) ?? []).filter((s) => compByStudent.has(s.id) || byStudent.has(s.id));
-                    if (list.length === 0) return [];
-                    return [
-                      <tr key={`g${g}`} className={styles.groupRow}>
-                        <th colSpan={COMPLETION_KINDS.length + 2}>{g ? `${g}. ročník` : "Bez ročníku"}</th>
-                      </tr>,
-                      ...list
-                        .sort((a, b) => a.name.localeCompare(b.name, "cs"))
-                        .map((s) => {
-                          const rows = compByStudent.get(s.id) ?? [];
-                          return (
-                            <tr key={s.id}>
-                              <th scope="row">
-                                <Link href={`/statistiky/${s.id}${keep}`} className={styles.rowTitle}>
-                                  {s.name}
-                                </Link>
-                              </th>
-                              {COMPLETION_KINDS.map((k) => (
-                                <td key={k.kind}>
-                                  <CountCell summary={completionSummary(rows.filter((r) => r.activity.kind === k.kind))} />
-                                </td>
-                              ))}
-                              <td>
-                                <RateCell value={summarize(byStudent.get(s.id) ?? []).handedRate} detail="odevzdané úkoly" />
-                              </td>
-                            </tr>
-                          );
-                        }),
-                    ];
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <CompletionTable
+              kinds={COMPLETION_KINDS.map((k) => ({ kind: k.kind, label: k.label }))}
+              keep={keep}
+              rows={[...students]
+                .filter((s) => compByStudent.has(s.id) || byStudent.has(s.id))
+                .sort((a, b) => (a.grade || 9) - (b.grade || 9) || a.name.localeCompare(b.name, "cs"))
+                .map((s) => {
+                  const rows = compByStudent.get(s.id) ?? [];
+                  return {
+                    id: s.id,
+                    name: s.name,
+                    grade: s.grade,
+                    kinds: COMPLETION_KINDS.map((k) => completionSummary(rows.filter((r) => r.activity.kind === k.kind))),
+                    handedRate: summarize(byStudent.get(s.id) ?? []).handedRate,
+                  };
+                })}
+            />
           </section>
         </>
       )}

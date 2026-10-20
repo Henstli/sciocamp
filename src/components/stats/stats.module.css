@@ -797,3 +797,26 @@ a.rowTitle:hover {
   color: var(--text-2);
   font-style: italic;
 }
+.tableTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+.tableTools .pickerField {
+  flex: 0 1 240px;
+  height: 40px;
+}
+.tableTools :global(.tablist) {
+  padding: 3px;
+}
+.tableTools :global(.tab) {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+.tableCount {
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
