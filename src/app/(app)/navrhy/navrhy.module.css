@@ -553,13 +553,13 @@ a.title:hover {
   color: #fff;
 }
 .choice[data-choice="jedno"][aria-pressed="true"] {
-  background: var(--text-2);
-  border-color: var(--text-2);
-  color: #fff;
+  background: #e3e8f2;
+  border-color: #b9c3d6;
+  color: var(--text);
 }
 .choice[data-choice="proti"][aria-pressed="true"] {
-  background: #b76e00;
-  border-color: #b76e00;
+  background: #c93b3b;
+  border-color: #c93b3b;
   color: #fff;
 }
 .results {
@@ -581,10 +581,10 @@ a.title:hover {
   background: var(--primary);
 }
 .stack > span[data-choice="jedno"] {
-  background: var(--primary-line);
+  background: #c3cad8;
 }
 .stack > span[data-choice="proti"] {
-  background: #f0a63a;
+  background: #c93b3b;
 }
 .mark {
   position: absolute;
@@ -619,10 +619,10 @@ a.title:hover {
   background: var(--primary);
 }
 .legend span[data-choice="jedno"]::before {
-  background: var(--primary-line);
+  background: #c3cad8;
 }
 .legend span[data-choice="proti"]::before {
-  background: #f0a63a;
+  background: #c93b3b;
 }
 .legend span[data-choice="none"]::before {
   background: var(--border-soft);
