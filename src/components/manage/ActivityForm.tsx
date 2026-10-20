@@ -234,9 +234,7 @@ export function ActivityForm({
             ? "Admin zatím nezadal termíny (Správa → Kurzová období → Termíny ateliérů a expedic), proto vyplň data ručně. "
             : null}
           {usesTerms && (termId || !allowCustomDates)
-            ? kind === "atelier"
-              ? "Souběžné ateliéry ve stejném termínu si student vybírá mezi sebou — může být jen v jednom."
-              : null
+            ? null
             : kind === "atelier"
             ? "Vyplň, od kdy do kdy ateliér běží. Student může být v jednu dobu jen v jednom ateliéru."
             : kind === "ostatni"
