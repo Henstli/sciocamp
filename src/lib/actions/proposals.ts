@@ -8,7 +8,7 @@ import { refresh } from "next/cache";
 import { requireUser } from "../auth";
 import { isSupabase } from "../config";
 import { getActivity } from "../data";
-import type { ProposalCategory, ProposalGoal, WishKind } from "../proposals";
+import type { ProposalCategory, ProposalGoal, VoteChoice, WishKind } from "../proposals";
 import { canTeach } from "../roles";
 import { createClient } from "../supabase/server";
 
@@ -16,7 +16,8 @@ export type ActionResult = { error?: string; info?: string; ok?: boolean };
 export type FormResult = ActionResult & { fieldErrors?: Record<string, string> };
 
 const DEMO = "Ukázkový režim: změny se neukládají.";
-const CATEGORIES: ProposalCategory[] = ["vyuka", "rozvrh", "expedice", "prostory", "jine"];
+const CATEGORIES: ProposalCategory[] = ["kurzy", "ateliery", "rozvrh", "online", "expedice", "komunita", "pravidla", "jine"];
+const CHOICES: VoteChoice[] = ["pro", "jedno", "proti"];
 const GOALS: ProposalGoal[] = ["shromazdeni", "schvaleni"];
 const KINDS: WishKind[] = ["atelier", "expedice", "kurz"];
 
@@ -45,13 +46,13 @@ export async function createProposal(_prev: FormResult, formData: FormData): Pro
   const body = String(formData.get("body") ?? "").trim();
   const category = String(formData.get("category") ?? "jine") as ProposalCategory;
   const goal = String(formData.get("goal") ?? "") as ProposalGoal;
-  const need = Number(formData.get("need"));
+  const need = Number(formData.get("needPercent"));
   const fieldErrors: Record<string, string> = {};
   if (title.length < 3) fieldErrors.title = "Napiš krátký název návrhu.";
   if (title.length > 120) fieldErrors.title = "Název je moc dlouhý (max. 120 znaků).";
   if (body.length > 4000) fieldErrors.body = "Popis je moc dlouhý.";
   if (!GOALS.includes(goal)) fieldErrors.goal = "Vyber, co se má s návrhem stát.";
-  if (!Number.isInteger(need) || need < 1 || need > 500) fieldErrors.need = "Napiš počet 1 až 500.";
+  if (!Number.isInteger(need) || need < 1 || need > 100) fieldErrors.needPercent = "Napiš celé číslo 1 až 100.";
   if (Object.keys(fieldErrors).length) return { error: "Zkontroluj zvýrazněná pole.", fieldErrors };
   if (!isSupabase) return { info: DEMO };
 
@@ -61,22 +62,29 @@ export async function createProposal(_prev: FormResult, formData: FormData): Pro
     body,
     category: CATEGORIES.includes(category) ? category : "jine",
     goal,
-    need_proposed: need,
+    need_percent_proposed: need,
   });
   if (error) return { error: "Návrh se nepodařilo zveřejnit." };
   refresh();
-  return { ok: true, info: "Návrh je zveřejněný. Vyučující teď potvrdí počet podporovatelů." };
+  return { ok: true, info: "Návrh je zveřejněný. Vyučující teď potvrdí práh." };
 }
 
-export async function toggleSupport(id: string, on: boolean): Promise<ActionResult> {
+/** Hlas k návrhu: pro / je mi to jedno / proti; null = hlas zrušit. */
+export async function voteProposal(id: string, choice: VoteChoice | null): Promise<ActionResult> {
   const user = await requireUser();
-  return run(
-    (sb) =>
-      on
-        ? sb.from("proposal_supports").insert({ proposal_id: id })
-        : sb.from("proposal_supports").delete().eq("proposal_id", id).eq("user_id", user.id),
-    on ? "Podpořit se nepodařilo (návrh je možná uzavřený)." : "Podporu se nepodařilo odebrat.",
-  );
+  if (choice !== null && !CHOICES.includes(choice)) return { error: "Neznámá volba." };
+  if (!isSupabase) return { info: DEMO };
+  const sb = await createClient();
+  const { data: mine } = await sb.from("proposal_supports").select("choice").eq("proposal_id", id).eq("user_id", user.id).maybeSingle();
+  const { error } =
+    choice === null
+      ? await sb.from("proposal_supports").delete().eq("proposal_id", id).eq("user_id", user.id)
+      : mine
+        ? await sb.from("proposal_supports").update({ choice }).eq("proposal_id", id).eq("user_id", user.id)
+        : await sb.from("proposal_supports").insert({ proposal_id: id, choice });
+  if (error) return { error: "Hlas se nepodařilo uložit (návrh je možná uzavřený)." };
+  refresh();
+  return { ok: true };
 }
 
 export async function addProposalComment(id: string, body: string): Promise<ActionResult> {
@@ -94,9 +102,9 @@ export async function deleteProposalComment(commentId: string): Promise<ActionRe
 
 export async function setProposalNeed(id: string, need: number): Promise<ActionResult> {
   const user = await requireUser();
-  if (!canTeach(user.role)) return { error: "Počet potvrzuje vyučující nebo admin." };
-  if (!Number.isInteger(need) || need < 1 || need > 500) return { error: "Napiš počet 1 až 500." };
-  return run((sb) => sb.rpc("set_proposal_need", { proposal: id, n: need }), "Počet se nepodařilo uložit.");
+  if (!canTeach(user.role)) return { error: "Práh potvrzuje vyučující nebo admin." };
+  if (!Number.isInteger(need) || need < 1 || need > 100) return { error: "Napiš celé číslo 1 až 100." };
+  return run((sb) => sb.rpc("set_proposal_need", { proposal: id, n: need }), "Práh se nepodařilo uložit.");
 }
 
 export async function resolveProposal(id: string, result: "projednano" | "schvaleno" | "zamitnuto", note: string): Promise<ActionResult> {

@@ -1,27 +1,28 @@
 import Link from "next/link";
-import { CATEGORY_LABEL, GOAL_LABEL, proposalChip, proposalTarget, type Proposal } from "@/lib/proposals";
 import { plural } from "@/lib/format";
+import { CATEGORY_LABEL, GOAL_LABEL, proposalChip, type Proposal } from "@/lib/proposals";
 import { formatStamp } from "@/lib/time";
-import { VoteButton } from "./VoteButton";
+import { ProposalVote } from "./ProposalVote";
 import styles from "@/app/(app)/navrhy/navrhy.module.css";
 
-/** Karta návrhu v seznamu: podpora, štítky, text, autor a ukazatel podpory. */
-export function ProposalCard({ p, authorName, meId, now }: { p: Proposal; authorName: string; meId: string; now: Date }) {
-  const chip = proposalChip(p);
-  const target = proposalTarget(p);
+/** Karta návrhu v seznamu: štítky, text, autor, hlasování a průběžný výsledek. */
+export function ProposalCard({
+  p,
+  authorName,
+  meId,
+  now,
+  members,
+}: {
+  p: Proposal;
+  authorName: string;
+  meId: string;
+  now: Date;
+  members: number;
+}) {
+  const chip = proposalChip(p, members);
   const open = p.status === "open";
-  const done = p.supportCount >= target;
   return (
     <article className={`card ${styles.item}`} data-closed={!open}>
-      <VoteButton
-        id={p.id}
-        kind="proposal"
-        count={p.supportCount}
-        on={p.supported}
-        disabled={!open}
-        locked={p.authorId === meId}
-        label="podpora"
-      />
       <div className={styles.body}>
         <div className={styles.chips}>
           <span className={`chip ${chip.tone}`}>{chip.label}</span>
@@ -46,16 +47,17 @@ export function ProposalCard({ p, authorName, meId, now }: { p: Proposal; author
             {p.commentCount} {plural(p.commentCount, "komentář", "komentáře", "komentářů")}
           </Link>
         </div>
-        {open && (
-          <div className={styles.progress}>
-            <span className={styles.track}>
-              <span className={styles.fill} data-done={done} style={{ width: `${Math.min(100, Math.round((p.supportCount / target) * 100))}%` }} />
-            </span>
-            <span className={styles.count}>
-              {p.supportCount} / {target}
-              {p.need === null && " (navrženo)"}
-            </span>
-          </div>
+        {p.status !== "stazeno" && (
+          <ProposalVote
+            id={p.id}
+            counts={{ pro: p.proCount, jedno: p.neutralCount, proti: p.againstCount }}
+            myChoice={p.myChoice}
+            members={members}
+            needPercent={p.needPercent ?? p.needPercentProposed}
+            needConfirmed={p.needPercent !== null}
+            open={open}
+            isAuthor={p.authorId === meId}
+          />
         )}
       </div>
     </article>

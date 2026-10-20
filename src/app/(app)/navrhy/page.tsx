@@ -5,9 +5,9 @@ import { ProposalCard } from "@/components/proposals/ProposalCard";
 import { ProposalForm } from "@/components/proposals/ProposalForm";
 import { requireUser } from "@/lib/auth";
 import { getUsersByIds } from "@/lib/data";
-import { listProposals } from "@/lib/data-proposals";
+import { listProposals, memberCount } from "@/lib/data-proposals";
 import { plural } from "@/lib/format";
-import type { Proposal } from "@/lib/proposals";
+import { proposalReached, type Proposal } from "@/lib/proposals";
 import { canTeach, initials } from "@/lib/roles";
 import { nowMs } from "@/lib/time";
 import styles from "./navrhy.module.css";
@@ -15,15 +15,15 @@ import styles from "./navrhy.module.css";
 export const metadata: Metadata = { title: "Návrhy" };
 
 /** Co má vyučující udělat: potvrdit počet, nebo rozhodnout. */
-function staffTodo(p: Proposal) {
+function staffTodo(p: Proposal, members: number) {
   if (p.status !== "open") return 0;
-  if (p.need === null) return 2;
-  return p.supportCount >= p.need ? 1 : 0;
+  if (p.needPercent === null) return 2;
+  return proposalReached(p, members) ? 1 : 0;
 }
 
 export default async function ProposalsPage() {
   const user = await requireUser();
-  const all = await listProposals(user);
+  const [all, members] = await Promise.all([listProposals(user), memberCount()]);
   const people = await getUsersByIds([...new Set(all.map((p) => p.authorId))]);
   const nameOf = (id: string) => people.find((u) => u.id === id)?.name ?? "Bývalý člen školy";
   const staff = canTeach(user.role);
@@ -32,11 +32,11 @@ export default async function ProposalsPage() {
   // Otevřené: vyučujícím nahoru ty, které čekají na ně; jinak nejnovější.
   const open = all
     .filter((p) => p.status === "open")
-    .sort((a, b) => (staff ? staffTodo(b) - staffTodo(a) : 0) || b.createdAt.localeCompare(a.createdAt));
+    .sort((a, b) => (staff ? staffTodo(b, members) - staffTodo(a, members) : 0) || b.createdAt.localeCompare(a.createdAt));
   const closed = all
     .filter((p) => p.status !== "open")
     .sort((a, b) => (b.resolvedAt ?? b.createdAt).localeCompare(a.resolvedAt ?? a.createdAt));
-  const waiting = open.filter((p) => staffTodo(p) > 0).length;
+  const waiting = open.filter((p) => staffTodo(p, members) > 0).length;
 
   return (
     <>
@@ -44,8 +44,8 @@ export default async function ProposalsPage() {
         title="Návrhy"
         subtitle={
           staff && waiting > 0
-            ? `${waiting} ${plural(waiting, "návrh čeká", "návrhy čekají", "návrhů čeká")} na potvrzení počtu nebo rozhodnutí`
-            : "Návrh s dostatečnou podporou jde na shromáždění, nebo ho posoudí vyučující."
+            ? `${waiting} ${plural(waiting, "návrh čeká", "návrhy čekají", "návrhů čeká")} na potvrzení prahu nebo rozhodnutí`
+            : "Hlasuj pro, proti, nebo že je ti to jedno. Návrh s dost hlasy pro jde na shromáždění, nebo ho posoudí vyučující."
         }
         avatar={{ initials: initials(user.name), name: user.name }}
       >
@@ -56,7 +56,7 @@ export default async function ProposalsPage() {
       </PageHeader>
       <div className={styles.layout}>
         <div className={styles.side} id="formular">
-          <ProposalForm />
+          <ProposalForm members={members} />
         </div>
         <div className={styles.list}>
           {open.length === 0 ? (
@@ -64,7 +64,7 @@ export default async function ProposalsPage() {
               <p className={styles.empty}>Zatím tu není žádný otevřený návrh. Máš nápad, co ve škole zlepšit? Podej ho vlevo.</p>
             </div>
           ) : (
-            open.map((p) => <ProposalCard key={p.id} p={p} authorName={nameOf(p.authorId)} meId={user.id} now={now} />)
+            open.map((p) => <ProposalCard key={p.id} p={p} authorName={nameOf(p.authorId)} meId={user.id} now={now} members={members} />)
           )}
           {closed.length > 0 && (
             <details className={styles.closed}>
@@ -73,7 +73,7 @@ export default async function ProposalsPage() {
               </summary>
               <div className={styles.closedList}>
                 {closed.map((p) => (
-                  <ProposalCard key={p.id} p={p} authorName={nameOf(p.authorId)} meId={user.id} now={now} />
+                  <ProposalCard key={p.id} p={p} authorName={nameOf(p.authorId)} meId={user.id} now={now} members={members} />
                 ))}
               </div>
             </details>

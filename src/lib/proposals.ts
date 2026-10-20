@@ -2,7 +2,8 @@
 
 export type ProposalGoal = "shromazdeni" | "schvaleni";
 export type ProposalStatus = "open" | "projednano" | "schvaleno" | "zamitnuto" | "stazeno";
-export type ProposalCategory = "vyuka" | "rozvrh" | "expedice" | "prostory" | "jine";
+export type ProposalCategory = "kurzy" | "ateliery" | "rozvrh" | "online" | "expedice" | "komunita" | "pravidla" | "jine";
+export type VoteChoice = "pro" | "jedno" | "proti";
 
 export type Proposal = {
   id: string;
@@ -11,30 +12,46 @@ export type Proposal = {
   body: string;
   category: ProposalCategory;
   goal: ProposalGoal;
-  /** Kolik podporovatelů navrhl autor */
-  needProposed: number;
-  /** Kolik potvrdil vyučující (null = čeká na potvrzení) */
-  need: number | null;
+  /** Kolik % školy má být pro — navrhl autor */
+  needPercentProposed: number;
+  /** Kolik % školy má být pro — potvrdil vyučující (null = čeká na potvrzení) */
+  needPercent: number | null;
   status: ProposalStatus;
   resolution: string | null;
   resolvedBy: string | null;
   resolvedAt: string | null;
-  supportCount: number;
+  proCount: number;
+  againstCount: number;
+  neutralCount: number;
   reachedAt: string | null;
   createdAt: string;
   commentCount: number;
-  /** Podporuje ho přihlášený? */
-  supported: boolean;
+  /** Jak hlasoval přihlášený (null = nehlasoval) */
+  myChoice: VoteChoice | null;
 };
 
 export type ProposalComment = { id: string; authorId: string; body: string; createdAt: string };
 
 export const CATEGORY_LABEL: Record<ProposalCategory, string> = {
-  vyuka: "Výuka a ateliéry",
+  kurzy: "Kurzy a výuka",
+  ateliery: "Ateliéry",
   rozvrh: "Rozvrh",
-  expedice: "Expedice",
-  prostory: "Prostory a vybavení",
+  online: "Online prostředí",
+  expedice: "Expedice a výjezdy",
+  komunita: "Komunita a setkávání",
+  pravidla: "Pravidla a hodnocení",
   jine: "Jiné",
+};
+
+export const CATEGORY_HINT: Record<ProposalCategory, string> = {
+  kurzy: "",
+  ateliery: "",
+  rozvrh: "",
+  online: "Meet, aplikace, nástroje",
+  expedice: "",
+  komunita: "Srazy, shromáždění, akce",
+  pravidla: "",
+  jine: "",
 };
 
 export const GOAL_LABEL: Record<ProposalGoal, string> = {
@@ -42,8 +59,20 @@ export const GOAL_LABEL: Record<ProposalGoal, string> = {
   schvaleni: "Ke schválení",
 };
 
+export const CHOICE_LABEL: Record<VoteChoice, string> = { pro: "Pro", jedno: "Je mi to jedno", proti: "Proti" };
+
+/** Podíl školy v procentech (zaokrouhleno). */
+export function percentOf(count: number, members: number): number {
+  return members > 0 ? Math.round((count / members) * 100) : 0;
+}
+
+/** Dosáhl návrh prahu? (hlasy pro ≥ práh % celé školy) */
+export function proposalReached(p: Pick<Proposal, "proCount" | "needPercent">, members: number): boolean {
+  return p.needPercent !== null && p.proCount * 100 >= p.needPercent * members;
+}
+
 /** Štítek stavu návrhu: text a třída čipu. */
-export function proposalChip(p: Pick<Proposal, "status" | "need" | "supportCount" | "goal">): { label: string; tone: string } {
+export function proposalChip(p: Pick<Proposal, "status" | "needPercent" | "proCount" | "goal">, members: number): { label: string; tone: string } {
   switch (p.status) {
     case "projednano":
       return { label: "Projednáno", tone: "chip-primary" };
@@ -54,16 +83,11 @@ export function proposalChip(p: Pick<Proposal, "status" | "need" | "supportCount
     case "stazeno":
       return { label: "Staženo", tone: "chip-info" };
   }
-  if (p.need === null) return { label: "Čeká na potvrzení počtu", tone: "chip-info" };
-  if (p.supportCount >= p.need) {
+  if (p.needPercent === null) return { label: "Čeká na potvrzení prahu", tone: "chip-info" };
+  if (proposalReached(p, members)) {
     return { label: p.goal === "shromazdeni" ? "Půjde na shromáždění" : "Čeká na rozhodnutí", tone: "chip-ok" };
   }
-  return { label: "Sbírá podporu", tone: "chip-wait" };
-}
-
-/** Počet, ke kterému se měří podpora (potvrzený, jinak navržený). */
-export function proposalTarget(p: Pick<Proposal, "need" | "needProposed">): number {
-  return p.need ?? p.needProposed;
+  return { label: "Sbírá hlasy", tone: "chip-wait" };
 }
 
 export type WishKind = "atelier" | "expedice" | "kurz";

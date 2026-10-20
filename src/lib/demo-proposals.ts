@@ -1,86 +1,91 @@
 // Ukázková data pro Návrhy a Hlasování (režim bez Supabase).
 
-import type { Proposal, ProposalComment, Wish } from "./proposals";
+import type { Proposal, ProposalComment, VoteChoice, Wish } from "./proposals";
 
-type DemoProposal = Omit<Proposal, "supported" | "commentCount" | "supportCount"> & { supporters: string[] };
+type DemoProposal = Omit<Proposal, "myChoice" | "commentCount" | "proCount" | "againstCount" | "neutralCount"> & {
+  votes: Record<string, VoteChoice>;
+};
+
+const V = (pro: string[], proti: string[] = [], jedno: string[] = []): Record<string, VoteChoice> =>
+  Object.fromEntries([...pro.map((u) => [u, "pro"]), ...proti.map((u) => [u, "proti"]), ...jedno.map((u) => [u, "jedno"])]);
 
 export const DEMO_PROPOSALS: DemoProposal[] = [
   {
-    id: "navrh-mikrovlnka",
+    id: "navrh-desata",
     authorId: "u-liska",
-    title: "Mikrovlnka do druhého patra",
-    body: "V jídelně se o přestávce stojí fronta na jedinou mikrovlnku. Druhá ve druhém patře by ušetřila čas všem.",
-    category: "prostory",
+    title: "Začínat v onlinu v 10:00",
+    body: "Ranní hodiny od 9:00 jsou pro hodně lidí brzo — kdo dojíždí nebo pracuje večer, nestíhá. Posunout začátek online výuky na 10:00 a obědovou pauzu zkrátit.",
+    category: "rozvrh",
     goal: "schvaleni",
-    needProposed: 15,
-    need: 15,
+    needPercentProposed: 40,
+    needPercent: 40,
     status: "open",
     resolution: null,
     resolvedBy: null,
     resolvedAt: null,
     reachedAt: null,
     createdAt: "2026-10-17T09:12:00Z",
-    supporters: ["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna", "u-kubicek", "u-maly", "u-svobodova", "u-benes", "u-dvorakova"],
+    votes: V(["u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna"], ["u-maly", "u-pietraszek"], ["u-svobodova"]),
   },
   {
-    id: "navrh-fotografie",
+    id: "navrh-kamery",
     authorId: "u-hankova",
-    title: "Ateliér reportážní fotografie",
-    body: "Ateliér zaměřený na reportážní fotku. Lektorka se už nabídla, potřebujeme jen vědět, jestli je zájem.",
-    category: "vyuka",
+    title: "Zapnuté kamery aspoň na začátku hodiny",
+    body: "Na začátku každé online hodiny se na pět minut všichni ukážeme, ať víme, s kým se učíme.",
+    category: "online",
     goal: "shromazdeni",
-    needProposed: 10,
-    need: 10,
+    needPercentProposed: 25,
+    needPercent: 25,
     status: "open",
     resolution: null,
     resolvedBy: null,
     resolvedAt: null,
     reachedAt: "2026-10-18T10:00:00Z",
     createdAt: "2026-10-12T08:00:00Z",
-    supporters: ["u-hankova", "u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jaukner", "u-novotna", "u-kubicek", "u-maly", "u-svobodova", "u-benes", "u-dvorakova"],
+    votes: V(["u-hankova", "u-liska", "u-komarek", "u-kolarova", "u-cerny", "u-jakubcova", "u-pavel"], ["u-jaukner", "u-kubicek"], ["u-maly", "u-benes"]),
   },
   {
-    id: "navrh-kola",
+    id: "navrh-sraz",
     authorId: "u-komarek",
-    title: "Jarní expedice na kolech",
-    body: "Třídenní cesta podél Vltavy s noclehy v kempech.",
-    category: "expedice",
+    title: "Společný sraz naživo jednou za pololetí",
+    body: "Celá škola se jednou za pololetí potká naživo — výlet, hry, poznat se mimo obrazovku.",
+    category: "komunita",
     goal: "schvaleni",
-    needProposed: 20,
-    need: null,
+    needPercentProposed: 30,
+    needPercent: null,
     status: "open",
     resolution: null,
     resolvedBy: null,
     resolvedAt: null,
     reachedAt: null,
     createdAt: "2026-10-19T15:30:00Z",
-    supporters: ["u-komarek", "u-cerny", "u-jaukner"],
+    votes: V(["u-komarek", "u-cerny", "u-jaukner"]),
   },
   {
-    id: "navrh-mobily",
+    id: "navrh-bez-znamek",
     authorId: "u-jaukner",
-    title: "Zákaz mobilů v ateliérech",
-    body: "Telefony by se během ateliérů odkládaly do boxu.",
-    category: "vyuka",
+    title: "Úkoly bez termínu odevzdání",
+    body: "Úkoly by neměly mít pevný termín, každý by si je odevzdal, kdy stihne.",
+    category: "pravidla",
     goal: "schvaleni",
-    needProposed: 10,
-    need: 10,
+    needPercentProposed: 20,
+    needPercent: 20,
     status: "zamitnuto",
-    resolution: "Telefony v ateliérech často potřebujete k práci (fotky, nahrávky). Domluvte se raději s vyučujícím konkrétního ateliéru.",
+    resolution: "Termíny pomáhají plánovat vám i vyučujícím. Kdo potřebuje víc času, domluví se s vyučujícím — odevzdání po termínu je povolené.",
     resolvedBy: "u-pavel",
     resolvedAt: "2026-10-08T12:00:00Z",
     reachedAt: "2026-10-06T12:00:00Z",
     createdAt: "2026-10-01T12:00:00Z",
-    supporters: ["u-jaukner", "u-maly", "u-svobodova", "u-benes", "u-dvorakova", "u-kral", "u-horakova", "u-vesely", "u-novotna", "u-kubicek"],
+    votes: V(["u-jaukner", "u-maly", "u-svobodova", "u-benes", "u-dvorakova", "u-kral"], ["u-pietraszek", "u-kubesova"]),
   },
 ];
 
 export const DEMO_PROPOSAL_COMMENTS: Record<string, ProposalComment[]> = {
-  "navrh-mikrovlnka": [
-    { id: "c1", authorId: "u-komarek", body: "Klidně se složíme, nová stojí kolem dvou tisíc.", createdAt: "2026-10-17T10:02:00Z" },
-    { id: "c2", authorId: "u-jakubcova", body: "Ve druhém patře je zásuvka u kuchyňky, tam by šla.", createdAt: "2026-10-18T07:45:00Z" },
+  "navrh-desata": [
+    { id: "c1", authorId: "u-komarek", body: "Ráno se mi líp soustředí, ale chápu, že pro dojíždějící je to těžký.", createdAt: "2026-10-17T10:02:00Z" },
+    { id: "c2", authorId: "u-jakubcova", body: "Rozvrh na další období se dá ještě upravit, pokud se shodneme do konce listopadu.", createdAt: "2026-10-18T07:45:00Z" },
   ],
-  "navrh-fotografie": [{ id: "c3", authorId: "u-cerny", body: "Šel bych do toho!", createdAt: "2026-10-13T16:20:00Z" }],
+  "navrh-kamery": [{ id: "c3", authorId: "u-cerny", body: "Šel bych do toho!", createdAt: "2026-10-13T16:20:00Z" }],
 };
 
 /** Datum před `days` dny (ukázková přání stárnou s časem, ať nevyprší). */

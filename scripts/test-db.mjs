@@ -880,49 +880,63 @@ await test("barva profilu: každý mění jen svou a jen z nabídky", async () =
   assert.equal(r.length, 0);
 });
 
-await test("návrhy: podání, podpora, potvrzení počtu, rozhodnutí a oznámení", async () => {
-  const [p] = await as(student, `insert into public.proposals (title, body, category, goal, need_proposed)
-    values ('Mikrovlnka do druhého patra', 'Fronta u jedné.', 'prostory', 'schvaleni', 2) returning id, support_count, need`);
-  // Autor podporuje rovnou (počet doplní trigger až po vložení).
-  assert.equal((await db.query(`select support_count from public.proposals where id = $1`, [p.id])).rows[0].support_count, 1);
-  assert.equal(p.need, null);
+await test("návrhy: hlasování pro/proti/jedno, práh v procentech, rozhodnutí a oznámení", async () => {
+  const [p] = await as(student, `insert into public.proposals (title, body, category, goal, need_percent_proposed)
+    values ('Začínat v onlinu v 10:00', 'Ráno je to brzo.', 'rozvrh', 'schvaleni', 30) returning id, need_percent`);
+  // Autor hlasuje pro rovnou (počet doplní trigger až po vložení).
+  assert.equal((await db.query(`select pro_count from public.proposals where id = $1`, [p.id])).rows[0].pro_count, 1);
+  assert.equal(p.need_percent, null);
+  await assert.rejects(() => as(student, `insert into public.proposals (title, goal, need_percent_proposed) values ('Moc', 'schvaleni', 150)`));
+  await assert.rejects(() => as(student, `insert into public.proposals (title, goal, need_percent_proposed, category) values ('Budova', 'schvaleni', 10, 'prostory')`));
   // Učitelé dostali oznámení o novém návrhu.
   assert.equal((await db.query(`select 1 from public.notifications where user_id = $1 and kind = 'navrh'`, [teacher])).rows.length, 1);
-  // Stav ani potvrzený počet si autor sám nastavit nemůže.
+  // Stav ani práh si autor sám nastavit nemůže; svůj hlas pro nezmění ani neodebere.
   await assert.rejects(() => as(student, `update public.proposals set status = 'schvaleno' where id = $1`, [p.id]));
-  await assert.rejects(() => as(student, `update public.proposals set need = 1 where id = $1`, [p.id]));
+  await assert.rejects(() => as(student, `update public.proposals set need_percent = 1 where id = $1`, [p.id]));
   await assert.rejects(() => as(student, `select public.set_proposal_need($1, 1)`, [p.id]));
-  // Autor svou podporu neodebere.
   assert.equal((await as(student, `delete from public.proposal_supports where proposal_id = $1 returning 1`, [p.id])).length, 0);
+  assert.equal((await as(student, `update public.proposal_supports set choice = 'proti' where proposal_id = $1 returning 1`, [p.id])).length, 0);
 
-  await as(teacher, `select public.set_proposal_need($1, 2)`, [p.id]);
-  await as(student2, `insert into public.proposal_supports (proposal_id) values ($1)`, [p.id]);
-  const after = (await db.query(`select support_count, reached_at from public.proposals where id = $1`, [p.id])).rows[0];
-  assert.equal(after.support_count, 2);
+  // Práh tak, aby jeden hlas pro nestačil a dva ano.
+  const [{ member_count: m }] = await as(admin, `select public.member_count()`);
+  const n = Math.floor(200 / m);
+  await assert.rejects(() => as(teacher, `select public.set_proposal_need($1, 101)`, [p.id]));
+  await as(teacher, `select public.set_proposal_need($1, $2)`, [p.id, n]);
+  assert.equal((await db.query(`select reached_at from public.proposals where id = $1`, [p.id])).rows[0].reached_at, null);
+  await as(teacher2, `insert into public.proposal_supports (proposal_id, choice) values ($1, 'proti')`, [p.id]);
+  await as(admin, `insert into public.proposal_supports (proposal_id, choice) values ($1, 'jedno')`, [p.id]);
+  await as(student2, `insert into public.proposal_supports (proposal_id, choice) values ($1, 'proti')`, [p.id]);
+  await as(student2, `update public.proposal_supports set choice = 'pro' where proposal_id = $1 and user_id = $2`, [p.id, student2]);
+  const after = (await db.query(`select pro_count, against_count, neutral_count, reached_at from public.proposals where id = $1`, [p.id])).rows[0];
+  assert.deepEqual([after.pro_count, after.against_count, after.neutral_count], [2, 1, 1]);
   assert.ok(after.reached_at, "dosaženo");
-  // Cizí podporu za někoho jiného vložit nejde.
-  await assert.rejects(() => as(student2, `insert into public.proposal_supports (proposal_id, user_id) values ($1, $2)`, [p.id, teacher2]));
+  // Hlasy jsou anonymní: každý vidí jen svůj.
+  assert.equal((await as(student2, `select * from public.proposal_supports where proposal_id = $1`, [p.id])).length, 1);
+  assert.equal((await as(admin, `select * from public.proposal_supports where proposal_id = $1`, [p.id])).length, 1);
+  // Hlas za někoho jiného vložit nejde.
+  await assert.rejects(() => as(student2, `insert into public.proposal_supports (proposal_id, user_id) values ($1, $2)`, [p.id, outsider]));
 
   // Projednáno nejde u návrhu ke schválení; rozhodnutí potřebuje zdůvodnění.
   await assert.rejects(() => as(teacher, `select public.resolve_proposal($1, 'projednano', 'x')`, [p.id]));
   await assert.rejects(() => as(teacher, `select public.resolve_proposal($1, 'schvaleno', '  ')`, [p.id]));
   await assert.rejects(() => as(student2, `select public.resolve_proposal($1, 'schvaleno', 'ano')`, [p.id]));
-  await as(teacher, `select public.resolve_proposal($1, 'schvaleno', 'Koupíme v listopadu.')`, [p.id]);
+  await as(teacher, `select public.resolve_proposal($1, 'schvaleno', 'Od pololetí začínáme v 10:00.')`, [p.id]);
   const got = await db.query(`select user_id from public.notifications where title like 'Návrh schválen%'`);
   assert.deepEqual(got.rows.map((r) => r.user_id).sort(), [student, student2].sort());
-  // Uzavřený návrh už podporu nebere.
-  await assert.rejects(() => as(teacher2, `insert into public.proposal_supports (proposal_id) values ($1)`, [p.id]));
+  // Uzavřený návrh už hlasy nebere a hlas nejde změnit.
+  await assert.rejects(() => as(outsider, `insert into public.proposal_supports (proposal_id) values ($1)`, [p.id]));
+  assert.equal((await as(teacher2, `update public.proposal_supports set choice = 'pro' where proposal_id = $1 returning 1`, [p.id])).length, 0);
   await assert.rejects(() => as(teacher, `select public.resolve_proposal($1, 'zamitnuto', 'ne')`, [p.id]));
 });
 
 await test("návrhy: stažení autorem, komentáře, shromáždění", async () => {
-  const [p] = await as(student2, `insert into public.proposals (title, goal, need_proposed) values ('Páteční snídaně', 'shromazdeni', 10) returning id`);
+  const [p] = await as(student2, `insert into public.proposals (title, goal, need_percent_proposed) values ('Páteční online snídaně', 'shromazdeni', 10) returning id`);
   await as(student, `insert into public.proposal_comments (proposal_id, body) values ($1, 'Super nápad')`, [p.id]);
   assert.equal((await db.query(`select 1 from public.notifications where user_id = $1 and kind = 'komentar' and href = $2`, [student2, `/navrhy/${p.id}`])).rows.length, 1);
   await assert.rejects(() => as(student, `select public.withdraw_proposal($1)`, [p.id]));
   await as(student2, `select public.withdraw_proposal($1)`, [p.id]);
   assert.equal((await db.query(`select status from public.proposals where id = $1`, [p.id])).rows[0].status, "stazeno");
-  const [q] = await as(student, `insert into public.proposals (title, goal, need_proposed) values ('Shromáždění každý týden', 'shromazdeni', 1) returning id`);
+  const [q] = await as(student, `insert into public.proposals (title, goal, need_percent_proposed) values ('Shromáždění každý týden', 'shromazdeni', 1) returning id`);
   await assert.rejects(() => as(teacher, `select public.resolve_proposal($1, 'schvaleno', 'x')`, [q.id]));
   await as(admin, `select public.resolve_proposal($1, 'projednano', 'Domluveno: každé druhé pondělí.')`, [q.id]);
 });

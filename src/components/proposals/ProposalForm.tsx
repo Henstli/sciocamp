@@ -1,14 +1,16 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { createProposal, type FormResult } from "@/lib/actions/proposals";
-import { CATEGORY_LABEL, type ProposalCategory } from "@/lib/proposals";
+import { plural } from "@/lib/format";
+import { CATEGORY_HINT, CATEGORY_LABEL, type ProposalCategory } from "@/lib/proposals";
 import { keepForm } from "@/lib/use-keep-form";
 import f from "@/components/manage/manage.module.css";
 import styles from "@/app/(app)/navrhy/navrhy.module.css";
 
-/** Podání návrhu: název, oblast, cíl, navržený počet podporovatelů, popis. */
-export function ProposalForm() {
+/** Podání návrhu: název, oblast, cíl, navržený práh (% školy pro), popis. */
+export function ProposalForm({ members }: { members: number }) {
+  const [percent, setPercent] = useState("30");
   const [state, action, pending] = useActionState<FormResult, FormData>(createProposal, {});
   const form = useRef<HTMLFormElement>(null);
   const fe = state.fieldErrors ?? {};
@@ -21,15 +23,16 @@ export function ProposalForm() {
       <h2 className="section-title">Podat návrh</h2>
       <label className={f.field} data-invalid={!!fe.title}>
         <span className={f.label}>Název</span>
-        <input name="title" maxLength={120} className={f.input} placeholder="Např. Mikrovlnka do druhého patra" />
+        <input name="title" maxLength={120} className={f.input} placeholder="Např. Začínat v onlinu v 10:00" />
         {fe.title && <span className={f.fieldError}>{fe.title}</span>}
       </label>
       <label className={f.field}>
         <span className={f.label}>Oblast</span>
-        <select name="category" defaultValue="vyuka" className={f.input}>
+        <select name="category" defaultValue="kurzy" className={f.input}>
           {(Object.keys(CATEGORY_LABEL) as ProposalCategory[]).map((c) => (
             <option key={c} value={c}>
               {CATEGORY_LABEL[c]}
+              {CATEGORY_HINT[c] ? ` (${CATEGORY_HINT[c]})` : ""}
             </option>
           ))}
         </select>
@@ -56,13 +59,25 @@ export function ProposalForm() {
         </div>
         {fe.goal && <span className={f.fieldError}>{fe.goal}</span>}
       </fieldset>
-      <label className={f.field} data-invalid={!!fe.need}>
-        <span className={f.label}>Kolik lidí ho má podpořit</span>
-        <input name="need" type="number" inputMode="numeric" min={1} max={500} defaultValue={10} className={`${f.input} ${styles.number}`} />
-        {fe.need ? (
-          <span className={f.fieldError}>{fe.need}</span>
+      <label className={f.field} data-invalid={!!fe.needPercent}>
+        <span className={f.label}>Kolik procent školy má být pro</span>
+        <span className={styles.percentField}>
+          <input
+            name="needPercent"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={100}
+            value={percent}
+            onChange={(e) => setPercent(e.target.value)}
+            className={`${f.input} ${styles.number}`}
+          />
+          <span aria-hidden="true">%</span>
+        </span>
+        {fe.needPercent ? (
+          <span className={f.fieldError}>{fe.needPercent}</span>
         ) : (
-          <span className={f.hint}>Vyučující počet potvrdí, nebo upraví.</span>
+          <span className={f.hint}>{needHint(Number(percent), members)} Vyučující práh potvrdí, nebo upraví.</span>
         )}
       </label>
       <label className={f.field} data-invalid={!!fe.body}>
@@ -79,8 +94,15 @@ export function ProposalForm() {
         {pending ? "Zveřejňuji…" : "Zveřejnit návrh"}
       </button>
       <span className={f.hint} style={{ marginTop: -10 }}>
-        Návrh uvidí pod tvým jménem celá škola. Ty ho podporuješ automaticky.
+        Návrh uvidí pod tvým jménem celá škola a ty jsi automaticky pro. Kdo jak hlasuje, nikdo nevidí.
       </span>
     </form>
   );
+}
+
+/** „Ve škole je 150 lidí — 30 % znamená aspoň 45 hlasů pro.“ */
+function needHint(percent: number, members: number) {
+  if (!Number.isFinite(percent) || percent < 1 || percent > 100 || members < 1) return "";
+  const votes = Math.ceil((percent * members) / 100);
+  return `Ve škole je ${members} ${plural(members, "člověk", "lidé", "lidí")} — ${percent} % znamená aspoň ${votes} ${plural(votes, "hlas", "hlasy", "hlasů")} pro.`;
 }

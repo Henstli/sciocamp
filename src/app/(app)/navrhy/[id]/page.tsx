@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Avatar } from "@/components/Avatar";
 import { PageHeader } from "@/components/PageHeader";
 import { StaffPanel, WithdrawButton } from "@/components/proposals/ProposalActions";
 import { ProposalComments } from "@/components/proposals/ProposalComments";
-import { VoteButton } from "@/components/proposals/VoteButton";
+import { ProposalVote } from "@/components/proposals/ProposalVote";
 import { requireUser } from "@/lib/auth";
 import { getUsersByIds } from "@/lib/data";
-import { getProposal } from "@/lib/data-proposals";
-import { plural } from "@/lib/format";
-import { CATEGORY_LABEL, GOAL_LABEL, proposalChip, proposalTarget } from "@/lib/proposals";
+import { getProposal, memberCount } from "@/lib/data-proposals";
+import { CATEGORY_LABEL, GOAL_LABEL, proposalChip } from "@/lib/proposals";
 import { canTeach, initials, isAdmin } from "@/lib/roles";
 import { formatStamp, nowMs } from "@/lib/time";
 import styles from "../navrhy.module.css";
@@ -27,15 +25,13 @@ const OUTCOME = {
 export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">) {
   const user = await requireUser();
   const { id } = await params;
-  const data = await getProposal(user, id);
+  const [data, members] = await Promise.all([getProposal(user, id), memberCount()]);
   if (!data) notFound();
-  const { proposal: p, comments, supporters } = data;
-  const people = await getUsersByIds([...new Set([p.authorId, ...supporters, ...comments.map((c) => c.authorId), ...(p.resolvedBy ? [p.resolvedBy] : [])])]);
-  const person = (pid: string) => people.find((u) => u.id === pid);
-  const nameOf = (pid: string) => person(pid)?.name ?? "Bývalý člen školy";
+  const { proposal: p, comments } = data;
+  const people = await getUsersByIds([...new Set([p.authorId, ...comments.map((c) => c.authorId), ...(p.resolvedBy ? [p.resolvedBy] : [])])]);
+  const nameOf = (pid: string) => people.find((u) => u.id === pid)?.name ?? "Bývalý člen školy";
   const now = new Date(nowMs());
-  const chip = proposalChip(p);
-  const target = proposalTarget(p);
+  const chip = proposalChip(p, members);
   const open = p.status === "open";
   const admin = isAdmin(user.role);
   const outcome = p.status === "open" ? null : OUTCOME[p.status];
@@ -50,15 +46,7 @@ export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">
         </Link>
 
         <article className={`card ${styles.item}`} style={{ padding: "22px 24px" }}>
-          <VoteButton
-            id={p.id}
-            kind="proposal"
-            count={p.supportCount}
-            on={p.supported}
-            disabled={!open}
-            locked={p.authorId === user.id}
-            label="podpora"
-          />
+
           <div className={styles.body} style={{ gap: 10 }}>
             <div className={styles.chips}>
               <span className={`chip ${chip.tone}`}>{chip.label}</span>
@@ -74,20 +62,17 @@ export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">
               </span>
             </div>
             {p.body ? <p className={styles.desc}>{p.body}</p> : <p className={styles.empty}>Bez popisu.</p>}
-            {open && (
-              <div className={styles.progress}>
-                <span className={styles.track}>
-                  <span
-                    className={styles.fill}
-                    data-done={p.supportCount >= target}
-                    style={{ width: `${Math.min(100, Math.round((p.supportCount / target) * 100))}%` }}
-                  />
-                </span>
-                <span className={styles.count}>
-                  {p.supportCount} / {target} {plural(target, "podporovatel", "podporovatelé", "podporovatelů")}
-                  {p.need === null && " (navrženo autorem, čeká na potvrzení)"}
-                </span>
-              </div>
+            {p.status !== "stazeno" && (
+              <ProposalVote
+                id={p.id}
+                counts={{ pro: p.proCount, jedno: p.neutralCount, proti: p.againstCount }}
+                myChoice={p.myChoice}
+                members={members}
+                needPercent={p.needPercent ?? p.needPercentProposed}
+                needConfirmed={p.needPercent !== null}
+                open={open}
+                isAuthor={p.authorId === user.id}
+              />
             )}
             {outcome && (
               <div className={styles.outcome} data-tone={outcome.tone}>
@@ -109,19 +94,17 @@ export default async function ProposalPage({ params }: PageProps<"/navrhy/[id]">
         </article>
 
         {canTeach(user.role) && (
-          <StaffPanel id={p.id} goal={p.goal} status={p.status} need={p.need} needProposed={p.needProposed} admin={admin} />
+          <StaffPanel
+            id={p.id}
+            goal={p.goal}
+            status={p.status}
+            needPercent={p.needPercent}
+            needPercentProposed={p.needPercentProposed}
+            members={members}
+            admin={admin}
+          />
         )}
 
-        <section className={`card ${styles.panel}`} aria-label="Podporovatelé">
-          <h2>
-            {supporters.length} {plural(supporters.length, "podporovatel", "podporovatelé", "podporovatelů")}
-          </h2>
-          <div className={styles.people}>
-            {supporters.map((sid) => (
-              <Avatar key={sid} initials={initials(nameOf(sid))} size={36} href={`/lide/${sid}`} title={nameOf(sid)} tone={sid === user.id ? "me" : person(sid)?.role === "student" ? "student" : "ucitel"} />
-            ))}
-          </div>
-        </section>
 
         <ProposalComments
           id={p.id}

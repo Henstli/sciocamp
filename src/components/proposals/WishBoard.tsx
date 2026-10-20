@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { closeWish, deleteWish, reopenWish, type ActionResult } from "@/lib/actions/proposals";
 import { plural } from "@/lib/format";
 import { WISH_KIND_LABEL, type Wish, type WishKind } from "@/lib/proposals";
-import { VoteButton } from "./VoteButton";
+import { WishVote } from "./WishVote";
 import f from "@/components/manage/manage.module.css";
 import styles from "@/app/(app)/navrhy/navrhy.module.css";
 
@@ -75,7 +75,7 @@ function WishCard({ w, staff }: { w: WishView; staff: boolean }) {
   const open = w.status === "open";
   return (
     <article className={`card ${styles.item}`} data-closed={!open} data-vote="arrow" id={`prani-${w.id}`}>
-      <VoteButton id={w.id} kind="wish" count={w.voteCount} on={w.voted} disabled={!open} label="chci to" />
+      <WishVote id={w.id} count={w.voteCount} on={w.voted} disabled={!open} />
       <div className={styles.body}>
         <div className={styles.chips}>
           <span className="chip" style={KIND_CHIP[w.kind]}>

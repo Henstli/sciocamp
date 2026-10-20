@@ -28,21 +28,23 @@ export function StaffPanel({
   id,
   goal,
   status,
-  need,
-  needProposed,
+  needPercent,
+  needPercentProposed,
+  members,
   admin,
 }: {
   id: string;
   goal: ProposalGoal;
   status: ProposalStatus;
-  need: number | null;
-  needProposed: number;
+  needPercent: number | null;
+  needPercentProposed: number;
+  members: number;
   admin: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [res, setRes] = useState<ActionResult>({});
-  const [count, setCount] = useState(String(need ?? needProposed));
+  const [count, setCount] = useState(String(needPercent ?? needPercentProposed));
   const results =
     goal === "shromazdeni"
       ? ([
@@ -69,24 +71,30 @@ export function StaffPanel({
     <section className={`card ${styles.staff}`} aria-label="Pro vyučující">
       {open && (
         <>
-          <h3>Počet podporovatelů</h3>
+          <h3>Práh (kolik % školy má být pro)</h3>
           <div className={styles.inline}>
             <input
               type="number"
               inputMode="numeric"
               min={1}
-              max={500}
+              max={100}
               value={count}
               onChange={(e) => setCount(e.target.value)}
               className={`${f.input} ${styles.number}`}
-              aria-label="Potřebný počet podporovatelů"
+              aria-label="Práh v procentech"
             />
+            <span aria-hidden="true" style={{ fontWeight: 700 }}>
+              %
+            </span>
             <button type="button" className="btn btn-outline" disabled={pending} onClick={() => act(() => setProposalNeed(id, Number(count)))}>
-              {need === null ? "Potvrdit počet" : "Změnit počet"}
+              {needPercent === null ? "Potvrdit práh" : "Změnit práh"}
             </button>
           </div>
           <span className={f.hint} style={{ marginTop: -6 }}>
-            {need === null ? `Autor navrhuje ${needProposed}. Po potvrzení se mu pošle oznámení.` : `Potvrzeno: ${need}. Autor navrhoval ${needProposed}.`}
+            {needPercent === null
+              ? `Autor navrhuje ${needPercentProposed} %. Po potvrzení dostane oznámení.`
+              : `Potvrzeno ${needPercent} %, autor navrhoval ${needPercentProposed} %.`}{" "}
+            {Number(count) >= 1 && Number(count) <= 100 && `Při ${members} lidech ve škole to je aspoň ${Math.ceil((Number(count) * members) / 100)} hlasů pro.`}
           </span>
 
           <h3>{goal === "shromazdeni" ? "Po shromáždění" : "Rozhodnutí"}</h3>
@@ -115,7 +123,7 @@ export function StaffPanel({
             >
               Uložit a oznámit
             </button>
-            <span className={f.hint}>Oznámení dostane autor i všichni, kdo návrh podpořili.</span>
+            <span className={f.hint}>Oznámení dostane autor i všichni, kdo hlasovali pro.</span>
           </div>
         </>
       )}

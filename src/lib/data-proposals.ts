@@ -3,14 +3,15 @@
 import "server-only";
 import { cache } from "react";
 import { isSupabase } from "./config";
+import { DEMO_USERS } from "./demo-data";
 import { DEMO_PROPOSAL_COMMENTS, DEMO_PROPOSALS, DEMO_WISHES } from "./demo-proposals";
-import { wishExpired, type Proposal, type ProposalComment, type Wish } from "./proposals";
+import { wishExpired, type Proposal, type ProposalComment, type VoteChoice, type Wish } from "./proposals";
 import { createClient } from "./supabase/server";
 import { nowMs } from "./time";
 import type { User } from "./types";
 
 const PROPOSAL_COLUMNS =
-  "id, author_id, title, body, category, goal, need_proposed, need, status, resolution, resolved_by, resolved_at, support_count, reached_at, created_at";
+  "id, author_id, title, body, category, goal, need_percent_proposed, need_percent, status, resolution, resolved_by, resolved_at, pro_count, against_count, neutral_count, reached_at, created_at";
 
 type ProposalRow = {
   id: string;
@@ -19,18 +20,20 @@ type ProposalRow = {
   body: string;
   category: Proposal["category"];
   goal: Proposal["goal"];
-  need_proposed: number;
-  need: number | null;
+  need_percent_proposed: number;
+  need_percent: number | null;
   status: Proposal["status"];
   resolution: string | null;
   resolved_by: string | null;
   resolved_at: string | null;
-  support_count: number;
+  pro_count: number;
+  against_count: number;
+  neutral_count: number;
   reached_at: string | null;
   created_at: string;
 };
 
-function toProposal(r: ProposalRow, commentCount: number, supported: boolean): Proposal {
+function toProposal(r: ProposalRow, commentCount: number, myChoice: VoteChoice | null): Proposal {
   return {
     id: r.id,
     authorId: r.author_id,
@@ -38,29 +41,44 @@ function toProposal(r: ProposalRow, commentCount: number, supported: boolean): P
     body: r.body,
     category: r.category,
     goal: r.goal,
-    needProposed: r.need_proposed,
-    need: r.need,
+    needPercentProposed: r.need_percent_proposed,
+    needPercent: r.need_percent,
     status: r.status,
     resolution: r.resolution,
     resolvedBy: r.resolved_by,
     resolvedAt: r.resolved_at,
-    supportCount: r.support_count,
+    proCount: r.pro_count,
+    againstCount: r.against_count,
+    neutralCount: r.neutral_count,
     reachedAt: r.reached_at,
     createdAt: r.created_at,
     commentCount,
-    supported,
+    myChoice,
   };
 }
 
 function demoProposal(p: (typeof DEMO_PROPOSALS)[number], user: User): Proposal {
-  const { supporters, ...rest } = p;
+  const { votes, ...rest } = p;
+  const all = Object.values(votes);
   return {
     ...rest,
-    supportCount: supporters.length,
-    supported: supporters.includes(user.id),
+    proCount: all.filter((v) => v === "pro").length,
+    againstCount: all.filter((v) => v === "proti").length,
+    neutralCount: all.filter((v) => v === "jedno").length,
+    myChoice: votes[user.id] ?? null,
     commentCount: DEMO_PROPOSAL_COMMENTS[p.id]?.length ?? 0,
   };
 }
+
+/** Kolik lidí ve škole může hlasovat (základ pro procenta). */
+async function memberCountUncached(): Promise<number> {
+  if (!isSupabase) return DEMO_USERS.length;
+  const sb = await createClient();
+  const { data } = await sb.rpc("member_count");
+  return (data as number | null) ?? 0;
+}
+
+export const memberCount = cache(memberCountUncached);
 
 /** Všechny návrhy, nejnovější první. */
 async function listProposalsUncached(user: User): Promise<Proposal[]> {
@@ -68,46 +86,42 @@ async function listProposalsUncached(user: User): Promise<Proposal[]> {
   const sb = await createClient();
   const [rows, mine, comments] = await Promise.all([
     sb.from("proposals").select(PROPOSAL_COLUMNS).order("created_at", { ascending: false }),
-    sb.from("proposal_supports").select("proposal_id").eq("user_id", user.id),
+    // Hlasy jsou anonymní — RLS vrátí jen ty moje.
+    sb.from("proposal_supports").select("proposal_id, choice").eq("user_id", user.id),
     sb.from("proposal_comments").select("proposal_id"),
   ]);
   if (rows.error) throw new Error(`Nepodařilo se načíst návrhy: ${rows.error.message}`);
-  const supported = new Set((mine.data ?? []).map((r) => r.proposal_id as string));
+  const choice = new Map((mine.data ?? []).map((r) => [r.proposal_id as string, r.choice as VoteChoice]));
   const counts = new Map<string, number>();
   for (const c of comments.data ?? []) counts.set(c.proposal_id as string, (counts.get(c.proposal_id as string) ?? 0) + 1);
-  return (rows.data as ProposalRow[]).map((r) => toProposal(r, counts.get(r.id) ?? 0, supported.has(r.id)));
+  return (rows.data as ProposalRow[]).map((r) => toProposal(r, counts.get(r.id) ?? 0, choice.get(r.id) ?? null));
 }
 
 export const listProposals = cache(listProposalsUncached);
 
-/** Jeden návrh s komentáři a podporovateli (id lidí v pořadí podpory). */
-export async function getProposal(
-  user: User,
-  id: string,
-): Promise<{ proposal: Proposal; comments: ProposalComment[]; supporters: string[] } | null> {
+/** Jeden návrh s komentáři. */
+export async function getProposal(user: User, id: string): Promise<{ proposal: Proposal; comments: ProposalComment[] } | null> {
   if (!isSupabase) {
     const p = DEMO_PROPOSALS.find((x) => x.id === id);
     if (!p) return null;
-    return { proposal: demoProposal(p, user), comments: DEMO_PROPOSAL_COMMENTS[id] ?? [], supporters: p.supporters };
+    return { proposal: demoProposal(p, user), comments: DEMO_PROPOSAL_COMMENTS[id] ?? [] };
   }
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const sb = await createClient();
-  const [row, comments, supports] = await Promise.all([
+  const [row, comments, mine] = await Promise.all([
     sb.from("proposals").select(PROPOSAL_COLUMNS).eq("id", id).maybeSingle(),
     sb.from("proposal_comments").select("id, author_id, body, created_at").eq("proposal_id", id).order("created_at"),
-    sb.from("proposal_supports").select("user_id").eq("proposal_id", id).order("created_at"),
+    sb.from("proposal_supports").select("choice").eq("proposal_id", id).eq("user_id", user.id).maybeSingle(),
   ]);
   if (!row.data) return null;
-  const supporters = (supports.data ?? []).map((s) => s.user_id as string);
   return {
-    proposal: toProposal(row.data as ProposalRow, comments.data?.length ?? 0, supporters.includes(user.id)),
+    proposal: toProposal(row.data as ProposalRow, comments.data?.length ?? 0, (mine.data?.choice as VoteChoice | undefined) ?? null),
     comments: (comments.data ?? []).map((c) => ({
       id: c.id as string,
       authorId: c.author_id as string,
       body: c.body as string,
       createdAt: c.created_at as string,
     })),
-    supporters,
   };
 }
 
