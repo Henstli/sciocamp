@@ -29,7 +29,7 @@ export type ShotFrames = {
   /** 0 = před akcí, další = psaní nebo stav po kliknutí */
   frames: string[];
   /** Prvek v procentech výřezu */
-  target: { x: number; y: number; w: number; h: number } | null;
+  target: { x: number; y: number; w: number; h: number; r?: number } | null;
   action: "click" | "point" | "type" | "select" | "none";
   /** Psaní: text a vzhled obsahu pole, prohlížeč ho pak dopisuje po písmenech */
   typing?: HelpTyping;
@@ -130,6 +130,8 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
   await page.waitForTimeout(200);
   let areaBox = (await area.boundingBox())!;
   const tBox = target ? await target.boundingBox() : null;
+  // Zaoblení prvku, ať zvýraznění sedí přesně na jeho okraji.
+  const tRadius = target ? await target.evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0) : 0;
 
   // Snímky celé obrazovky; výřez se spočítá z oblasti před i po akci (rozbalení).
   const shots = [await grab(page)];
@@ -206,6 +208,7 @@ async function shoot(page: Page, slug: string, index: number, shot: HelpShot): P
         y: (tBox.y - clip.y) / clip.height,
         w: tBox.width / clip.width,
         h: tBox.height / clip.height,
+        r: tRadius / clip.width,
       }
     : null;
   const typing: HelpTyping | undefined = rawTyping

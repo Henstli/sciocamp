@@ -171,7 +171,13 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
             className={styles.ring}
             data-on={showRing || undefined}
             data-press={phase === "press" || undefined}
-            style={{ left: `${t.x * 100}%`, top: `${t.y * 100}%`, width: `${t.w * 100}%`, height: `${t.h * 100}%` }}
+            style={{
+              left: `${t.x * 100}%`,
+              top: `${t.y * 100}%`,
+              width: `${t.w * 100}%`,
+              height: `${t.h * 100}%`,
+              borderRadius: t.r ? `${t.r * 100}cqw` : 6,
+            }}
             aria-hidden="true"
           />
         )}

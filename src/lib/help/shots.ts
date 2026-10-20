@@ -8,7 +8,8 @@ export type HelpShotData = {
   /** 0 = před akcí, další = psaní nebo stav po kliknutí */
   frames: string[];
   /** Prvek v podílech výřezu (0–1) */
-  target: { x: number; y: number; w: number; h: number } | null;
+  /** r = zaoblení rohů v podílech šířky výřezu */
+  target: { x: number; y: number; w: number; h: number; r?: number } | null;
   action: "click" | "point" | "type" | "select" | "none";
   /** Psaní: obsah pole v podílech výřezu, písmo v podílech šířky výřezu */
   typing?: {
