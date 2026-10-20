@@ -78,10 +78,17 @@
   margin-top: 2px;
 }
 
+/* Karty nahoře a sloupce pod nimi sdílejí stejnou mřížku o třech sloupcích,
+   takže rozvrh končí přesně pod druhou kartou a pravý sloupec je pod třetí. */
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+}
+@media (max-width: 1000px) {
+  .stats {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
 }
 .stat {
   display: flex;
@@ -184,17 +191,16 @@
 }
 
 .columns {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
-  align-items: flex-start;
+  align-items: start;
 }
 .schedule {
-  flex: 2 1 560px;
+  grid-column: span 2;
   min-width: 0;
 }
 .side {
-  flex: 1 1 300px;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -291,4 +297,13 @@ a.deadline {
 }
 a.deadline:hover .itemTitle {
   color: var(--primary-text);
+}
+
+@media (max-width: 1100px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .schedule {
+    grid-column: auto;
+  }
 }

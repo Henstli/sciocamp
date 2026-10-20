@@ -127,7 +127,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         >
           <div className={styles.chips}>
             <span className="chip chip-wait">{openWishes.length} {plural(openWishes.length, "otevřené", "otevřená", "otevřených")}</span>
-            <span className="chip chip-ok">{wishes.filter((w) => w.status === "vypsano").length} vypsáno</span>
+            <span className="chip chip-ok">{wishes.filter((w) => w.status === "vypsano").length} schváleno</span>
           </div>
           {openWishes[0] && (
             <div className={styles.statFoot}>
