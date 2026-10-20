@@ -9,6 +9,7 @@ export type StorageView = {
   buckets: { id: string; label: string; files: number; bytes: number }[];
   totalBytes: number;
   orphans: { files: number; bytes: number };
+  young: { files: number; bytes: number };
 };
 
 /** Správa → Úložiště: kolik místa zabírají soubory a úklid nepoužívaných. */
@@ -53,8 +54,12 @@ export function StorageManager({ report, problem }: { report: StorageView | null
               <strong>Celkem {formatBytes(report.totalBytes)}</strong>
               <p className={styles.inviteNote}>
                 {report.orphans.files
-                  ? `Nepoužívané: ${report.orphans.files} ${plural(report.orphans.files, "soubor", "soubory", "souborů")} (${formatBytes(report.orphans.bytes)}). Soubory mladší než den se nemažou — mohou se právě nahrávat.`
-                  : "Žádné nepoužívané soubory."}
+                  ? `Ke smazání: ${report.orphans.files} ${plural(report.orphans.files, "nepoužívaný soubor", "nepoužívané soubory", "nepoužívaných souborů")} (${formatBytes(report.orphans.bytes)}).`
+                  : report.young.files
+                    ? "Teď není co mazat."
+                    : "Žádné nepoužívané soubory."}
+                {report.young.files > 0 &&
+                  ` Dalších ${report.young.files} ${plural(report.young.files, "nepoužívaný soubor", "nepoužívané soubory", "nepoužívaných souborů")} (${formatBytes(report.young.bytes)}) je mladších než den — smažou se při nočním úklidu, až budou starší (mohly by se zrovna nahrávat).`}
               </p>
             </div>
             {report.orphans.files > 0 && (

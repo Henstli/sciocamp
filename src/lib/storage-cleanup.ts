@@ -19,13 +19,16 @@ export const BUCKET_LABEL: Record<string, string> = {
 export type StorageReport = {
   buckets: { id: string; label: string; files: number; bytes: number }[];
   totalBytes: number;
+  /** Nepoužívané soubory starší než den (smaže je úklid) */
   orphans: { files: number; bytes: number };
+  /** Nepoužívané soubory mladší než den (úklid je smaže, až zestárnou) */
+  young: { files: number; bytes: number };
 };
 
 type Orphan = { bucket: string; path: string; size: number };
 
-async function orphans(): Promise<Orphan[]> {
-  const { data, error } = await createAdminClient().rpc("storage_orphans");
+async function orphans(minAge?: string): Promise<Orphan[]> {
+  const { data, error } = await createAdminClient().rpc("storage_orphans", minAge ? { min_age: minAge } : {});
   if (error) throw new Error(`storage_orphans: ${error.message}`);
   return ((data ?? []) as Orphan[]).map((o) => ({ ...o, size: Number(o.size) }));
 }
@@ -33,7 +36,7 @@ async function orphans(): Promise<Orphan[]> {
 /** Obsazené místo po složkách a kolik by úklid uvolnil. */
 export async function storageReport(): Promise<StorageReport> {
   const sb = createAdminClient();
-  const [{ data, error }, orph] = await Promise.all([sb.rpc("storage_usage"), orphans()]);
+  const [{ data, error }, orph, all] = await Promise.all([sb.rpc("storage_usage"), orphans(), orphans("0 seconds")]);
   if (error) throw new Error(`storage_usage: ${error.message}`);
   const rows = (data ?? []) as { bucket: string; files: number; bytes: number }[];
   const buckets = rows
@@ -43,6 +46,7 @@ export async function storageReport(): Promise<StorageReport> {
     buckets,
     totalBytes: buckets.reduce((s, b) => s + b.bytes, 0),
     orphans: { files: orph.length, bytes: orph.reduce((s, o) => s + o.size, 0) },
+    young: { files: all.length - orph.length, bytes: all.reduce((s, o) => s + o.size, 0) - orph.reduce((s, o) => s + o.size, 0) },
   };
 }
 
