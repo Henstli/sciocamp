@@ -217,7 +217,7 @@ export const HELP_GUIDES: HelpGuide[] = [
           goto: "/ukoly/novy?trida=literatura-ve-filmu",
           area: { css: "main form" },
           maxHeight: 250,
-          target: { css: "label:has(select)" },
+          target: { css: "label:has(select) select" },
           action: "point",
         },
       },
