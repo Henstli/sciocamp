@@ -72,7 +72,7 @@ export const DEMO_PROPOSALS: DemoProposal[] = [
     reachedAt: null,
     createdAt: ago(6, 14),
     votingEndsAt: plus7(ago(6, 14)),
-    mandatoryAt: ago(1),
+    mandatoryAt: null,
     votes: V(["u-komarek", "u-cerny", "u-jaukner"]),
   },
   {

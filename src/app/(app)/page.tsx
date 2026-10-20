@@ -25,6 +25,8 @@ import {
   sameDate,
 } from "@/lib/time";
 import styles from "./home.module.css";
+import { HomeSearch } from "@/components/search/HomeSearch";
+import { buildSearchIndex } from "@/lib/search-index";
 import { listWishes } from "@/lib/data-proposals";
 import { WISH_KIND_LABEL } from "@/lib/proposals";
 
@@ -60,10 +62,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         title={`Ahoj, ${firstNameVocative(user.name)}`}
         avatar={{ initials: initials(user.name), name: user.name }}
       >
-        <label className={styles.search}>
-          <Icon name="search" size={18} />
-          <input type="search" aria-label="Hledat" placeholder="Hledat kurzy, úkoly, lidi…" />
-        </label>
+        <HomeSearch items={await buildSearchIndex(user)} />
       </PageHeader>
 
       {upcoming && (
