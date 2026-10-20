@@ -12,7 +12,7 @@ type Phase = "start" | "show" | "move" | "press" | "result" | "hold" | "end";
 
 
 /** Kroky animace (ms od začátku). */
-const T = { show: 250, move: 450, press: 1450, result: 1800, typeStep: 170, hold: 2600 };
+const T = { show: 250, move: 450, press: 1450, result: 1850, typeStep: 170, hold: 2600 };
 
 function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -74,8 +74,8 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
     at(T.move, () => setPhase("move"));
     let end = T.result;
     if (shot.target && shot.action !== "none") {
-      // „Ukázat“ = kurzor jen najede (bez kliknutí, nic se nemění).
-      if (shot.action !== "point") at(T.press, () => setPhase("press"));
+      // Kliknutí (vlnka) u každého kroku s cílem — i u „ukázat“, kde se obrazovka nemění.
+      at(T.press, () => setPhase("press"));
       at(T.result, () => setPhase("result"));
       if (typing) {
         // Hotový snímek (pole s fokusem a celým textem) + překryv, ve kterém se
@@ -134,7 +134,7 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
             className={styles.frame}
             data-on={i === frame || undefined}
             // Po kliknutí se obrazovka změní hned (jako ve skutečnosti), bez prolínání dvou rozvržení.
-            data-instant={(i > 0 && (shot.action === "type" || shot.action === "click")) || undefined}
+            data-instant={i > 0 || undefined}
             loading={i === 0 ? "lazy" : "eager"}
             decoding="async"
             draggable={false}
