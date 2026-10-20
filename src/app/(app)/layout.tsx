@@ -4,6 +4,7 @@ import { PageSkeleton, SidebarSkeleton } from "@/components/Skeletons";
 import { requireUser } from "@/lib/auth";
 import { getHomeSummary, listUsers } from "@/lib/data";
 import { AvatarState } from "@/components/AvatarState";
+import { bannerSwatch } from "@/lib/banner";
 import { homeTasks } from "@/lib/data-assignments";
 import { unreadMessages } from "@/lib/data-communication";
 import { canTeach, initials, isAdmin, roleCaption } from "@/lib/roles";
@@ -41,10 +42,14 @@ async function UserSidebar() {
   const avatars = Object.fromEntries(
     users.filter((u) => u.avatarPath).map((u) => [u.id, u.avatarPath!]),
   );
+  // Barva profilu (výchozí modrou nepředáváme) — obarví kolečka s iniciálami.
+  const colors = Object.fromEntries(
+    users.filter((u) => u.bannerColor && u.bannerColor !== "modra").map((u) => [u.id, bannerSwatch(u.bannerColor)]),
+  );
   const teach = canTeach(user.role);
   return (
     <>
-      <AvatarState map={avatars} meId={user.id} />
+      <AvatarState map={avatars} colors={colors} meId={user.id} />
       <Sidebar
         user={{
           name: user.name,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useAvatarSrc } from "@/lib/avatar-store";
+import { useAvatarColor, useAvatarSrc } from "@/lib/avatar-store";
 import styles from "./ui.module.css";
 
 /**
@@ -28,11 +28,19 @@ export function Avatar({
 }) {
   const id = userId ?? href?.match(/^\/lide\/([^/?#]+)/)?.[1];
   const src = useAvatarSrc(id, tone === "me");
+  const color = useAvatarColor(id, tone === "me");
   const [broken, setBroken] = useState<string | null>(null);
   const showPhoto = src && broken !== src;
   const props = {
     className: `${styles.avatar} ${styles[`avatar_${tone}`]}`,
-    style: { width: size, height: size, borderRadius: size / 2, fontSize: size >= 44 ? 15 : size >= 40 ? 13 : 12 },
+    style: {
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      fontSize: size >= 44 ? 15 : size >= 40 ? 13 : 12,
+      // Zvolená barva profilu obarví kolečko s iniciálami.
+      ...(color ? { background: color, color: "#fff" } : {}),
+    },
   };
   const inner = showPhoto ? (
     // eslint-disable-next-line @next/next/no-img-element -- malé obrázky přes vlastní adresu, optimalizace netřeba
@@ -53,8 +61,17 @@ export function Avatar({
 /** Fotka přihlášeného (v hlavičce a v menu), jinak jeho iniciály. */
 export function MyPhoto({ initials }: { initials: string }) {
   const src = useAvatarSrc(null, true);
+  const color = useAvatarColor(null, true);
   const [broken, setBroken] = useState<string | null>(null);
-  if (!src || broken === src) return <>{initials}</>;
+  if (!src || broken === src) {
+    return color ? (
+      <span className={styles.avatarFill} style={{ background: color }}>
+        {initials}
+      </span>
+    ) : (
+      <>{initials}</>
+    );
+  }
   // eslint-disable-next-line @next/next/no-img-element -- malé obrázky přes vlastní adresu
   return <img src={src} alt="" className={styles.avatarImg} onError={() => setBroken(src)} />;
 }

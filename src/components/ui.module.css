@@ -116,3 +116,12 @@
   object-fit: cover;
   display: block;
 }
+
+/* Iniciály v barvě profilu přes celé kolečko (hlavička, menu) */
+.avatarFill {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}

@@ -3,8 +3,8 @@
 
 import { useSyncExternalStore } from "react";
 
-type State = { map: Record<string, string>; meId: string | null };
-let state: State = { map: {}, meId: null };
+type State = { map: Record<string, string>; colors: Record<string, string>; meId: string | null };
+let state: State = { map: {}, colors: {}, meId: null };
 const listeners = new Set<() => void>();
 
 export function setAvatarState(next: State) {
@@ -15,6 +15,18 @@ export function setAvatarState(next: State) {
 function subscribe(l: () => void) {
   listeners.add(l);
   return () => listeners.delete(l);
+}
+
+/** Zvolená barva profilu (jen jiná než výchozí modrá), jinak null. */
+export function useAvatarColor(userId: string | null | undefined, me = false): string | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => {
+      const id = userId ?? (me ? state.meId : null);
+      return (id && state.colors[id]) || null;
+    },
+    () => null,
+  );
 }
 
 /** Adresa fotky člověka, nebo null (pak se ukážou iniciály). `null` id = přihlášený. */

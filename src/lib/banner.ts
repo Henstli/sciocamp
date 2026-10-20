@@ -11,6 +11,11 @@ export const BANNER_COLORS = [
 
 export type BannerColor = (typeof BANNER_COLORS)[number]["id"];
 
+/** Hlavní odstín barvy profilu (pro kolečka s iniciálami). */
+export function bannerSwatch(id: string | undefined): string {
+  return BANNER_COLORS.find((c) => c.id === id)?.swatch ?? BANNER_COLORS[0].swatch;
+}
+
 export function isBannerColor(v: unknown): v is BannerColor {
   return BANNER_COLORS.some((c) => c.id === v);
 }
