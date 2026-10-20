@@ -218,7 +218,6 @@ export function ActivityForm({
         </div>
         {kind === "ostatni" && (
           <div className={styles.quickRow}>
-            <span className={styles.quickLabel}>Rychle:</span>
             <button
               type="button"
               className={styles.quickChip}
