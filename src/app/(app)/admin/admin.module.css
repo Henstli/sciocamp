@@ -484,3 +484,8 @@
 .wrapLine {
   white-space: normal;
 }
+.storageSize {
+  min-width: 72px;
+  text-align: right;
+  font-size: 14px;
+}

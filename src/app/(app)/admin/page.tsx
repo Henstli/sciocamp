@@ -8,8 +8,10 @@ import { KIND_LABEL, activityHref } from "@/lib/links";
 import { canTeach, initials } from "@/lib/roles";
 import { isoToPragueLocal, nowMs, pragueNow, toIso } from "@/lib/time";
 import { readyTeachers } from "@/lib/data-enroll";
+import { storageReport } from "@/lib/storage-cleanup";
 import { AdminTabs } from "./AdminTabs";
 import { PeriodManager } from "./PeriodManager";
+import { StorageManager, type StorageView } from "./StorageManager";
 import { TermManager } from "./TermManager";
 import styles from "./admin.module.css";
 
@@ -32,6 +34,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   );
 
   const terms = await listTerms();
+  const storage = await loadStorage();
   // Připravené ateliéry a expedice (do zápisu se dají vyhlásit spolu s kurzy).
   const freeOf = (a: (typeof activities)[number]) =>
     !(a.round && a.round.closesAt > new Date(nowMs()).toISOString());
@@ -115,8 +118,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   ? "expedice"
                   : tab === "obdobi"
                     ? "periods"
-                    : "users"
+                    : tab === "uloziste"
+                      ? "storage"
+                      : "users"
         }
+        storageTab={<StorageManager report={storage.report} problem={storage.problem} />}
         periodsTab={
           <div className={styles.periodsStack}>
             <PeriodManager periods={periodRows} ready={readyCounts} />
@@ -171,4 +177,14 @@ function Stat({ label, value }: { label: string; value: number | string }) {
       <div className={styles.statValue}>{value}</div>
     </div>
   );
+}
+
+async function loadStorage(): Promise<{ report: StorageView | null; problem?: string }> {
+  if (!isSupabase) return { report: null, problem: "V ukázkovém režimu se soubory neukládají." };
+  if (!process.env.SUPABASE_SECRET_KEY) return { report: null, problem: "Chybí SUPABASE_SECRET_KEY, přehled úložiště nejde načíst." };
+  try {
+    return { report: await storageReport() };
+  } catch {
+    return { report: null };
+  }
 }

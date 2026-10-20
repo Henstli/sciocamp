@@ -30,7 +30,7 @@ await db.exec(`
   -- Minimální napodobenina Supabase Storage
   create schema storage;
   create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint);
-  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid, owner_id text default nullif(current_setting('request.jwt.claim.sub', true), ''));
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid, owner_id text default nullif(current_setting('request.jwt.claim.sub', true), ''), created_at timestamptz default now(), metadata jsonb);
   create function storage.foldername(name text) returns text[] language sql immutable as $$
     select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1]
   $$;
@@ -1139,6 +1139,32 @@ await test("zprávy: doručeno a přečteno — každý mění jen svoje", async
   // Cizí stav nikdo nezmění; odesílatel vidí stav druhého.
   assert.equal((await as(student, `update public.conversation_members set delivered_at = now() where conversation_id = $1 and user_id = $2 returning 1`, [conv, student2])).length, 0);
   assert.equal((await as(student, `select delivered_at from public.conversation_members where conversation_id = $1 and user_id = $2`, [conv, student2])).length, 1);
+});
+
+await test("úklid úložiště: najde jen soubory, na které nic neodkazuje", async () => {
+  const old = "now() - interval '2 days'";
+  const put = (bucket, name, fresh = false) =>
+    db.query(`insert into storage.objects (bucket_id, name, created_at, metadata) values ($1, $2, ${fresh ? "now()" : old}, '{"size": 100}')`, [bucket, name]);
+  const ghost = "00000000-0000-0000-0000-000000000099";
+  await put("materialy", `${task.id}/zije.pdf`);
+  await put("materialy", `${ghost}/smazany-ukol.pdf`);
+  await put("odevzdani", `${task.id}/${student}/prace.pdf`);
+  await put("odevzdani", `${task.id}/${ghost}/smazany-tym.pdf`);
+  await put("zpravy", `${ghost}/bez-zpravy.jpg`);
+  await put("zpravy", `${ghost}/prave-se-nahrava.jpg`, true);
+  await put("avatary", `${student}/stara.jpg`);
+  const sql = `select bucket, path from public.storage_orphans() where path like '%' || $1 || '%' or path like $2 || '%'`;
+  const rows = (await db.query(sql, [ghost, `${student}/`])).rows.map((r) => `${r.bucket}:${r.path}`).sort();
+  assert.deepEqual(rows, [
+    `avatary:${student}/stara.jpg`,
+    `materialy:${ghost}/smazany-ukol.pdf`,
+    `odevzdani:${task.id}/${ghost}/smazany-tym.pdf`,
+    `zpravy:${ghost}/bez-zpravy.jpg`,
+  ].sort());
+  // Běžní uživatelé ani admin přes API funkci nespustí (jen server se secret key).
+  await assert.rejects(() => as(admin, `select * from public.storage_orphans()`));
+  await assert.rejects(() => as(admin, `select * from public.storage_usage()`));
+  await db.query(`delete from storage.objects where name like '%' || $1 || '%' or name like $2 || '%' or name = $3`, [ghost, `${student}/stara`, `${task.id}/zije.pdf`]);
 });
 
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

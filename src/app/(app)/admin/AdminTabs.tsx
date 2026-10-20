@@ -42,7 +42,7 @@ const KIND_TABS = [
   ["ostatni", "Události"],
   ["expedice", "Expedice"],
 ] as const;
-type TabKey = "users" | "periods" | (typeof KIND_TABS)[number][0];
+type TabKey = "users" | "periods" | "storage" | (typeof KIND_TABS)[number][0];
 
 const KIND_WORDS: Record<ActivityKind, { title: string; add: string; empty: string; past: string }> = {
   kurz: { title: "Všechny kurzy", add: "Nový kurz", empty: "Zatím tu není žádný kurz.", past: "Proběhlé kurzy" },
@@ -67,6 +67,7 @@ export function AdminTabs({
   live,
   initialTab = "users",
   periodsTab,
+  storageTab,
 }: {
   users: AdminUser[];
   courses: AdminCourse[];
@@ -74,6 +75,8 @@ export function AdminTabs({
   initialTab?: TabKey;
   /** Obsah záložky Kurzová období (vykreslený na serveru) */
   periodsTab?: React.ReactNode;
+  /** Obsah záložky Úložiště (vykreslený na serveru) */
+  storageTab?: React.ReactNode;
 }) {
   const [tab, setTab] = useState<TabKey>(initialTab);
   const [filter, setFilter] = useState<(typeof FILTERS)[number][0]>("all");
@@ -126,6 +129,9 @@ export function AdminTabs({
             {label}
           </button>
         ))}
+        <button role="tab" aria-selected={tab === "storage"} className="tab" onClick={() => setTab("storage")}>
+          Úložiště
+        </button>
       </div>
 
       {tab === "users" && !inviting && (
@@ -219,6 +225,7 @@ export function AdminTabs({
       )}
 
       {tab === "periods" && periodsTab}
+      {tab === "storage" && storageTab}
 
       {KIND_TABS.map(([key]) =>
         tab === key ? <ActivityList key={key} kind={key} items={courses.filter((c) => c.kindKey === key)} /> : null,
