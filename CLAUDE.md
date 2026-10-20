@@ -31,6 +31,15 @@
 - Kurzy a ateliéry mají funkce jako Google Classroom: nástěnka, úkoly a materiály podle témat, odevzdávání souborů a Google dokumentů, soukromé komentáře s vyučujícím, týmové úkoly s týmovým chatem, chat třídy, hodnocení s body, kvízy.
 - Stack: Next.js (App Router) + TypeScript, Supabase (Postgres, auth, realtime, storage), hosting Vercel.
 
+## Návody v Nápovědě — pravidla (dodržovat u každého nového návodu)
+
+- Kdykoli se změní vzhled nebo postup v aplikaci, který některý návod ukazuje (stránka, tlačítko, popisek, formulář, pořadí kroků), uprav v témže commitu i návod: recept v `src/lib/help/guides.ts` (lokátory, texty kroků) a přegeneruj snímky `npm run napoveda:snimky -- <slug>` (aplikace v ukázkovém režimu na `NAPOVEDA_URL`, po přegenerování znovu build — `shots.json` se načítá při buildu). Před změnou UI zkontroluj, které návody danou obrazovku používají (hledat v `guides.ts` podle `goto`, textů a lokátorů).
+- Snímky jsou vždy skutečná aplikace v ukázkovém režimu (světlý režim), ne kreslené makety; výřez jen kolem toho, co krok potřebuje (`area`, `maxHeight`), poznámky „ukázkový režim“ skript maže.
+- Jeden krok = jedna akce: nadpis rozkazem („Klikni na…“, „Napiš…“, „Vyber…“), text 1–2 věty, co a proč. Každý krok má cíl (`target`) a myš na něj vždy klikne (vlnka) — i u „ukázat“.
+- Cíl musí být přesně ovládaný prvek: tlačítko, pole, volba/kartička — ne obal s popiskem (u `<label>` s polem cílit na samotné pole, např. `label:has(select) select`). Skrytý přepínač skript sám nahradí štítkem. Po vygenerování zkontrolovat rámečky (nakreslit `target` do snímků) — rámeček nesmí přesahovat do okolního textu.
+- Vzhled animace (`HelpShot`): kurzor najede doprostřed prvku, modrý rámeček přesně na okraji prvku s pulzující září (textový odkaz = průsvitný zvýrazňovač pod textem), bez bublin „Klikni/Napiš“; po kliknutí se obrazovka změní okamžitě (bez prolínání) a kurzor zůstane; psaní po písmenech přes překryv; výběr = dokreslený rozbalený seznam, kurzor klikne na možnost; před opakováním vše plynule zmizí; reduced motion = výsledný snímek.
+- Přehled: náhled na barevném podkladu a štítek podle publika (Všichni zeleně, Učitelé fialově, Admin modře); návod má `minutes`, `intro`, případně `tip`; nový návod se sám objeví v Nápovědě i v hledání na Domově.
+
 ## Etapy
 
 1. Přihlášení, role, kurzy, rozvrh a Meet (zatím na ukázkových datech, pak Supabase)
