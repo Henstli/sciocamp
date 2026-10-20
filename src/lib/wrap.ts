@@ -527,8 +527,16 @@ export function buildSlides(data: WrapData): WrapSlide[] {
     ].filter((x) => x !== null);
     if (community.length) out.push({ key: "komunita", kicker: "Komunita", title: "Měl(a) jsi slovo", lines: community.slice(0, 4), ...BG.amber });
     if (m.messages > 0) {
-      const bits = [m.topEmoji ? `Nejčastější reakce ${m.topEmoji}.` : null, m.gifs ? `${n(m.gifs)} ${plural(m.gifs, "poslaný GIF", "poslané GIFy", "poslaných GIFů")}.` : null];
-      out.push({ key: "zpravy", kicker: "Zprávy", title: "Poslal(a) jsi", big: n(m.messages), unit: plural(m.messages, "zprávu", "zprávy", "zpráv"), note: bits.filter(Boolean).join(" ") || undefined, ...BG.mix });
+      // Emoji nikdy na konci věty s tečkou — vypadá to jako překlep.
+      const gifs = m.gifs ? `${n(m.gifs)} ${plural(m.gifs, "GIF", "GIFy", "GIFů")}` : null;
+      const note = m.topEmoji
+        ? gifs
+          ? `Poslal(a) jsi ${gifs} a nejčastěji reaguješ ${m.topEmoji}`
+          : `Nejčastěji reaguješ ${m.topEmoji}`
+        : gifs
+          ? `A k tomu ${gifs}.`
+          : undefined;
+      out.push({ key: "zpravy", kicker: "Zprávy", title: "Poslal(a) jsi", big: n(m.messages), unit: plural(m.messages, "zprávu", "zprávy", "zpráv"), note, ...BG.mix });
     }
     out.push(peopleSlide(m.people));
     if (m.consultations > 0) {
