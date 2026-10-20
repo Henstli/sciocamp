@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatClock, formatDayLabel } from "@/lib/time";
 import type { Role, SubmissionFile } from "@/lib/types";
 import { isCompressibleImage } from "@/lib/image-compress";
-import { MAX_UPLOAD_BYTES, uploadFilesDetailed } from "@/lib/upload";
+import { tooBigMessage, uploadFilesDetailed, uploadLimit } from "@/lib/upload";
 import styles from "./messages.module.css";
 
 const BUCKET = "zpravy";
@@ -239,7 +239,7 @@ export function Messenger({
       clear();
       return;
     }
-    if (file_ && file_.size > MAX_UPLOAD_BYTES && !isCompressibleImage(file_)) return setError("Soubor je větší než 25 MB. Nahraj ho na Google Disk a pošli odkaz.");
+    if (file_ && file_.size > uploadLimit(BUCKET) && !isCompressibleImage(file_)) return setError(tooBigMessage(BUCKET));
     setSending(true);
     signalTyping(true);
     // Zpráva se ukáže hned se stavem „Odesílá se…“.

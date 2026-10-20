@@ -4,6 +4,23 @@ import { compressImage } from "./image-compress";
 import { createClient } from "./supabase/client";
 
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+/** Chaty a zprávy mají menší limit (fotky se stejně zmenší); úkoly, materiály a nástěnka 25 MB. */
+export const CHAT_UPLOAD_BYTES = 10 * 1024 * 1024;
+const CHAT_BUCKETS = new Set(["zpravy", "chat", "tymy"]);
+
+/** Limit velikosti souboru pro daný bucket (stejný jako file_size_limit v Supabase). */
+export function uploadLimit(bucket: string): number {
+  return CHAT_BUCKETS.has(bucket) ? CHAT_UPLOAD_BYTES : MAX_UPLOAD_BYTES;
+}
+
+/** „Soubor „x“ je větší než 10 MB. …“ */
+export function tooBigMessage(bucket: string, name?: string): string {
+  const mb = Math.round(uploadLimit(bucket) / 1024 / 1024);
+  const what = name ? `Soubor „${name}“` : "Soubor";
+  return CHAT_BUCKETS.has(bucket)
+    ? `${what} je větší než ${mb} MB. Nahraj ho na Google Disk a pošli odkaz.`
+    : `${what} je větší než ${mb} MB. Nahraj ho na Google Disk a přidej odkaz.`;
+}
 
 /** Název souboru bezpečný pro úložiště (bez diakritiky a zvláštních znaků). */
 export function safeName(name: string): string {
@@ -34,8 +51,8 @@ export async function uploadFilesDetailed(
     onProgress?.(original.name);
     // Fotky se před nahráním zmenší (viz image-compress.ts).
     const file = await compressImage(original);
-    if (file.size > MAX_UPLOAD_BYTES) {
-      problem = `Soubor „${file.name}“ je větší než 25 MB. Nahraj ho na Google Disk a přidej odkaz.`;
+    if (file.size > uploadLimit(bucket)) {
+      problem = tooBigMessage(bucket, original.name);
       continue;
     }
     const path = `${folder}/${Date.now()}-${safeName(file.name)}`;
