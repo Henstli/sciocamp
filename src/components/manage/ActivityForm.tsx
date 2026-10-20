@@ -281,15 +281,11 @@ export function ActivityForm({
           <legend className={styles.legend}>Kdo se účastní</legend>
           <label className={styles.check}>
             <input type="checkbox" name="forAllStudents" value="1" defaultChecked={initial.forAllStudents} />
-            <span>
-              <strong>Všichni studenti</strong> — zapíšou se sami, i ti, které admin přidá později (s ohledem na ročníky níže).
-            </span>
+            <span>Všichni studenti</span>
           </label>
           <label className={styles.check}>
             <input type="checkbox" name="forAllStaff" value="1" checked={forAllStaff} onChange={(e) => setForAllStaff(e.target.checked)} />
-            <span>
-              <strong>Všichni učitelé a admini</strong> — uvidí událost v rozvrhu jako vyučující, i nově přidaní.
-            </span>
+            <span>Všichni učitelé a admini</span>
           </label>
           <span className={styles.hint}>Jednotlivé studenty můžeš zapsat i ručně po uložení v části Studenti.</span>
         </fieldset>
