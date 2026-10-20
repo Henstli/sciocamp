@@ -4,11 +4,14 @@ import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/Icon";
 import { profileHref } from "@/components/PageHeader";
-import { LinkTabs, RateCell, StatTile, WeeklyChart } from "@/components/stats/StatBits";
+import { CountCell, LinkTabs, RateCell, StatTile, WeeklyChart } from "@/components/stats/StatBits";
 import styles from "@/components/stats/stats.module.css";
 import { requireTeacher } from "@/lib/auth";
 import { isTeacherOf, listActivities } from "@/lib/data";
 import { statsInput } from "@/lib/data-stats";
+import { finalData } from "@/lib/data-final";
+import { COMPLETION_CHIP, COMPLETION_KINDS, COMPLETION_TEXT, completionRows, completionSummary } from "@/lib/completion";
+import { formatDateRange, activityRange } from "@/lib/periods";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { initials, isAdmin } from "@/lib/roles";
 import {
@@ -25,7 +28,7 @@ import {
   type Pair,
   type RangeKey,
 } from "@/lib/stats";
-import { formatDue } from "@/lib/time";
+import { formatDue, pragueNow, toIso } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Statistiky studenta" };
 
@@ -36,7 +39,7 @@ export default async function StudentStatsPage({ params, searchParams }: PagePro
   const { id } = await params;
   const sp = await searchParams;
   const range: RangeKey = sp.obdobi === "mesic" || sp.obdobi === "rok" ? sp.obdobi : "pololeti";
-  const [input, activities] = await Promise.all([statsInput(), listActivities()]);
+  const [input, activities, final] = await Promise.all([statsInput(), listActivities(), finalData()]);
   const student = input.students.find((s) => s.id === id);
   if (!student) notFound();
 
@@ -47,6 +50,10 @@ export default async function StudentStatsPage({ params, searchParams }: PagePro
   const all = summarize(school);
   const weeks = weekly(mine, input.now, range === "mesic" ? 5 : 12, from);
   const actMap = new Map(activities.map((a) => [a.id, a]));
+  const today = toIso(pragueNow(new Date(input.now)));
+  const completion = completionRows(activities, final.reviews, final.closures, toIso(pragueNow(new Date(from))), today, new Set([id]))
+    .sort((a, b) => (activityRange(b.activity).to ?? "9").localeCompare(activityRange(a.activity).to ?? "9"));
+  const canOpen = (a: (typeof activities)[number]) => isAdmin(user.role) || isTeacherOf(a, user.id);
   const enrolled = activities.filter((a) => a.studentIds.includes(id));
 
   const perClass = [...groupBy(mine, (p) => p.assignment.activityId)]
@@ -107,6 +114,55 @@ export default async function StudentStatsPage({ params, searchParams }: PagePro
         />
       </div>
 
+      <section className={`card ${styles.panel}`} aria-labelledby="ss-splneni">
+        <h2 id="ss-splneni" className={styles.panelTitle}>
+          Kurzy, ateliéry a expedice
+        </h2>
+        {completion.length === 0 ? (
+          <p className={styles.muted}>V tomto období nebyl zapsaný v žádném kurzu, ateliéru ani expedici.</p>
+        ) : (
+          <>
+            <div className={styles.compSummary}>
+              {COMPLETION_KINDS.map((k) => (
+                <span key={k.kind} className={styles.compKind}>
+                  <span className={styles.rowTitle}>
+                    <i className={styles.kindDot} data-kind={k.kind} aria-hidden="true" />
+                    {k.label}
+                  </span>
+                  <CountCell summary={completionSummary(completion.filter((r) => r.activity.kind === k.kind))} />
+                </span>
+              ))}
+            </div>
+            <ul className={styles.tasks}>
+              {completion.map((r) => {
+                const range = activityRange(r.activity);
+                return (
+                  <li key={r.activity.id} className={styles.task}>
+                    <span className={styles.taskText}>
+                      <span className={`${styles.taskTitle} ${styles.rowTitle}`}>
+                        <i className={styles.kindDot} data-kind={r.activity.kind} aria-hidden="true" />
+                        {canOpen(r.activity) ? (
+                          <Link href={`${activityHref(r.activity)}${r.state === "ceka" || r.review ? "?tab=hodnoceni" : ""}`}>{r.activity.title}</Link>
+                        ) : (
+                          r.activity.title
+                        )}
+                      </span>
+                      <span className={styles.taskMeta}>
+                        {KIND_LABEL[r.activity.kind]} · {formatDateRange(range.from, range.to)}
+                        {r.review && !r.published && " · student hodnocení ještě nevidí (třída není uzavřená)"}
+                      </span>
+                      {r.review?.feedback && <span className={styles.feedbackText}>„{r.review.feedback}“</span>}
+                    </span>
+                    <span className={`chip ${COMPLETION_CHIP[r.state]}`}>{COMPLETION_TEXT[r.state]}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </section>
+
+      <h2 className={styles.sectionTitle}>Úkoly</h2>
       {me.assigned === 0 ? (
         <div className={`card ${styles.emptyCard}`}>V tomto období student nedostal žádný úkol. Zkus delší období.</div>
       ) : (

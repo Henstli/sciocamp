@@ -3,12 +3,15 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
-import { LinkTabs, RateCell, StatTile, WeeklyChart } from "@/components/stats/StatBits";
+import { CompletionCard, CountCell, LinkTabs, RateCell, StatTile, WeeklyChart } from "@/components/stats/StatBits";
 import { StudentPicker } from "@/components/stats/StudentPicker";
 import styles from "@/components/stats/stats.module.css";
 import { requireTeacher } from "@/lib/auth";
 import { canOpenActivity, isTeacherOf, listActivities } from "@/lib/data";
 import { statsInput } from "@/lib/data-stats";
+import { finalData } from "@/lib/data-final";
+import { COMPLETION_KINDS, awaitingClosure, completionRows, completionSummary } from "@/lib/completion";
+import { pragueNow, toIso } from "@/lib/time";
 import { KIND_LABEL, activityHref } from "@/lib/links";
 import { initials } from "@/lib/roles";
 import {
@@ -35,7 +38,7 @@ export default async function StatsPage({ searchParams }: PageProps<"/statistiky
   const user = await requireTeacher();
   const sp = await searchParams;
   const range = readRange(sp.obdobi);
-  const [input, activities] = await Promise.all([statsInput(), listActivities()]);
+  const [input, activities, final] = await Promise.all([statsInput(), listActivities(), finalData()]);
   const mineIds = new Set(activities.filter((a) => isTeacherOf(a, user.id)).map((a) => a.id));
   const scope = sp.rozsah === "moje" && mineIds.size > 0 ? "moje" : "skola";
   const from = rangeStart(range, input.now);
@@ -48,6 +51,20 @@ export default async function StatsPage({ searchParams }: PageProps<"/statistiky
     students = students.filter((s) => inMine.has(s.id));
   }
   const all = summarize(pairs);
+
+  // Splnění kurzů, ateliérů a expedic (závěrečné hodnocení)
+  const today = toIso(pragueNow(new Date(input.now)));
+  const fromDay = toIso(pragueNow(new Date(from)));
+  const completion = completionRows(
+    scope === "moje" ? activities.filter((a) => mineIds.has(a.id)) : activities,
+    final.reviews,
+    final.closures,
+    fromDay,
+    today,
+    new Set(students.map((s) => s.id)),
+  );
+  const waiting = awaitingClosure(completion, today);
+  const compByStudent = groupBy(completion, (r) => r.studentId);
   const weeks = weekly(pairs, input.now, range === "mesic" ? 5 : 12, from);
   const attention = needsAttention(students, pairs);
   const good = doingWell(students, pairs);
@@ -111,6 +128,101 @@ export default async function StatsPage({ searchParams }: PageProps<"/statistiky
         )}
       </div>
 
+      <h2 className={styles.sectionTitle}>Splnění kurzů, ateliérů a expedic</h2>
+      {completion.length === 0 ? (
+        <div className={`card ${styles.emptyCard}`}>V tomto období neběžel žádný kurz, ateliér ani expedice{scope === "moje" ? " ve tvých třídách" : ""}.</div>
+      ) : (
+        <>
+          <section className={styles.kindCards} aria-label="Splnění podle druhu">
+            {COMPLETION_KINDS.map((k) => (
+              <CompletionCard key={k.kind} kind={k.kind} label={k.label} summary={completionSummary(completion.filter((r) => r.activity.kind === k.kind))} />
+            ))}
+          </section>
+
+          {waiting.length > 0 && (
+            <section className={`card ${styles.panel}`} aria-labelledby="st-uzavreni">
+              <h2 id="st-uzavreni" className={styles.panelTitle}>
+                Čeká na uzavření
+                <span className={styles.count} data-tone="wait">{waiting.length}</span>
+                <span className={styles.panelNote}>skončilo, ale studenti hodnocení ještě nevidí</span>
+              </h2>
+              <ul className={styles.waitList}>
+                {waiting.map((w) => (
+                  <li key={w.activity.id}>
+                    <span className={styles.rowTitle}>
+                      <i className={styles.kindDot} data-kind={w.activity.kind} aria-hidden="true" />
+                      {canOpenActivity(user, w.activity) ? (
+                        <Link href={`${activityHref(w.activity)}?tab=hodnoceni`}>{w.activity.title}</Link>
+                      ) : (
+                        w.activity.title
+                      )}
+                    </span>
+                    <span className={styles.rowMeta}>
+                      {KIND_LABEL[w.activity.kind]} · ohodnoceno {w.graded} z {w.total}
+                      {mineIds.has(w.activity.id) && " · moje"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section className={`card ${styles.panel}`} aria-labelledby="st-studenti">
+            <h2 id="st-studenti" className={styles.panelTitle}>
+              Studenti
+              <span className={styles.panelNote}>splněno / nesplněno / čeká na hodnocení</span>
+            </h2>
+            <div className={`${styles.tableWrap} ${styles.tall}`}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    {COMPLETION_KINDS.map((k) => (
+                      <th key={k.kind}>{k.label}</th>
+                    ))}
+                    <th>Úkoly</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[1, 2, 3, 4, 0].flatMap((g) => {
+                    const list = (gradeStudents.get(g) ?? []).filter((s) => compByStudent.has(s.id) || byStudent.has(s.id));
+                    if (list.length === 0) return [];
+                    return [
+                      <tr key={`g${g}`} className={styles.groupRow}>
+                        <th colSpan={COMPLETION_KINDS.length + 2}>{g ? `${g}. ročník` : "Bez ročníku"}</th>
+                      </tr>,
+                      ...list
+                        .sort((a, b) => a.name.localeCompare(b.name, "cs"))
+                        .map((s) => {
+                          const rows = compByStudent.get(s.id) ?? [];
+                          return (
+                            <tr key={s.id}>
+                              <th scope="row">
+                                <Link href={`/statistiky/${s.id}${keep}`} className={styles.rowTitle}>
+                                  {s.name}
+                                </Link>
+                              </th>
+                              {COMPLETION_KINDS.map((k) => (
+                                <td key={k.kind}>
+                                  <CountCell summary={completionSummary(rows.filter((r) => r.activity.kind === k.kind))} />
+                                </td>
+                              ))}
+                              <td>
+                                <RateCell value={summarize(byStudent.get(s.id) ?? []).handedRate} detail="odevzdané úkoly" />
+                              </td>
+                            </tr>
+                          );
+                        }),
+                    ];
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
+
+      <h2 className={styles.sectionTitle}>Úkoly</h2>
       {all.assigned === 0 ? (
         <div className={`card ${styles.emptyCard}`}>
           V tomto období zatím nebyl zadaný žádný úkol{scope === "moje" ? " ve tvých třídách" : ""}. Zkus delší období.

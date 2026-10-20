@@ -2,7 +2,9 @@
 // týdenní graf a přepínače období. Vše bez klientského JS.
 
 import Link from "next/link";
+import type { CompletionSummary } from "@/lib/completion";
 import { pct, type Week } from "@/lib/stats";
+import type { ActivityKind } from "@/lib/types";
 import styles from "./stats.module.css";
 
 /** Barva podle úspěšnosti: ≥ 85 % dobře, ≥ 70 % pozor, jinak špatně */
@@ -140,5 +142,75 @@ export function LinkTabs({
         </Link>
       ))}
     </nav>
+  );
+}
+
+/** Karta splnění jednoho druhu aktivit (kurzy / ateliéry / expedice) */
+export function CompletionCard({ kind, label, summary: s }: { kind: ActivityKind; label: string; summary: CompletionSummary }) {
+  const tone = rateTone(s.rate);
+  return (
+    <div className={`card ${styles.kindCard}`} data-kind={kind}>
+      <span className={styles.kindLabel}>
+        <i className={styles.kindDot} data-kind={kind} aria-hidden="true" />
+        {label}
+      </span>
+      {s.total === 0 ? (
+        <span className={styles.muted}>V tomto období žádné.</span>
+      ) : (
+        <>
+          {s.rate === null ? (
+            <span className={styles.kindValue} data-tone="none">
+              <small>Zatím nic ohodnocené</small>
+            </span>
+          ) : (
+            <span className={styles.kindValue} data-tone={tone}>
+              {pct(s.rate)}
+              <small>splněno</small>
+            </span>
+          )}
+          <span className={styles.stackBar} role="img" aria-label={`Splněno ${s.splneno}, nesplněno ${s.nesplneno}, čeká ${s.ceka}, probíhá ${s.probiha}`}>
+            <span data-k="ok" style={{ flexGrow: s.splneno }} />
+            <span data-k="late" style={{ flexGrow: s.nesplneno }} />
+            <span data-k="wait" style={{ flexGrow: s.ceka }} />
+            <span data-k="run" style={{ flexGrow: s.probiha }} />
+          </span>
+          <span className={styles.kindCounts}>
+            <span data-k="ok">{s.splneno} splněno</span>
+            <span data-k="late">{s.nesplneno} nesplněno</span>
+            {s.ceka > 0 && <span data-k="wait">{s.ceka} čeká na hodnocení</span>}
+            {s.probiha > 0 && <span data-k="run">{s.probiha} probíhá</span>}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Buňka tabulky: „3 ✓ 1 ✗ 1 …“ (splněno, nesplněno, čeká) */
+export function CountCell({ summary: s }: { summary: CompletionSummary }) {
+  if (s.total === 0) return <span className={styles.zero}>–</span>;
+  return (
+    <span className={styles.countCell}>
+      {(s.splneno > 0 || s.nesplneno > 0) && (
+        <span data-k="ok" title="Splněno">
+          {s.splneno} ✓
+        </span>
+      )}
+      {s.nesplneno > 0 && (
+        <span data-k="late" title="Nesplněno">
+          {s.nesplneno} ✗
+        </span>
+      )}
+      {s.ceka > 0 && (
+        <span data-k="wait" title="Čeká na hodnocení">
+          {s.ceka} čeká
+        </span>
+      )}
+      {s.probiha > 0 && (
+        <span data-k="run" title="Probíhá">
+          {s.probiha} běží
+        </span>
+      )}
+    </span>
   );
 }

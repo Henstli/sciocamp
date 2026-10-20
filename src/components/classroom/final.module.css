@@ -1,0 +1,281 @@
+/* Závěrečné hodnocení třídy */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px 24px;
+  padding: 20px 22px;
+}
+.headText {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+.note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.progress {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--border-soft);
+  max-width: 420px;
+}
+.progress span {
+  flex-basis: 0;
+  min-width: 0;
+}
+.progress [data-k="ok"] {
+  background: #1f9a63;
+}
+.progress [data-k="late"] {
+  background: #d24c4c;
+}
+.progress [data-k="none"] {
+  background: var(--border-soft);
+}
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.counts b {
+  color: var(--text);
+}
+.ok {
+  color: var(--ok);
+  font-weight: 800;
+}
+.late {
+  color: var(--late-fg);
+  font-weight: 800;
+}
+.headActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.closedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 360px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--primary-tint);
+  border: 1px solid var(--primary-line);
+  font-size: 14px;
+  font-weight: 600;
+}
+.confirmBtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.msg {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.msg[data-tone="error"] {
+  color: var(--late-fg);
+}
+.empty {
+  padding: 24px;
+  color: var(--text-2);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  grid-template-areas:
+    "who choice"
+    "fb fb"
+    "foot foot";
+  gap: 12px 16px;
+  padding: 16px 18px;
+  border-left: 4px solid var(--border);
+}
+.row[data-result="splneno"] {
+  border-left-color: #1f9a63;
+}
+.row[data-result="nesplneno"] {
+  border-left-color: #d24c4c;
+}
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "who" "choice" "fb" "foot";
+    padding: 14px;
+  }
+}
+.who {
+  grid-area: who;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.whoText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.name {
+  font-size: 15px;
+  font-weight: 800;
+}
+.tasks {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.tasks b {
+  color: var(--late-fg);
+}
+.choice {
+  grid-area: choice;
+  display: flex;
+  gap: 6px;
+  align-self: center;
+}
+.choice label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--border-input);
+  background: var(--card);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.choice input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.choice label:has(input:focus-visible) {
+  outline: 3px solid var(--primary-line);
+}
+.choice label[data-v="splneno"]:has(input:checked) {
+  background: var(--ok-bg);
+  border-color: var(--ok-line);
+  color: var(--ok);
+}
+.choice label[data-v="nesplneno"]:has(input:checked) {
+  background: var(--late-bg);
+  border-color: var(--late-line);
+  color: var(--late-fg);
+}
+.feedback {
+  grid-area: fb;
+}
+.feedback textarea {
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-input);
+  background: var(--card);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  resize: vertical;
+}
+.feedback textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.rowFoot {
+  grid-area: foot;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.stamp {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.unsaved {
+  color: var(--wait);
+  font-weight: 700;
+}
+
+/* Karta pro studenta (po uzavření třídy) */
+.mine {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 22px;
+  border-left: 5px solid #1f9a63;
+}
+.mine[data-result="nesplneno"] {
+  border-left-color: #d24c4c;
+}
+.mineHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.mineTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+.mineText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.mineMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+}

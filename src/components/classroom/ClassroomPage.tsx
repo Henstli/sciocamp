@@ -14,13 +14,19 @@ import { KIND_LABEL, activityHref } from "@/lib/links";
 import { initials } from "@/lib/roles";
 import { currentOrNext, expeditionBlocker } from "@/lib/schedule";
 import { describeWhen } from "@/lib/periods";
-import { DAYS_SHORT, formatRange, isoWeekdayOf, pragueNow } from "@/lib/time";
+import { DAYS_SHORT, formatRange, isoWeekdayOf, pragueNow, toIso } from "@/lib/time";
 import { STATE_CHIP, STATE_LABEL, isHandedIn, isOpen, isPublished, needsReview, workState } from "@/lib/assignments";
 import { assignmentsForActivity, workMap } from "@/lib/data-assignments";
 import { formatDue, formatStamp } from "@/lib/time";
 import type { Activity, ActivityKind, User } from "@/lib/types";
 import { signupBoards } from "@/lib/data-signups";
 import { tripDays } from "@/lib/signups";
+import { finalForActivity } from "@/lib/data-final";
+import { statsInput } from "@/lib/data-stats";
+import { FINAL_CHIP, FINAL_LABEL, isGradable } from "@/lib/final-reviews";
+import { buildPairs, pct, schoolYearStart, summarize } from "@/lib/stats";
+import type { FinalView } from "./FinalReviews";
+import finalStyles from "./final.module.css";
 import styles from "./classroom.module.css";
 
 /** Detail třídy ve stylu Google Classroomu (návrh: design/Trida.dc.html). */
@@ -60,6 +66,12 @@ export async function ClassroomPage({
   const lectorWord = activity.kind === "atelier" ? (feminine ? "lektorce" : "lektorovi") : feminine ? "vyučující" : "vyučujícímu";
 
   const work = await classWork(activity, user, isTeacher, teacher?.name ?? "Vyučující");
+  const gradable = isGradable(activity.kind);
+  const final = gradable ? await finalForActivity(activity.id) : null;
+  const finalView = gradable && isTeacher && final ? await buildFinalView(activity, students, final, stamp) : undefined;
+  // Student vidí svoje hodnocení až po uzavření třídy (v Supabase to hlídá i RLS).
+  const mine = final?.closure && !isTeacher ? (final.reviews.get(user.id) ?? null) : null;
+  const mineBy = mine ? (await getUsersByIds([mine.reviewedBy]))[0] : undefined;
 
   // Nástěnka: příspěvky a nové úkoly/materiály podle času, nejnovější nahoře.
   const stream: ClassView["stream"] = [
@@ -125,6 +137,7 @@ export async function ClassroomPage({
     dbId: activity.dbId,
     live: isSupabase,
     kindLabel: activity.kind === "atelier" ? "ateliéru" : "kurzu",
+    final: finalView,
     signups:
       activity.kind === "expedice"
         ? { boards: await signupBoards(activity), days: tripDays(activity.startsOn, activity.endsOn) }
@@ -169,6 +182,24 @@ export async function ClassroomPage({
           />
         </div>
       </section>
+
+      {mine && (
+        <section
+          aria-label="Závěrečné hodnocení"
+          className={`card ${finalStyles.mine}`}
+          data-result={mine.result}
+        >
+          <div className={finalStyles.mineHead}>
+            <h2 className={finalStyles.mineTitle}>Závěrečné hodnocení</h2>
+            <span className={`chip ${FINAL_CHIP[mine.result]}`}>{FINAL_LABEL[mine.result]}</span>
+          </div>
+          {mine.feedback && <p className={finalStyles.mineText}>{mine.feedback}</p>}
+          <span className={finalStyles.mineMeta}>
+            {mineBy ? `${mineBy.name} · ` : ""}
+            {formatStamp(mine.reviewedAt, stamp)}
+          </span>
+        </section>
+      )}
 
       {activity.project && (
         <section aria-label="Projekt ateliéru" className={`card ${styles.project}`}>
@@ -268,4 +299,36 @@ async function classWork(activity: Activity, user: User, isTeacher: boolean, tea
     }));
 
   return { topics, upcoming, stream };
+}
+
+/** Podklady pro záložku Závěrečné hodnocení: studenti, jejich hodnocení a přehled úkolů v této třídě. */
+async function buildFinalView(
+  activity: Activity,
+  students: User[],
+  final: Awaited<ReturnType<typeof finalForActivity>>,
+  stamp: Date,
+): Promise<FinalView> {
+  const input = await statsInput().catch(() => null);
+  const pairs = input ? buildPairs(input, schoolYearStart(input.now)).filter((p) => p.assignment.activityId === activity.id) : [];
+  const reviewers = await getUsersByIds([...new Set([...final.reviews.values()].map((r) => r.reviewedBy))]);
+  const nameOf = (id: string) => reviewers.find((u) => u.id === id)?.name ?? "";
+  const today = toIso(pragueNow());
+  const end = activity.endsOn ?? activity.period?.endsOn ?? null;
+  return {
+    closed: final.closure ? formatStamp(final.closure.closedAt, stamp) : null,
+    ended: !!end && end < today,
+    rows: [...students]
+      .sort((a, b) => a.name.localeCompare(b.name, "cs"))
+      .map((s) => {
+        const r = final.reviews.get(s.id);
+        const sm = summarize(pairs.filter((p) => p.studentId === s.id));
+        return {
+          student: { id: s.id, name: s.name, initials: initials(s.name), role: s.role },
+          result: r?.result ?? null,
+          feedback: r?.feedback ?? "",
+          stamp: r ? `${nameOf(r.reviewedBy)} · ${formatStamp(r.reviewedAt, stamp)}` : null,
+          tasks: sm.due > 0 ? { handed: sm.handed, due: sm.due, onTime: pct(sm.onTimeRate), points: pct(sm.pointsPct), missing: sm.missing } : null,
+        };
+      }),
+  };
 }

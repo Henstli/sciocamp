@@ -9,6 +9,7 @@ import { MeetEditor } from "./MeetEditor";
 import { type Person } from "./people";
 import { Stream, type StreamEntry } from "./Stream";
 import { SignupBoards, type SignupsView } from "../signups/SignupBoards";
+import { FinalReviews, type FinalView } from "./FinalReviews";
 import styles from "./classroom.module.css";
 
 export type ClassView = {
@@ -43,6 +44,8 @@ export type ClassView = {
   kindLabel: string;
   /** Rozdělení (pokoje, služby) — jen u expedic */
   signups?: SignupsView;
+  /** Závěrečné hodnocení — jen vyučující a admin u kurzu, ateliéru a expedice */
+  final?: FinalView;
 };
 
 const BASE_TABS = [
@@ -51,7 +54,7 @@ const BASE_TABS = [
   ["people", "Lidé"],
   ["chat", "Chat třídy"],
 ] as const;
-type Tab = (typeof BASE_TABS)[number][0] | "rozdeleni";
+type Tab = (typeof BASE_TABS)[number][0] | "rozdeleni" | "hodnoceni";
 
 
 export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: string }) {
@@ -59,6 +62,7 @@ export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: 
   const TABS: (readonly [Tab, string])[] = view.signups
     ? [BASE_TABS[0], ["rozdeleni", "Rozdělení"], ...BASE_TABS.slice(1)]
     : [...BASE_TABS];
+  if (view.final) TABS.push(["hodnoceni", "Závěrečné hodnocení"]);
   const [tab, setTab] = useState<Tab>(TABS.some(([k]) => k === initialTab) ? (initialTab as Tab) : "stream");
 
   return (
@@ -93,6 +97,7 @@ export function ClassTabs({ view, initialTab }: { view: ClassView; initialTab?: 
             live={view.live}
           />
         )}
+        {tab === "hodnoceni" && view.final && <FinalReviews view={view.final} slug={view.slug} live={view.live} />}
         {tab === "chat" && (
           <ClassChat
             initial={view.chat}

@@ -1647,4 +1647,48 @@ await test("statistiky: data celé školy jen pro vyučující a admina, bez nap
   await db.query(`delete from public.assignments where id in ($1, $2)`, [task.id, later.id]);
 });
 
+await test("závěrečné hodnocení: hodnotí vyučující, student vidí až po uzavření", async () => {
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2) on conflict do nothing`, [course.id, student]);
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2) on conflict do nothing`, [course.id, student2]);
+  const enrolled = (await db.query(`select student_id from public.enrollments where activity_id = $1`, [course.id])).rows.map((r) => r.student_id);
+  // Student ani cizí učitel hodnotit nesmí
+  await assert.rejects(() => as(student, `insert into public.final_reviews (activity_id, student_id, result) values ($1, $2, 'splneno')`, [course.id, student]));
+  await assert.rejects(() => as(teacher2, `insert into public.final_reviews (activity_id, student_id, result) values ($1, $2, 'splneno')`, [course.id, student]));
+  // Nezapsaného studenta ohodnotit nejde
+  await assert.rejects(() => as(teacher, `insert into public.final_reviews (activity_id, student_id, result) values ($1, $2, 'splneno')`, [course.id, outsider]));
+  await as(teacher, `insert into public.final_reviews (activity_id, student_id, result, feedback) values ($1, $2, 'splneno', 'Výborná práce')`, [course.id, student]);
+  // Před uzavřením student nic nevidí, uzavřít bez všech hodnocení nejde
+  assert.equal((await as(student, `select 1 from public.final_reviews`)).length, 0);
+  if (enrolled.length > 1) {
+    await assert.rejects(() => as(teacher, `select public.close_activity($1)`, [course.id]), /chybí hodnocení/);
+  }
+  for (const sid of enrolled.filter((x) => x !== student)) {
+    await as(admin, `insert into public.final_reviews (activity_id, student_id, result, feedback) values ($1, $2, 'nesplneno', 'Chybí projekt')`, [course.id, sid]);
+  }
+  await assert.rejects(() => as(student, `select public.close_activity($1)`, [course.id]), /vyučující nebo admin/);
+  await as(teacher, `select public.close_activity($1)`, [course.id]);
+  const mine = await as(student, `select result, feedback, reviewed_by from public.final_reviews`);
+  assert.deepEqual(mine.map((r) => r.result), ["splneno"]);
+  assert.equal(mine[0].reviewed_by, teacher);
+  const n = await db.query(`select title, body, href from public.notifications where user_id = $1 and kind = 'hodnoceni' order by created_at desc limit 1`, [student]);
+  assert.equal(n.rows[0].title, "Závěrečné hodnocení: Literatura ve filmu");
+  assert.equal(n.rows[0].href, "/kurzy/literatura-ve-filmu");
+  // Úprava po uzavření pošle oznámení; mazat po uzavření nejde
+  await as(teacher, `update public.final_reviews set feedback = 'Výborná práce, díky!' where activity_id = $1 and student_id = $2`, [course.id, student]);
+  const n2 = await db.query(`select title from public.notifications where user_id = $1 and kind = 'hodnoceni' order by created_at desc limit 1`, [student]);
+  assert.match(n2.rows[0].title, /upraveno/);
+  assert.equal((await as(teacher, `delete from public.final_reviews where activity_id = $1 returning 1`, [course.id])).length, 0);
+  // Události se nehodnotí
+  const { rows: [ev] } = await db.query(
+    `insert into public.activities (slug, kind, title, teacher_id, published) values ('fr-udalost', 'ostatni', 'Fr událost', $1, true) returning id`, [teacher]);
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2)`, [ev.id, student]);
+  await assert.rejects(() => as(teacher, `insert into public.final_reviews (activity_id, student_id, result) values ($1, $2, 'splneno')`, [ev.id, student]));
+  await assert.rejects(() => as(teacher, `select public.close_activity($1)`, [ev.id]), /kurzy, ateliéry a expedice/);
+  // Znovu otevřít: student hodnocení zase nevidí
+  await as(teacher, `select public.reopen_activity($1)`, [course.id]);
+  assert.equal((await as(student, `select 1 from public.final_reviews`)).length, 0);
+  await db.query(`delete from public.final_reviews`);
+  await db.query(`delete from public.activities where id = $1`, [ev.id]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);
