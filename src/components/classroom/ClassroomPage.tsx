@@ -138,7 +138,7 @@ export async function ClassroomPage({
         {back.label}
       </Link>
 
-      <section className={styles.hero}>
+      <section className={styles.hero} data-tone={kindTone(activity)}>
         <div aria-hidden="true" className={`${styles.blob} ${styles.blob1}`} />
         <div aria-hidden="true" className={`${styles.blob} ${styles.blob2}`} />
         <div className={styles.heroText}>

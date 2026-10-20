@@ -87,11 +87,13 @@ export function ClassCard({
   );
 }
 
-/** Barva karty: událost vždy oranžová, expedice zelenomodrá (jako v rozvrhu), jinak uložený odstín. */
+/** Barva aktivity podle druhu (karta, detail třídy, rozvrh): kurz modrá, ateliér fialová,
+ *  událost oranžová, expedice zelenomodrá. */
 export function kindTone(a: Pick<Activity, "kind" | "tone">): CardTone {
   if (a.kind === "ostatni") return "orange";
   if (a.kind === "expedice") return "teal";
-  return a.tone;
+  if (a.kind === "atelier") return "violet";
+  return a.tone === "blueDark" ? "blueDark" : "blue";
 }
 export type CardTone = Activity["tone"] | "orange";
 

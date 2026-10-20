@@ -75,6 +75,41 @@
   background: #2754bb;
   color: #fff;
 }
+/* Barva třídy podle druhu aktivity — stejný vzhled (kruhy, tlačítka), jiný odstín */
+.hero[data-tone="violet"] {
+  --tone: var(--atelier);
+  --tone-ink: #3e2f9e;
+}
+.hero[data-tone="teal"] {
+  --tone: var(--other);
+  --tone-ink: #0f6b5f;
+}
+.hero[data-tone="orange"] {
+  --tone: var(--event);
+  --tone-ink: #a3420f;
+}
+.hero:is([data-tone="violet"], [data-tone="teal"], [data-tone="orange"]) {
+  background: var(--tone);
+}
+.hero:is([data-tone="violet"], [data-tone="teal"], [data-tone="orange"]) .blob1 {
+  background: color-mix(in srgb, var(--tone), #fff 11%);
+}
+.hero:is([data-tone="violet"], [data-tone="teal"], [data-tone="orange"]) .blob2 {
+  background: color-mix(in srgb, var(--tone), #fff 20%);
+}
+.hero:is([data-tone="violet"], [data-tone="teal"], [data-tone="orange"]) .heroBtn {
+  background: color-mix(in srgb, var(--tone), #000 18%);
+}
+.hero:is([data-tone="violet"], [data-tone="teal"], [data-tone="orange"]) .heroBtn:hover {
+  background: color-mix(in srgb, var(--tone), #000 30%);
+}
+.hero:is([data-tone="violet"], [data-tone="teal"], [data-tone="orange"]) :global(.btn-white) {
+  color: var(--tone-ink);
+}
+.hero:is([data-tone="violet"], [data-tone="teal"], [data-tone="orange"]) :global(.btn-white:hover) {
+  background: color-mix(in srgb, var(--tone), #fff 88%);
+  color: color-mix(in srgb, var(--tone-ink), #000 15%);
+}
 
 .columns {
   display: flex;
