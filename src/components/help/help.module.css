@@ -361,33 +361,6 @@
   opacity: 1;
   animation: ringPulse 1.6s ease-out 0.3s infinite;
 }
-.hint {
-  position: absolute;
-  transform: translate(-50%, calc(-100% - 14px));
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: #3b6fe0;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-  box-shadow: 0 4px 12px rgba(17, 26, 51, 0.25);
-}
-.hint[data-below] {
-  transform: translate(-50%, 14px);
-}
-.hint[data-right] {
-  transform: translate(-100%, calc(-100% - 14px));
-}
-.hint[data-right][data-below] {
-  transform: translate(-100%, 14px);
-}
-.hint[data-on] {
-  opacity: 1;
-}
 .cursor {
   position: absolute;
   width: 26px;

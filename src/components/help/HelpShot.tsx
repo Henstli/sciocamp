@@ -10,13 +10,6 @@ import styles from "./help.module.css";
 
 type Phase = "start" | "move" | "press" | "result" | "hold";
 
-const HINT: Record<HelpShotData["action"], string | null> = {
-  click: "Klikni",
-  point: "Klikni sem",
-  type: "Napiš",
-  select: "Vyber",
-  none: null,
-};
 
 /** Kroky animace (ms od začátku). */
 const T = { show: 250, move: 450, press: 1450, result: 1800, typeStep: 170, hold: 2600 };
@@ -116,12 +109,7 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
     top: `${away ? Math.min(cy + 22, 92) : aside ? Math.min((t.y + t.h) * 100 + 4, 96) : cy}%`,
     opacity: changed ? 0 : 1,
   };
-  const hint = HINT[shot.action];
   const showRing = t && phase !== "start" && !changed;
-  // Bublina nad prvkem, u horního okraje pod ním.
-  const hintBelow = t ? t.y < 0.18 : false;
-  // U širokých polí bublina vpravo nad polem, ať nezakrývá popisek vlevo.
-  const hintRight = t ? t.w > 0.3 || shot.action === "type" : false;
 
   return (
     <figure className={styles.shot} aria-label={label}>
@@ -180,21 +168,6 @@ export function HelpShot({ shot, label }: { shot: HelpShotData; label: string })
             }}
             aria-hidden="true"
           />
-        )}
-        {t && hint && (
-          <span
-            className={styles.hint}
-            data-on={showRing || undefined}
-            data-below={hintBelow || undefined}
-            data-right={hintRight || undefined}
-            style={{
-              left: `${hintRight ? (t.x + t.w) * 100 : Math.min(Math.max(cx, 8), 92)}%`,
-              top: `${(hintBelow ? t.y + t.h : t.y) * 100}%`,
-            }}
-            aria-hidden="true"
-          >
-            {hint}
-          </span>
         )}
         {t && !still && shot.action !== "none" && (
           <span className={styles.cursor} style={cursor} aria-hidden="true">
