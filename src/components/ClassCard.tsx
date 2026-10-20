@@ -46,7 +46,7 @@ export function ClassCard({
           <>
             {activity.project && (
               <Milestones
-                label={`Projekt: ${activity.project.name}`}
+                label={activity.project.name ? `Projekt: ${activity.project.name}` : "Milníky ateliéru"}
                 done={activity.project.milestonesDone}
                 total={activity.project.milestonesTotal}
                 tone={activity.tone}

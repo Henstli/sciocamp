@@ -173,7 +173,7 @@ export async function ClassroomPage({
       {activity.project && (
         <section aria-label="Projekt ateliéru" className={`card ${styles.project}`}>
           <Milestones
-            label={`Projekt: ${activity.project.name}`}
+            label={activity.project.name ? `Projekt: ${activity.project.name}` : "Milníky ateliéru"}
             done={activity.project.milestonesDone}
             total={activity.project.milestonesTotal}
             tone={activity.tone}

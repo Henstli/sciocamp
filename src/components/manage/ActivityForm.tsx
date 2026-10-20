@@ -29,6 +29,8 @@ export type ActivityFormValues = {
   projectName: string;
   milestonesDone: number;
   milestonesTotal: number;
+  /** Ateliér už má milníky (i bez názvu projektu) */
+  hasProject?: boolean;
   slots: { day: number; start: string; end: string }[];
   /** Další vyučující */
   coTeacherIds: string[];
@@ -77,7 +79,7 @@ export function ActivityForm({
   );
   const [nextUid, setNextUid] = useState(100);
   const [periodId, setPeriodId] = useState(initial.periodId);
-  const [hasProject, setHasProject] = useState(!!initial.projectName);
+  const [hasProject, setHasProject] = useState(!!initial.projectName || !!initial.hasProject);
   const [leadId, setLeadId] = useState(initial.teacherId);
   const [coTeachers, setCoTeachers] = useState<string[]>(initial.coTeacherIds);
   const [forAllStaff, setForAllStaff] = useState(initial.forAllStaff);
@@ -403,11 +405,11 @@ export function ActivityForm({
           <legend className={styles.legend}>Projekt ateliéru (nepovinné)</legend>
           <label className={styles.check}>
             <input type="checkbox" checked={hasProject} onChange={(e) => setHasProject(e.target.checked)} />
-            Ateliér má projekt s milníky
+            Ateliér má milníky (projekt)
           </label>
           {hasProject && (
             <div className={styles.grid}>
-              <Field label="Název projektu" wide>
+              <Field label="Název projektu (nepovinné)" wide>
                 <input name="projectName" defaultValue={initial.projectName} className={styles.input} placeholder="Např. Týmová prezentace" />
               </Field>
               <Field label="Milníků celkem" error={fe.milestones}>

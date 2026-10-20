@@ -55,7 +55,7 @@
 - Google přihlášení se v UI zapíná proměnnou `NEXT_PUBLIC_GOOGLE_LOGIN=1` (až bude Google v Supabase zapnutý).
 - Autor nasadil aplikaci na Vercel: https://sciocamp.vercel.app (push do `main` = nasazení).
 - Kurzová období (tabulka `blocks`, admin je spravuje ve Správě → „Kurzová období“): 4 za rok, 2 za pololetí. Kurz trvá celé období; ateliér má vlastní od–do uvnitř období (student je v jednu dobu jen v jednom ateliéru — hlídá trigger `guard_one_atelier` i UI); událost (`ostatni`) má rozvrh nebo od–do. Pomocné funkce v `src/lib/periods.ts`. Proběhlé aktivity jsou na stránkách Kurzy/Ateliéry ve sbaleném seznamu „Proběhlé“.
-- Projekt ateliéru s milníky (`activities.project_name`, `milestones_done`/`milestones_total`, nastavuje se ve formuláři aktivity): ukazuje `Milestones` z `ClassCard.tsx` na kartě ateliéru (`ClassCard`, stránka Ateliéry) i pod hlavičkou detailu třídy (`ClassroomPage`).
+- Projekt ateliéru s milníky (`activities.project_name` nepovinný, `milestones_done`/`milestones_total` — milníky jdou i bez názvu, pak popisek „Milníky ateliéru“; nastavuje se ve formuláři aktivity): ukazuje `Milestones` z `ClassCard.tsx` na kartě ateliéru (`ClassCard`, stránka Ateliéry) i pod hlavičkou detailu třídy (`ClassroomPage`).
 - Učebny nejsou (výuka je online), místo `activities.location` je nepovinné.
 - Datum a čas ve formulářích jen přes `src/components/fields/DateTime.tsx` (dd. mm. rrrr, 24h, kalendář a nabídka časů, volné psaní „1 11“, „1230“) — nativní `<input type="date|time">` se řídí jazykem prohlížeče.
 - Vyučující přikládá k úkolům a materiálům soubory (Storage bucket `materialy`, cesta `<id úkolu>/<čas>-<název>`, nahrávání přes `src/lib/upload.ts`). Počet „odevzdalo X z Y“ nezapočítává vrácené práce (`isHandedIn`).

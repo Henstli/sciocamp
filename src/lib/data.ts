@@ -124,8 +124,8 @@ function toActivity(r: ActivityRow): Activity {
     round: r.enroll_rounds ? toRound(r.enroll_rounds) : null,
     tone: r.tone,
     project:
-      r.project_name && r.milestones_total > 0
-        ? { name: r.project_name, milestonesDone: r.milestones_done, milestonesTotal: r.milestones_total }
+      r.milestones_total > 0
+        ? { name: r.project_name ?? "", milestonesDone: r.milestones_done, milestonesTotal: r.milestones_total }
         : undefined,
   };
 }

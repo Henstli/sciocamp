@@ -43,6 +43,7 @@ export type Slot = {
 };
 
 export type Project = {
+  /** Název projektu (může být prázdný — pak jen „Milníky“) */
   name: string;
   milestonesDone: number;
   milestonesTotal: number;

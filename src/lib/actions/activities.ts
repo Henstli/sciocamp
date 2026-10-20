@@ -146,8 +146,9 @@ function parseForm(formData: FormData) {
       allowed_grades: grades.length && grades.length < 4 ? grades : null,
       tone: TONE_BY_KIND[kind] ?? "blue",
       project_name: kind === "atelier" ? projectName : null,
-      milestones_total: kind === "atelier" && projectName ? milestonesTotal : 0,
-      milestones_done: kind === "atelier" && projectName ? milestonesDone : 0,
+      // Milníky jdou i bez názvu projektu.
+      milestones_total: kind === "atelier" ? milestonesTotal : 0,
+      milestones_done: kind === "atelier" ? milestonesDone : 0,
       ...enrollment,
       ...forAll,
     },

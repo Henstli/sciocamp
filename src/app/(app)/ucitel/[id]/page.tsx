@@ -115,6 +115,7 @@ export default async function ManageActivityPage({ params, searchParams }: PageP
           projectName: activity.project?.name ?? "",
           milestonesDone: activity.project?.milestonesDone ?? 0,
           milestonesTotal: activity.project?.milestonesTotal ?? 5,
+          hasProject: !!activity.project,
           slots: activity.slots.map((s) => ({ day: s.day, start: s.start, end: s.end })),
           coTeacherIds: activity.coTeacherIds ?? [],
           announceReady: activity.announceReady ?? false,
