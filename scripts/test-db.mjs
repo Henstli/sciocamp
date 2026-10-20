@@ -404,8 +404,12 @@ await test("chat třídy: jen pro třídu, mazat smí autor a vyučující", asy
   await assert.rejects(() => as(outsider, `insert into public.class_messages (activity_id, body) values ($1, 'Haló')`, [course.id]));
   assert.equal((await as(student2, `select id from public.class_messages`)).length, 1);
   assert.equal((await as(outsider, `select id from public.class_messages`)).length, 0);
-  assert.equal((await as(student2, `delete from public.class_messages where id = $1 returning id`, [m.id])).length, 0);
-  assert.equal((await as(teacher, `delete from public.class_messages where id = $1 returning id`, [m.id])).length, 1);
+  await assert.rejects(() => as(student2, `select public.delete_chat_message('trida', $1)`, [m.id]), /smazat nemůžeš/);
+  await as(teacher, `select public.delete_chat_message('trida', $1)`, [m.id]);
+  const [gone] = await as(student2, `select body, deleted_by from public.class_messages where id = $1`, [m.id]);
+  assert.equal(gone.body, "");
+  assert.equal(gone.deleted_by, teacher);
+  await db.query(`delete from public.class_messages where id = $1`, [m.id]);
 });
 
 await test("zprávy: konverzace dvou lidí, třetí nic nevidí", async () => {
@@ -1401,9 +1405,18 @@ await test("akce se zprávami: odpověď, úprava, připnutí a reakce", async (
   assert.equal((await as(student, `select room from public.chat_reactions where message_id = $1`, [m1.id])).length, 2);
   assert.equal((await as(outsider, `select 1 from public.chat_reactions`)).length, 0);
   assert.equal((await as(student, `delete from public.chat_reactions where user_id = $1 returning 1`, [teacher2])).length, 0);
-  // Smazaná zpráva vezme reakce s sebou.
-  await as(student, `delete from public.messages where id = $1`, [m1.id]);
+  // Smazaná zpráva: zůstane záznam „smazal(a)“, text, reakce a připnutí zmizí.
+  await assert.rejects(() => as(student, `delete from public.messages where id = $1`, [m1.id]));
+  await assert.rejects(() => as(teacher2, `select public.delete_chat_message('zpravy', $1)`, [m1.id]), /smazat nemůžeš/);
+  await as(student, `select public.delete_chat_message('zpravy', $1)`, [m1.id]);
+  const [del] = await as(teacher2, `select body, deleted_at, deleted_by from public.messages where id = $1`, [m1.id]);
+  assert.equal(del.body, "");
+  assert.ok(del.deleted_at);
+  assert.equal(del.deleted_by, student);
   assert.equal((await db.query(`select 1 from public.chat_reactions where message_id = $1`, [m1.id])).rows.length, 0);
+  await assert.rejects(() => as(student, `update public.messages set body = 'zpět' where id = $1`, [m1.id]), /nejde upravit/);
+  await assert.rejects(() => as(teacher2, `insert into public.messages (conversation_id, body, reply_to) values ($1, 'x', $2)`, [conv, m1.id]));
+  await assert.rejects(() => as(student, `select public.delete_chat_message('zpravy', $1)`, [m1.id]), /už je smazaná/);
 
   // Chat třídy: připíná jen vyučující, upravuje jen autor.
   await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2) on conflict do nothing`, [course.id, student]);
