@@ -95,3 +95,23 @@
 .ms[data-tone="teal"] div[data-done="true"] {
   background: var(--other);
 }
+
+/* Štítek „Začne 2. 11.“ / „Připravuje se“ v hlavičce karty */
+.head {
+  position: relative;
+}
+.status {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--primary-text);
+}
+.status[data-kind="priprava"] {
+  background: var(--wait-bg);
+  color: var(--wait);
+}

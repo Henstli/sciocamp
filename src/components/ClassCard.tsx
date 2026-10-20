@@ -14,6 +14,7 @@ export function ClassCard({
   live,
   extra,
   teacherLabel,
+  status,
 }: {
   activity: Activity;
   teacher: User | null;
@@ -22,6 +23,8 @@ export function ClassCard({
   isTeacher: boolean;
   live: boolean;
   extra?: React.ReactNode;
+  /** Štítek v hlavičce u aktivity, která ještě nezačala */
+  status?: { kind: "bezi" | "priprava" | "chysta"; label: string };
 }) {
   const href = activityHref(activity);
   return (
@@ -30,6 +33,11 @@ export function ClassCard({
         <div className={styles.when}>
           {describeWhen(activity) || "Bez rozvrhu"}
         </div>
+        {status && (
+          <span className={styles.status} data-kind={status.kind}>
+            {status.label}
+          </span>
+        )}
         <div className={styles.title}>{activity.title}</div>
         <div className={styles.lector}>{teacherLabel ?? teacher?.name}</div>
       </Link>

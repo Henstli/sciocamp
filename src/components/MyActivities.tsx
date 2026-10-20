@@ -3,8 +3,8 @@ import { ClassCard } from "./ClassCard";
 import { EmptyNote, PageHeader } from "./PageHeader";
 import { activitiesForUser, getUsersByIds, isTeacherOf, listActivities } from "@/lib/data";
 import { activityHref } from "@/lib/links";
-import { describeWhen, hasEnded } from "@/lib/periods";
-import { initials } from "@/lib/roles";
+import { activityPhase, describeWhen, hasEnded, hasStarted } from "@/lib/periods";
+import { canTeach, initials } from "@/lib/roles";
 import { expeditionBlocker, isLiveNow } from "@/lib/schedule";
 import { pragueNow, toIso } from "@/lib/time";
 import type { Activity, ActivityKind, User } from "@/lib/types";
@@ -36,7 +36,10 @@ export async function MyActivities({
   const blocked = expeditionBlocker(await listActivities());
   const byStart = (a: Activity, b: Activity) =>
     (a.startsOn ?? a.period?.startsOn ?? "").localeCompare(b.startsOn ?? b.period?.startsOn ?? "") || a.title.localeCompare(b.title, "cs");
-  const all = (await activitiesForUser(user, kind)).sort(byStart);
+  // Student vidí kurz až od začátku jeho období (i když je zapsaný dřív).
+  // Ateliéry a expedice vidí hned po zápisu, aby se mohl podílet na přípravě.
+  const hideUntilStart = !canTeach(user.role) && kind === "kurz";
+  const all = (await activitiesForUser(user, kind)).filter((a) => !hideUntilStart || hasStarted(a, today)).sort(byStart);
   const current = all.filter((a) => !hasEnded(a, today));
   const ended = all.filter((a) => hasEnded(a, today)).reverse();
 
@@ -46,6 +49,14 @@ export async function MyActivities({
   const teachersLabel = (a: Activity) => {
     const more = (a.coTeacherIds ?? []).length;
     return [nameOf(a.teacherId), more > 0 ? `+ ${more} ${more < 5 ? "další" : "dalších"}` : null].filter(Boolean).join(" ");
+  };
+
+  // Štítek u aktivit, které ještě nezačaly („Začne 2. 11.“; učitel i „Připravuje se“).
+  const upcomingLabel = (a: Activity) => {
+    const phase = activityPhase(a, today);
+    if (phase.kind === "bezi") return undefined;
+    if (phase.kind === "priprava" && !isTeacherOf(a, user.id) && user.role !== "admin") return undefined;
+    return phase;
   };
 
   return (
@@ -66,6 +77,7 @@ export async function MyActivities({
               teacherLabel={teachersLabel(a)}
               isTeacher={isTeacherOf(a, user.id)}
               live={isLiveNow(a, now, blocked)}
+              status={upcomingLabel(a)}
             />
           ))}
         </div>

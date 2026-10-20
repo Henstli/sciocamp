@@ -123,3 +123,19 @@ export function currentSchoolYear(today = new Date()): { from: string; to: strin
   const start = today.getMonth() >= 6 ? y : y - 1;
   return { from: `${start}-09-01`, to: `${start + 1}-06-30` };
 }
+
+export type ActivityPhase = { kind: "bezi" | "priprava" | "chysta"; label: string };
+
+/**
+ * Stav aktivity, která ještě neskončila: probíhá / připravuje se (studenti ji
+ * ještě nevidí — kurz nezveřejněný, ateliér či expedice nevyhlášené v kole) /
+ * zveřejněná, ale ještě nezačala („Začne 2. 11.“).
+ */
+export function activityPhase(a: Activity, todayIso: string): ActivityPhase {
+  if (hasStarted(a, todayIso)) return { kind: "bezi", label: "Probíhá" };
+  const hidden = a.kind === "kurz" ? a.published === false : (a.kind === "atelier" || a.kind === "expedice") && !a.round;
+  if (hidden) return { kind: "priprava", label: a.announceReady ? "Čeká na vyhlášení" : "Připravuje se" };
+  const from = activityRange(a).from;
+  const [, m, d] = (from ?? "").split("-").map(Number);
+  return { kind: "chysta", label: from ? `Začne ${d}. ${m}.` : "Začne později" };
+}
