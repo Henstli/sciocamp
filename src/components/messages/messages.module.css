@@ -848,11 +848,15 @@
   .bubbleRow {
     position: relative;
   }
+  /* Svisle na střed bez transform: transform by z lišty udělal kotvu pro
+     plovoucí okna (position: fixed) a nabídky by se ukázaly mimo obrazovku. */
   .bubbleRow > :not(.bubbleCol) {
     position: absolute;
-    top: 50%;
+    top: 0;
+    bottom: 0;
     left: calc(100% + 8px);
-    transform: translateY(-50%);
+    height: max-content;
+    margin: auto 0;
     z-index: 2;
   }
   .msgWrap[data-mine="true"] .bubbleRow > :not(.bubbleCol) {
