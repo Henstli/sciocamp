@@ -13,6 +13,7 @@ const ICON: Record<SearchKind, IconName> = {
   person: "users",
   proposal: "bulb",
   wish: "vote",
+  help: "help",
   page: "chevronRight",
 };
 const ACTIVITY_ICON: Record<string, IconName> = { kurz: "book", atelier: "shapes", ostatni: "calendar", expedice: "mountain" };

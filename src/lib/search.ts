@@ -1,6 +1,6 @@
 // Vyhledávání na Domově: položky a řazení výsledků (běží v prohlížeči).
 
-export type SearchKind = "activity" | "assignment" | "person" | "proposal" | "wish" | "page";
+export type SearchKind = "activity" | "assignment" | "person" | "proposal" | "wish" | "help" | "page";
 
 export type SearchItem = {
   kind: SearchKind;
@@ -22,10 +22,11 @@ export const KIND_LABEL: Record<SearchKind, string> = {
   person: "Lidé",
   proposal: "Návrhy",
   wish: "Hlasování",
+  help: "Nápověda",
   page: "Stránky",
 };
 
-export const KIND_ORDER: SearchKind[] = ["activity", "assignment", "person", "proposal", "wish", "page"];
+export const KIND_ORDER: SearchKind[] = ["activity", "assignment", "person", "proposal", "wish", "help", "page"];
 
 /** Malá písmena bez diakritiky: „Šachy“ → „sachy“. */
 export function fold(s: string): string {

@@ -118,7 +118,7 @@ export function Sidebar({ user, showTeach, showAdmin, badges }: SidebarProps) {
           </div>
         ))}
 
-        <div className={styles.userCard}>
+        <div className={styles.userCard} data-help="user-card">
           <Link href="/profil" className={styles.user} aria-current={isActive("/profil") ? "page" : undefined}>
             <span className={styles.avatar}>
               <MyPhoto initials={user.initials} />
@@ -127,6 +127,15 @@ export function Sidebar({ user, showTeach, showAdmin, badges }: SidebarProps) {
               <span className={styles.userName}>{user.name}</span>
               <span className={styles.userRole}>{user.caption}</span>
             </span>
+          </Link>
+          <Link
+            href="/napoveda"
+            aria-label="Nápověda"
+            title="Nápověda"
+            className={styles.iconLink}
+            aria-current={isActive("/napoveda") ? "page" : undefined}
+          >
+            <Icon name="help" size={18} />
           </Link>
           <Link
             href="/nastaveni"

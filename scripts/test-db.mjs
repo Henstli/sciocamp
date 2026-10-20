@@ -1611,4 +1611,16 @@ await test("wrap: spuštění, zkouška na adminovi, data a typ", async () => {
   await db.query(`delete from public.activities where id = $1`, [exp.id]);
 });
 
+await test("nápověda: odpověď „pomohl návod“ jen svoje, souhrn vidí admin", async () => {
+  await as(student, `insert into public.help_feedback (slug, helpful) values ('profil', true)`);
+  await as(student, `insert into public.help_feedback (slug, helpful) values ('profil', false) on conflict (user_id, slug) do update set helpful = excluded.helpful, updated_at = now()`);
+  assert.equal((await as(student, `select helpful from public.help_feedback where slug = 'profil'`))[0].helpful, false);
+  await assert.rejects(() => as(student, `insert into public.help_feedback (user_id, slug, helpful) values ($1, 'profil', true)`, [student2]));
+  await as(teacher, `insert into public.help_feedback (slug, helpful) values ('profil', true)`);
+  assert.equal((await as(student, `select 1 from public.help_feedback`)).length, 1, "cizí odpovědi student nevidí");
+  assert.equal((await as(admin, `select 1 from public.help_feedback where slug = 'profil'`)).length, 2);
+  await assert.rejects(() => as(student, `insert into public.help_feedback (slug, helpful) values ('Špatně!', true)`));
+  await db.query(`delete from public.help_feedback`);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

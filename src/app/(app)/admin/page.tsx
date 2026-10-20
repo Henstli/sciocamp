@@ -17,6 +17,8 @@ import { PeriodManager } from "./PeriodManager";
 import { StorageManager, type StorageView } from "./StorageManager";
 import { TermManager } from "./TermManager";
 import { WrapTools } from "./WrapTools";
+import { HelpFeedbackTable } from "./HelpFeedbackTable";
+import { helpFeedbackSummary } from "@/lib/data-help";
 import { wrapState } from "@/lib/data-wrap";
 import styles from "./admin.module.css";
 
@@ -42,6 +44,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const storage = await loadStorage();
   const announcements = await listAnnouncements();
   const wrap = await wrapState(me);
+  const helpRows = await helpFeedbackSummary();
   // Připravené ateliéry a expedice (do zápisu se dají vyhlásit spolu s kurzy).
   const freeOf = (a: (typeof activities)[number]) =>
     !(a.round && a.round.closesAt > new Date(nowMs()).toISOString());
@@ -143,6 +146,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
               season={wrap?.season ?? 0}
             />
             <StorageManager report={storage.report} problem={storage.problem} />
+            <HelpFeedbackTable rows={helpRows} live={isSupabase} />
           </div>
         }
         announcementsTab={

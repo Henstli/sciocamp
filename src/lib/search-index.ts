@@ -1,6 +1,7 @@
 // Co se dá na Domově vyhledat — sestaví se na serveru pro přihlášeného.
 
 import "server-only";
+import { guidesFor } from "./help/guides";
 import { isTeacherOf, listActivities, listUsers } from "./data";
 import { assignmentsForUser } from "./data-assignments";
 import { listProposals, listWishes } from "./data-proposals";
@@ -95,6 +96,11 @@ export async function buildSearchIndex(user: User): Promise<SearchItem[]> {
   if (canTeach(user.role)) pages.push(["Moje třídy", "/ucitel", "vyuka nova aktivita"]);
   if (isAdmin(user.role)) pages.push(["Uživatelé a škola", "/admin", "sprava pozvanka kurzova obdobi terminy"]);
   for (const [title, href, keywords] of pages) items.push({ kind: "page", title, sub: "Stránka", href, keywords });
+  items.push({ kind: "page", title: "Nápověda", sub: "Stránka", href: "/napoveda", keywords: "navod jak na to pomoc" });
+  // Návody v Nápovědě (podle role), hledá se i v názvech kroků.
+  for (const g of guidesFor(user.role)) {
+    items.push({ kind: "help", title: g.title, sub: "Návod", href: `/napoveda/${g.slug}`, keywords: [g.intro, ...g.steps.map((s) => s.title)].join(" ") });
+  }
 
   return items;
 }
