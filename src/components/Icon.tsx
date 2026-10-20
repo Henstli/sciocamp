@@ -40,7 +40,7 @@ const PATHS = {
   edit: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13 7 4 4" /></>,
   smile: <><circle cx="12" cy="12" r="9" /><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0" /><path d="M9 9.5h.01M15 9.5h.01" /></>,
   // Plný štítek s vyříznutými písmeny GIF (maska; id se opakuje, ale definice jsou stejné).
-  gif: <><mask id="ikona-gif-pismena"><rect width="24" height="24" fill="#fff" stroke="none" /><path d="M10.1 9.6a2.6 2.6 0 1 0 0 4.8V12.4H8.7M12.7 9v6M15.3 15V9h3M15.3 12h2.4" stroke="#000" strokeWidth={1.9} /></mask><rect x="2" y="4.5" width="20" height="15" rx="4" fill="currentColor" stroke="none" mask="url(#ikona-gif-pismena)" /></>,
+  gif: <><mask id="ikona-gif-pismena"><rect width="24" height="24" fill="#fff" stroke="none" /><path d="M10.2 9.4H8a1.8 1.8 0 0 0-1.8 1.8v1.6A1.8 1.8 0 0 0 8 14.6h2.2v-2.5H8.6M12.7 9.4v5.2M15.2 14.6V9.4h3M15.2 12h2.3" stroke="#000" strokeWidth={1.7} /></mask><rect x="2" y="4.5" width="20" height="15" rx="4" fill="currentColor" stroke="none" mask="url(#ikona-gif-pismena)" /></>,
   reply: <><path d="M9 14 4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 6 6v5" /></>,
   more: <><circle cx="5" cy="12" r="1.4" /><circle cx="12" cy="12" r="1.4" /><circle cx="19" cy="12" r="1.4" /></>,
   pushpin: <><path d="M9 3.5h6l-1 5.5 3.5 3.5V14h-11v-1.5L10 9z" /><path d="M12 14v6.5" /></>,

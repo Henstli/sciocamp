@@ -275,9 +275,13 @@
 .fieldValue a {
   color: var(--primary-text);
   font-weight: 600;
-  /* Podtržení pod spodkem „@“ — jinak ho prohlížeč u zavináče přeruší a zbyde tečka */
+  /* Bez podtržení (u „@“ a písmen s ocáskem vypadalo rozbitě), podtrhne se až při najetí */
+  text-decoration: none;
+}
+.fieldValue a:hover,
+.fieldValue a:focus-visible {
+  text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-skip-ink: none;
 }
 
 /* Vystavené odznaky na kartě profilu */
