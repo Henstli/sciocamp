@@ -9,7 +9,7 @@ import { ENROLL_KINDS, clashWith, enrollWindow } from "@/lib/enroll";
 import { activityHref } from "@/lib/links";
 import { activityRange, describeWhen, hasEnded, hasStarted } from "@/lib/periods";
 import { canTeach, initials, isAdmin } from "@/lib/roles";
-import { isTeacherOf } from "@/lib/data";
+import { canOpenActivity, isTeacherOf } from "@/lib/data";
 import { nowMs, pragueNow, toIso } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Zápisy" };
@@ -63,7 +63,7 @@ export default async function EnrollPage({ searchParams }: PageProps<"/zapisy">)
       group: a.kind === "kurz" && a.period ? { id: a.period.id, name: a.period.name } : null,
       clash: student && !enrolled ? clashWith(a, mine) : null,
       gradeNote: gradeOk ? null : `Jen pro ${a.allowedGrades!.map((g) => `${g}.`).join(", ")} ročník`,
-      href: enrolled || canTeach(user.role) ? activityHref(a) : null,
+      href: canOpenActivity(user, a) ? activityHref(a) : null,
     };
   });
 

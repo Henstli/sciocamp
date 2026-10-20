@@ -245,9 +245,14 @@ export async function activitiesTaughtBy(user: User): Promise<Activity[]> {
   return (await listActivities()).filter((a) => isTeacherOf(a, user.id));
 }
 
-/** Kdo smí otevřít detail třídy: zapsaný student, vyučující a admin. */
+/**
+ * Kdo smí otevřít detail třídy: jen zapsaný student a vyučující, který ji vede
+ * (hlavní i další). Ostatní studenti a učitelé ne — ani do proběhlé, běžící,
+ * nebo budoucí. Admin ano (správa školy).
+ */
 export function canOpenActivity(user: User, activity: Activity): boolean {
-  return isAdmin(user.role) || isTeacherOf(activity, user.id) || activity.studentIds.includes(user.id);
+  if (isAdmin(user.role) || isTeacherOf(activity, user.id)) return true;
+  return user.role === "student" && activity.studentIds.includes(user.id);
 }
 
 /** Smí měnit nastavení třídy (např. Meet): její vyučující a admin. */

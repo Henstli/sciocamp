@@ -12,7 +12,8 @@ import styles from "@/app/(app)/navrhy/navrhy.module.css";
 export type WishView = Wish & {
   authorName: string;
   when: string;
-  activity: { href: string; title: string } | null;
+  /** Název připravené aktivity (bez odkazu — studenti ji do začátku neotevřou) */
+  activity: { title: string } | null;
   mine: boolean;
   /** Kolik dní ještě sbírá hlasy (null u vypsaných) */
   daysLeft: number | null;
@@ -93,7 +94,7 @@ function WishCard({ w, staff }: { w: WishView; staff: boolean }) {
         {w.status === "vypsano" && w.activity && (
           <p className={styles.desc}>
             <strong>Připraveno jako: </strong>
-            <Link href={w.activity.href}>{w.activity.title}</Link>
+            {w.activity.title}
           </p>
         )}
         {w.status === "uzavreno" && w.note && (

@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { BackButton } from "@/components/BackButton";
 import { ProfileView } from "@/components/ProfileView";
 import { requireUser } from "@/lib/auth";
-import { activitiesForUser, getPhone, getSocials, getUserById } from "@/lib/data";
+import { activitiesForUser, canOpenActivity, getPhone, getSocials, getUserById } from "@/lib/data";
 import { pragueNow, toIso } from "@/lib/time";
 
 export async function generateMetadata({ params }: PageProps<"/lide/[id]">): Promise<Metadata> {
@@ -27,7 +27,10 @@ export default async function PersonPage({ params }: PageProps<"/lide/[id]">) {
   return (
     <>
       <BackButton />
-      <ProfileView person={person} isMe={false} phone={phone} socials={socials} activities={activities} todayIso={toIso(pragueNow())} />
+      <ProfileView person={person} isMe={false} phone={phone} socials={socials} activities={activities}
+        canOpen={activities.filter((a) => canOpenActivity(viewer, a)).map((a) => a.id)}
+        todayIso={toIso(pragueNow())}
+      />
     </>
   );
 }

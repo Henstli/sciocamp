@@ -19,7 +19,10 @@ export function ProfileView({
   socials = null,
   activities,
   todayIso,
+  canOpen,
 }: {
+  /** Které aktivity smí divák otevřít (slugy); ostatní jsou jen štítek bez odkazu. Bez údaje = všechny. */
+  canOpen?: string[];
   /** Instagram (vidí všichni ve škole) */
   socials?: { instagram: string | null; discord: string | null } | null;
   person: User;
@@ -119,11 +122,17 @@ export function ProfileView({
             <p className={styles.empty}>{isMe ? "Teď nemáš žádné probíhající třídy." : "Žádné společné probíhající třídy."}</p>
           ) : (
             <div className={styles.pills}>
-              {current.map((a) => (
-                <Link key={a.id} href={activityHref(a)} className={styles.pill} data-kind={a.kind}>
-                  {a.title}
-                </Link>
-              ))}
+              {current.map((a) =>
+                !canOpen || canOpen.includes(a.id) ? (
+                  <Link key={a.id} href={activityHref(a)} className={styles.pill} data-kind={a.kind}>
+                    {a.title}
+                  </Link>
+                ) : (
+                  <span key={a.id} className={styles.pill} data-kind={a.kind}>
+                    {a.title}
+                  </span>
+                ),
+              )}
             </div>
           )}
           <div className={styles.legend}>

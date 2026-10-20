@@ -972,4 +972,20 @@ await test("hlasování: nevypsaná přání po 14 dnech a schválená po týdnu
   assert.deepEqual(left, [fresh.id]);
 });
 
+await test("hlasování: smazaná vypsaná aktivita → přání uzavřené", async () => {
+  const [w] = await as(student, `insert into public.wishes (kind, title) values ('atelier', 'Ateliér keramiky') returning id`);
+  const [a] = await as(teacher, `insert into public.activities (slug, kind, title, teacher_id) values ('keramika-prani', 'atelier', 'Keramika', $1) returning id`, [teacher]);
+  await as(teacher, `select public.fulfil_wish($1, $2)`, [w.id, a.id]);
+  await as(teacher, `delete from public.activities where id = $1`, [a.id]);
+  const row = (await db.query(`select status, note, activity_id from public.wishes where id = $1`, [w.id])).rows[0];
+  assert.equal(row.status, "uzavreno");
+  assert.equal(row.activity_id, null);
+  assert.ok(row.note);
+  assert.equal((await db.query(`select 1 from public.notifications where user_id = $1 and title = 'Zrušeno: Ateliér keramiky'`, [student])).rows.length, 1);
+  // Uzavřené zmizí týden po uzavření.
+  await db.query(`update public.wishes set closed_at = now() - interval '8 days' where id = $1`, [w.id]);
+  await as(student, `select public.purge_expired_wishes()`);
+  assert.equal((await db.query(`select 1 from public.wishes where id = $1`, [w.id])).rows.length, 0);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

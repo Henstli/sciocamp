@@ -7,7 +7,6 @@ import { requireUser } from "@/lib/auth";
 import { getUsersByIds, listActivities } from "@/lib/data";
 import { listWishes, purgeExpiredWishes } from "@/lib/data-proposals";
 import { plural } from "@/lib/format";
-import { activityHref } from "@/lib/links";
 import { WISH_DAYS, wishDaysLeft } from "@/lib/proposals";
 import { canTeach, initials } from "@/lib/roles";
 import { formatStamp, nowMs } from "@/lib/time";
@@ -29,9 +28,9 @@ export default async function WishesPage() {
       ...w,
       authorName: people.find((u) => u.id === w.authorId)?.name ?? "Bývalý člen školy",
       when: formatStamp(w.createdAt, now),
-      activity: a ? { href: activityHref(a), title: a.title } : null,
+      activity: a ? { title: a.title } : null,
       mine: w.authorId === user.id,
-      daysLeft: w.status === "vypsano" ? null : wishDaysLeft(w.createdAt, now.getTime()),
+      daysLeft: w.status === "open" ? wishDaysLeft(w.createdAt, now.getTime()) : null,
     };
   });
 
