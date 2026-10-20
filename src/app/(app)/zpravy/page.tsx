@@ -97,6 +97,11 @@ export default async function MessagesPage({ searchParams }: PageProps<"/zpravy"
           time: formatClock(m.createdAt),
           day: formatDayLabel(m.createdAt, now),
           createdAt: m.createdAt,
+          replyTo: m.replyTo ?? null,
+          editedAt: m.editedAt ?? null,
+          pinnedAt: m.pinnedAt ?? null,
+          pinnedBy: m.pinnedBy ?? null,
+          reactions: m.reactions ?? [],
         };
       })
     : [];

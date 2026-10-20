@@ -14,6 +14,8 @@ import {
   DEMO_MEMBER_STATE,
   DEMO_GROUP_MEMBERS,
 } from "./demo-communication";
+import { CHAT_META_COLUMNS } from "./chat";
+import { chatMetaFor } from "./data-chat";
 import { createClient } from "./supabase/server";
 import type {
   Activity,
@@ -95,14 +97,15 @@ async function classChatUncached(activity: Activity): Promise<ClassMessage[]> {
   const sb = await createClient();
   const { data, error } = await sb
     .from("class_messages")
-    .select("id, author_id, body, file_path, file_name, file_size, created_at")
+    .select(`id, author_id, body, file_path, file_name, file_size, created_at, ${CHAT_META_COLUMNS}`)
     .eq("activity_id", activity.dbId)
     .order("created_at", { ascending: false })
     .limit(150);
   if (error || !data) return [];
   const files = data.filter((m) => m.file_path).map((m) => ({ path: m.file_path!, name: m.file_name ?? "soubor", size: m.file_size }));
-  const urls = await sign(CHAT_BUCKET, files);
+  const [urls, meta] = await Promise.all([sign(CHAT_BUCKET, files), chatMetaFor("trida", activity.dbId)]);
   return data.reverse().map((m) => ({
+    ...meta(m),
     id: m.id,
     authorId: m.author_id,
     body: m.body,
@@ -155,14 +158,15 @@ export async function conversationMessages(conversationId: string): Promise<Dire
   const sb = await createClient();
   const { data, error } = await sb
     .from("messages")
-    .select("id, author_id, body, file_path, file_name, file_size, created_at, system")
+    .select(`id, author_id, body, file_path, file_name, file_size, created_at, system, ${CHAT_META_COLUMNS}`)
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: false })
     .limit(200);
   if (error || !data) return [];
   const files = data.filter((m) => m.file_path).map((m) => ({ path: m.file_path!, name: m.file_name ?? "soubor", size: m.file_size }));
-  const urls = await sign(MESSAGE_BUCKET, files);
+  const [urls, meta] = await Promise.all([sign(MESSAGE_BUCKET, files), chatMetaFor("zpravy", conversationId)]);
   return data.reverse().map((m) => ({
+    ...meta(m),
     id: m.id,
     authorId: m.author_id,
     body: m.body,

@@ -1374,4 +1374,48 @@ await test("zmínky: oznámení zmíněným členům chatu třídy, ne cizím", 
   await db.query(`delete from public.enrollments where activity_id = $1 and student_id = any($2)`, [course.id, [student, student2]]);
 });
 
+await test("akce se zprávami: odpověď, úprava, připnutí a reakce", async () => {
+  const [{ start_conversation: conv }] = await as(student, `select public.start_conversation($1)`, [teacher2]);
+  const [m1] = await as(student, `insert into public.messages (conversation_id, body) values ($1, 'Ahoj') returning id`, [conv]);
+  // Odpověď jen v rámci stejné konverzace.
+  const [r1] = await as(teacher2, `insert into public.messages (conversation_id, body, reply_to) values ($1, 'Čau', $2) returning reply_to`, [conv, m1.id]);
+  assert.equal(r1.reply_to, m1.id);
+  const [{ start_conversation: other }] = await as(student, `select public.start_conversation($1)`, [admin]);
+  await assert.rejects(() => as(student, `insert into public.messages (conversation_id, body, reply_to) values ($1, 'x', $2)`, [other, m1.id]), /stejného chatu/);
+  // Úprava: jen autor, jen text; čas úpravy doplní databáze.
+  const [e1] = await as(student, `update public.messages set body = 'Ahoj!' where id = $1 returning edited_at`, [m1.id]);
+  assert.ok(e1.edited_at, "upraveno");
+  assert.equal((await as(teacher2, `update public.messages set body = 'hack' where id = $1 returning id`, [m1.id])).length, 0, "cizí nesmí");
+  await assert.rejects(() => as(student, `update public.messages set pinned_at = now() where id = $1`, [m1.id]));
+  await assert.rejects(() => as(student, `update public.messages set body = '' where id = $1`, [m1.id]), "prázdná zpráva");
+  // Připnutí ve Zprávách smí kdokoli z konverzace, cizí ne.
+  await as(teacher2, `select public.pin_chat_message('zpravy', $1, true)`, [m1.id]);
+  assert.ok((await db.query(`select pinned_at from public.messages where id = $1`, [m1.id])).rows[0].pinned_at);
+  await assert.rejects(() => as(outsider, `select public.pin_chat_message('zpravy', $1, false)`, [m1.id]));
+  await as(student, `select public.pin_chat_message('zpravy', $1, false)`, [m1.id]);
+  // Reakce: vidí a dává jen konverzace, ruší jen autor.
+  await as(teacher2, `insert into public.chat_reactions (chat, message_id, emoji) values ('zpravy', $1, '❤️')`, [m1.id]);
+  await as(student, `insert into public.chat_reactions (chat, message_id, emoji) values ('zpravy', $1, '👍')`, [m1.id]);
+  await assert.rejects(() => as(outsider, `insert into public.chat_reactions (chat, message_id, emoji) values ('zpravy', $1, '👎')`, [m1.id]));
+  await assert.rejects(() => as(outsider, `insert into public.chat_reactions (chat, room, message_id, emoji) values ('zpravy', $2, $1, '👎')`, [m1.id, conv]));
+  assert.equal((await as(student, `select room from public.chat_reactions where message_id = $1`, [m1.id])).length, 2);
+  assert.equal((await as(outsider, `select 1 from public.chat_reactions`)).length, 0);
+  assert.equal((await as(student, `delete from public.chat_reactions where user_id = $1 returning 1`, [teacher2])).length, 0);
+  // Smazaná zpráva vezme reakce s sebou.
+  await as(student, `delete from public.messages where id = $1`, [m1.id]);
+  assert.equal((await db.query(`select 1 from public.chat_reactions where message_id = $1`, [m1.id])).rows.length, 0);
+
+  // Chat třídy: připíná jen vyučující, upravuje jen autor.
+  await db.query(`insert into public.enrollments (activity_id, student_id) values ($1, $2) on conflict do nothing`, [course.id, student]);
+  const [c1] = await as(student, `insert into public.class_messages (activity_id, body) values ($1, 'Dotaz') returning id`, [course.id]);
+  await assert.rejects(() => as(student, `select public.pin_chat_message('trida', $1, true)`, [c1.id]), /připnout nemůžeš/);
+  await as(teacher, `select public.pin_chat_message('trida', $1, true)`, [c1.id]);
+  assert.equal((await as(teacher, `update public.class_messages set body = 'x' where id = $1 returning 1`, [c1.id])).length, 0);
+  await as(student, `insert into public.chat_reactions (chat, message_id, emoji) values ('trida', $1, '😂')`, [c1.id]);
+  assert.equal((await as(teacher, `select 1 from public.chat_reactions where message_id = $1`, [c1.id])).length, 1);
+  await db.query(`delete from public.class_messages where id = $1`, [c1.id]);
+  await db.query(`delete from public.enrollments where activity_id = $1 and student_id = $2`, [course.id, student]);
+  await db.query(`delete from public.conversations where id = any($1)`, [[conv, other]]);
+});
+
 console.log(`\n${passed} testů prošlo${process.exitCode ? ", některé selhaly" : ""}.`);

@@ -6,6 +6,8 @@ import { isSupabase } from "./config";
 import { assignmentsForActivity } from "./data-assignments";
 import { createClient } from "./supabase/server";
 import type { Activity, ClassMessage, Team } from "./types";
+import { CHAT_META_COLUMNS } from "./chat";
+import { chatMetaFor } from "./data-chat";
 
 export const TEAM_BUCKET = "tymy";
 
@@ -65,7 +67,7 @@ export async function teamChat(teamId: string): Promise<ClassMessage[]> {
   const sb = await createClient();
   const { data, error } = await sb
     .from("team_messages")
-    .select("id, author_id, body, file_path, file_name, file_size, created_at")
+    .select(`id, author_id, body, file_path, file_name, file_size, created_at, ${CHAT_META_COLUMNS}`)
     .eq("team_id", teamId)
     .order("created_at", { ascending: false })
     .limit(150);
@@ -76,7 +78,9 @@ export async function teamChat(teamId: string): Promise<ClassMessage[]> {
     const { data: signed } = await sb.storage.from(TEAM_BUCKET).createSignedUrls(paths, 60 * 60);
     signed?.forEach((s) => s.path && s.signedUrl && urls.set(s.path, s.signedUrl));
   }
+  const meta = await chatMetaFor("tym", teamId);
   return data.reverse().map((m) => ({
+    ...meta(m),
     id: m.id,
     authorId: m.author_id,
     body: m.body,

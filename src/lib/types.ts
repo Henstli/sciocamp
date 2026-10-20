@@ -222,7 +222,22 @@ export type Post = {
 };
 
 /** Zpráva v chatu třídy (text, příloha nebo obojí). */
-export type ClassMessage = { id: string; authorId: string; body: string; createdAt: string; file: SubmissionFile | null };
+/** Reakce na zprávu: emoji a kdo ji dal. */
+export type ChatReaction = { emoji: string; userIds: string[] };
+
+/** Odpověď, úprava, připnutí a reakce u zprávy (Zprávy, chat třídy i týmu). */
+export type ChatMeta = {
+  /** Id zprávy, na kterou tahle odpovídá */
+  replyTo?: string | null;
+  /** Kdy autor zprávu naposledy upravil */
+  editedAt?: string | null;
+  /** Kdy byla připnutá (null = není) */
+  pinnedAt?: string | null;
+  pinnedBy?: string | null;
+  reactions?: ChatReaction[];
+};
+
+export type ClassMessage = { id: string; authorId: string; body: string; createdAt: string; file: SubmissionFile | null } & ChatMeta;
 
 /** Řádek v seznamu konverzací. */
 export type ConversationSummary = {
@@ -261,7 +276,7 @@ export type DirectMessage = {
   createdAt: string;
   /** Systémová zpráva skupiny („X opustil(a) skupinu“) */
   system?: boolean;
-};
+} & ChatMeta;
 
 export type NotificationItem = {
   id: string;

@@ -728,3 +728,18 @@ a.attachment:hover {
   font-weight: 700;
   color: var(--text-muted);
 }
+
+/* Akce se zprávou v chatu třídy / týmu */
+.msgQuote {
+  display: flex;
+  margin: 4px 0 2px;
+}
+.msgReactions {
+  margin-top: 6px;
+}
+.msgReactions:empty {
+  display: none;
+}
+.chatContext {
+  padding: 10px 16px 0;
+}

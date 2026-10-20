@@ -817,3 +817,8 @@
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
 }
+
+/* Pruh „Odpovídáš / Upravuješ“ nad polem pro psaní */
+.contextWrap {
+  padding: 8px 16px 0;
+}

@@ -141,10 +141,10 @@ export function ComposerPlus({
   );
 }
 
-function EmojiPanel({ onPick }: { onPick: (e: string) => void }) {
+export function EmojiPanel({ onPick, className }: { onPick: (e: string) => void; className?: string }) {
   const [group, setGroup] = useState(0);
   return (
-    <div className={styles.panel} role="dialog" aria-label="Emoji">
+    <div className={className ?? styles.panel} role="dialog" aria-label="Emoji">
       <div className={styles.tabs} role="tablist">
         {EMOJI_GROUPS.map((g, i) => (
           <button key={g.name} type="button" role="tab" aria-selected={i === group} aria-label={g.name} title={g.name} className={styles.tab} onClick={() => setGroup(i)}>

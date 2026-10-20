@@ -13,13 +13,17 @@ import { isGifUrl } from "../composer/gif";
 import { MentionInput } from "../composer/MentionInput";
 import { MentionText } from "../composer/MentionText";
 import { encodeMentions } from "@/lib/mentions";
+import { applyReaction, editableText, messageSnippet } from "@/lib/chat";
+import { deleteChatMessage, editChatMessage, pinChatMessage, setReaction, useChatLive } from "@/lib/chat-client";
+import { ComposerContext, MessageTools, PinnedBar, Reactions, ReplyQuote, messageDomId } from "../chat/ChatBits";
+import chatStyles from "../chat/chat.module.css";
 import { Avatar, profileHref } from "../PageHeader";
 import { markConversationRead, startConversation } from "@/lib/actions/communication";
 import { plural } from "@/lib/format";
 import { useIsOnline, useOnlineCount } from "@/lib/presence";
 import { createClient } from "@/lib/supabase/client";
 import { formatClock, formatDayLabel } from "@/lib/time";
-import type { Role, SubmissionFile } from "@/lib/types";
+import type { ChatMeta, Role, SubmissionFile } from "@/lib/types";
 import { useStickToBottom } from "@/lib/use-stick-to-bottom";
 import { isCompressibleImage } from "@/lib/image-compress";
 import { tooBigMessage, uploadFilesDetailed, uploadLimit } from "@/lib/upload";
@@ -58,7 +62,7 @@ export type ThreadMessage = {
   createdAt: string;
   /** Ještě se odesílá */
   pending?: boolean;
-};
+} & ChatMeta;
 
 /** Jak dlouho po posledním signálu ukazovat, že druhý píše (ms). */
 const TYPING_SHOW_MS = 4000;
@@ -75,7 +79,13 @@ type Row = {
   file_size: number | null;
   created_at: string;
   system?: boolean;
+  reply_to?: string | null;
 };
+
+/** Aktuální čas v ms (mimo komponentu, ať ho kompilátor Reactu nepovažuje za volání při vykreslení). */
+function nowMs() {
+  return Date.now();
+}
 
 function tone(role: Role) {
   return role === "student" ? ("student" as const) : ("late" as const);
@@ -121,6 +131,10 @@ export function Messenger({
   const [typing, setTyping] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [panel, setPanel] = useState(false);
+  /** Odpovídám na zprávu (id) */
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  /** Upravuji svou zprávu (id) */
+  const [editing, setEditing] = useState<string | null>(null);
   const isOpen = !!(activePerson || activeGroup);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingSentAt = useRef(0);
@@ -183,6 +197,8 @@ export function Messenger({
                     time: formatClock(r.created_at),
                     day: formatDayLabel(r.created_at, new Date()),
                     createdAt: r.created_at,
+                    replyTo: r.reply_to ?? null,
+                    reactions: [],
                   },
                 ],
           );
@@ -248,11 +264,97 @@ export function Messenger({
     };
   }, [live, convId, me.id]);
 
+  const byId = new Map(messages.map((m) => [m.id, m]));
+  const patch = (id: string, change: (m: ThreadMessage) => ThreadMessage) => setMessages((ms) => ms.map((m) => (m.id === id ? change(m) : m)));
+  const nameOf = (id: string) => (id === me.id ? "Ty" : authorOf(id).authorName);
+
+  // Úpravy, připnutí, smazání a reakce naživo.
+  useChatLive("zpravy", convId, live, {
+    onUpdate: (u) => patch(u.id, (m) => ({ ...m, body: u.body, editedAt: u.editedAt, pinnedAt: u.pinnedAt, pinnedBy: u.pinnedBy })),
+    onDelete: (id) => {
+      if (byId.has(id)) setMessages((m) => m.filter((x) => x.id !== id));
+    },
+    onReaction: (id, emoji, userId, add) => patch(id, (m) => ({ ...m, reactions: applyReaction(m.reactions, emoji, userId, add) })),
+  });
+
+  async function remove(id: string) {
+    if (editing === id) cancelContext();
+    if (live) {
+      const res = await deleteChatMessage("zpravy", id);
+      if (res.error) return setError(res.error);
+    }
+    setMessages((m) => m.filter((x) => x.id !== id));
+    if (live) router.refresh();
+  }
+
+  async function react(m: ThreadMessage, emoji: string, add: boolean) {
+    patch(m.id, (x) => ({ ...x, reactions: applyReaction(x.reactions, emoji, me.id, add) }));
+    if (!live) return;
+    const res = await setReaction("zpravy", m.id, emoji, add, me.id);
+    if (res.error) {
+      patch(m.id, (x) => ({ ...x, reactions: applyReaction(x.reactions, emoji, me.id, !add) }));
+      setError(res.error);
+    }
+  }
+
+  async function pin(m: ThreadMessage) {
+    const pinned = !m.pinnedAt;
+    const before = { pinnedAt: m.pinnedAt, pinnedBy: m.pinnedBy };
+    patch(m.id, (x) => ({ ...x, pinnedAt: pinned ? new Date().toISOString() : null, pinnedBy: pinned ? me.id : null }));
+    if (!live) return;
+    const res = await pinChatMessage("zpravy", m.id, pinned);
+    if (res.error) {
+      patch(m.id, (x) => ({ ...x, ...before }));
+      setError(res.error);
+    }
+  }
+
+  function startReply(m: ThreadMessage) {
+    setEditing(null);
+    setReplyTo(m.id);
+    draftInput.current?.focus();
+  }
+
+  function startEdit(m: ThreadMessage) {
+    setReplyTo(null);
+    setFile(null);
+    setEditing(m.id);
+    setDraft(editableText(m.body));
+    draftInput.current?.focus();
+  }
+
+  function cancelContext() {
+    if (editing) setDraft("");
+    setEditing(null);
+    setReplyTo(null);
+  }
+
+  async function saveEdit() {
+    const m = editing ? byId.get(editing) : null;
+    if (!m) return cancelContext();
+    const body = encodeMentions(draft.trim(), mentionable);
+    if (!body && !m.file) return setError("Prázdnou zprávu uložit nejde. Smazat ji můžeš v nabídce u zprávy.");
+    setError(null);
+    if (body === m.body) return cancelContext();
+    if (live) {
+      setSending(true);
+      const res = await editChatMessage("zpravy", m.id, body);
+      setSending(false);
+      if (res.error) return setError(res.error);
+      patch(m.id, (x) => ({ ...x, body, editedAt: res.editedAt ?? new Date().toISOString() }));
+      router.refresh();
+    } else {
+      patch(m.id, (x) => ({ ...x, body, editedAt: new Date().toISOString() }));
+    }
+    setEditing(null);
+    setDraft("");
+  }
+
   /** Pošle druhému „píšu“ (nejvýš jednou za 2 s), nebo „přestal jsem“. */
   const signalTyping = (stop = false) => {
     const ch = typingChannel.current;
     if (!ch) return;
-    const now = Date.now();
+    const now = nowMs();
     if (!stop && now - typingSentAt.current < TYPING_SEND_MS) return;
     typingSentAt.current = stop ? 0 : now;
     void ch.send({ type: "broadcast", event: "typing", payload: { userId: me.id, stop } });
@@ -268,10 +370,13 @@ export function Messenger({
 
   /** Odešle rozepsanou zprávu, nebo rovnou GIF (`gif` = odkaz). */
   async function send(gif?: string) {
+    if (editing && !gif) return saveEdit();
     stickToBottom();
     const body = gif ?? encodeMentions(draft.trim(), mentionable);
     const file_ = gif ? null : file;
+    const reply = replyTo;
     const clear = () => {
+      setReplyTo(null);
       if (gif) return;
       setDraft("");
       setFile(null);
@@ -293,6 +398,8 @@ export function Messenger({
           time: "teď",
           day: "Dnes",
           createdAt: new Date().toISOString(),
+          replyTo: reply,
+          reactions: [],
         },
       ]);
       clear();
@@ -302,7 +409,7 @@ export function Messenger({
     setSending(true);
     signalTyping(true);
     // Zpráva se ukáže hned se stavem „Odesílá se…“.
-    const tempId = `odesila-${Date.now()}`;
+    const tempId = `odesila-${nowMs()}`;
     setMessages((m) => [
       ...m,
       {
@@ -318,6 +425,8 @@ export function Messenger({
         day: "Dnes",
         createdAt: new Date().toISOString(),
         pending: true,
+        replyTo: reply,
+        reactions: [],
       },
     ]);
     const dropPending = () => setMessages((m) => m.filter((x) => x.id !== tempId));
@@ -350,6 +459,7 @@ export function Messenger({
           file_path: attached?.path ?? null,
           file_name: attached?.name ?? null,
           file_size: attached?.size ?? null,
+          reply_to: reply,
         })
         .select("id, created_at")
         .single();
@@ -393,6 +503,17 @@ export function Messenger({
     if (i === 0 || messages[i - 1].day !== m.day) rows.push({ kind: "day", label: m.day });
     rows.push({ kind: "msg", m });
   });
+
+  const replyTarget = (id: string) => {
+    const t = byId.get(id);
+    return t ? { id: t.id, authorName: nameOf(t.authorId), snippet: messageSnippet(t.body, t.file?.name, 70) } : null;
+  };
+  const pinnedItems = messages
+    .filter((m) => m.pinnedAt && !m.system)
+    .sort((a, b) => (b.pinnedAt ?? "").localeCompare(a.pinnedAt ?? ""))
+    .map((m) => ({ id: m.id, authorName: nameOf(m.authorId), snippet: messageSnippet(m.body, m.file?.name) }));
+  const replying = replyTo ? byId.get(replyTo) : null;
+  const editingMsg = editing ? byId.get(editing) : null;
 
   const typingName = typing ? (authorOf(typing).authorName.split(" ")[0] ?? "") : "";
   const threadLabel = activeGroup ? activeGroup.title : activePerson?.name;
@@ -512,6 +633,7 @@ export function Messenger({
             </header>
 
             {activeGroup && panel && <GroupPanel group={activeGroup} people={people} live={live} />}
+            {!(activeGroup && panel) && <PinnedBar items={pinnedItems} canUnpin onUnpin={(id) => { const m = byId.get(id); if (m) void pin(m); }} />}
 
             <div className={styles.messages} aria-live="polite" ref={thread} hidden={!!activeGroup && panel}>
               {rows.length === 0 && <p className={styles.emptyThread}>Napiš první zprávu.</p>}
@@ -533,30 +655,73 @@ export function Messenger({
                 const prev = rows[i - 1];
                 // Ve skupině u cizích zpráv jméno a avatar, když se změní autor.
                 const showAuthor = !!activeGroup && !r.m.mine && !(prev?.kind === "msg" && !prev.m.system && prev.m.authorId === r.m.authorId);
+                const m = r.m;
+                const align = m.mine ? "end" : "start";
                 const content = (
-                  <div className={styles.msgWrap} data-mine={r.m.mine}>
-                    {showAuthor && <span className={styles.author}>{r.m.authorName}</span>}
-                    {r.m.file && <Attachment bucket={BUCKET} file={r.m.file} live={live} />}
-                    {r.m.body && (isGifUrl(r.m.body) ? <GifImage url={r.m.body} /> : <div className={styles.bubble}><MentionText body={r.m.body} meId={me.id} /></div>)}
+                  <div className={styles.msgWrap} data-mine={m.mine}>
+                    {showAuthor && <span className={styles.author}>{m.authorName}</span>}
+                    {m.replyTo && <ReplyQuote target={replyTarget(m.replyTo)} align={align} />}
+                    {m.file && <Attachment bucket={BUCKET} file={m.file} live={live} />}
+                    {m.body && (isGifUrl(m.body) ? <GifImage url={m.body} /> : <div className={styles.bubble}><MentionText body={m.body} meId={me.id} /></div>)}
+                    <Reactions reactions={m.reactions} meId={me.id} nameOf={nameOf} align={align} onToggle={(e, add) => void react(m, e, add)} />
                     <div className={styles.time}>
+                      {m.pinnedAt && (
+                        <span className={chatStyles.pinMark}>
+                          <Icon name="pushpin" size={11} /> připnuto ·{" "}
+                        </span>
+                      )}
+                      {m.editedAt && <span className={chatStyles.edited}>upraveno · </span>}
                       {/* U přečtené poslední zprávy stačí „Přečteno …“, čas odeslání se skryje. */}
-                      {r.m.id === last?.id && status ? (
+                      {m.id === last?.id && status ? (
                         <span className={styles.status} data-seen={status.startsWith("Přečet")}>
-                          {status.startsWith("Přečet") || r.m.pending ? status : `${r.m.time} · ${status}`}
+                          {status.startsWith("Přečet") || m.pending ? status : `${m.time} · ${status}`}
                         </span>
                       ) : (
-                        !r.m.pending && r.m.time
+                        !m.pending && m.time
                       )}
                     </div>
                   </div>
                 );
-                if (!activeGroup || r.m.mine) return <div key={r.m.id} className={styles.msgLine} data-mine={r.m.mine}>{content}</div>;
+                const tools = !m.pending && (
+                  <MessageTools
+                    align={align}
+                    myReactions={(m.reactions ?? []).filter((x) => x.userIds.includes(me.id)).map((x) => x.emoji)}
+                    canEdit={m.mine && !!m.body && !isGifUrl(m.body)}
+                    canDelete={m.mine}
+                    canPin
+                    pinned={!!m.pinnedAt}
+                    onReact={(e) => {
+                      const has = (m.reactions ?? []).some((x) => x.emoji === e && x.userIds.includes(me.id));
+                      void react(m, e, !has);
+                    }}
+                    onReply={() => startReply(m)}
+                    onEdit={() => startEdit(m)}
+                    onDelete={() => void remove(m.id)}
+                    onPin={() => void pin(m)}
+                  />
+                );
+                const lineProps = { id: messageDomId(m.id), tabIndex: -1, className: `${styles.msgLine} ${chatStyles.line}` };
+                if (m.mine)
+                  return (
+                    <div key={m.id} {...lineProps} data-mine="true">
+                      {tools}
+                      {content}
+                    </div>
+                  );
+                if (!activeGroup)
+                  return (
+                    <div key={m.id} {...lineProps}>
+                      {content}
+                      {tools}
+                    </div>
+                  );
                 return (
-                  <div key={r.m.id} className={styles.msgLine}>
+                  <div key={m.id} {...lineProps}>
                     <span className={styles.authorAvatar}>
-                      {showAuthor && <Avatar presence initials={r.m.authorInitials} size={32} tone={tone(r.m.authorRole)} href={profileHref(r.m.authorId)} title={r.m.authorName} />}
+                      {showAuthor && <Avatar presence initials={m.authorInitials} size={32} tone={tone(m.authorRole)} href={profileHref(m.authorId)} title={m.authorName} />}
                     </span>
                     {content}
+                    {tools}
                   </div>
                 );
               })}
@@ -583,6 +748,17 @@ export function Messenger({
                 </button>
               </div>
             )}
+            {!(activeGroup && panel) && (editingMsg || replying) && (
+              <div className={styles.contextWrap}>
+                {editingMsg ? (
+                  <ComposerContext mode="edit" title="Upravuješ zprávu" snippet={messageSnippet(editingMsg.body, editingMsg.file?.name)} onCancel={cancelContext} />
+                ) : (
+                  replying && (
+                    <ComposerContext mode="reply" title={`Odpovídáš: ${nameOf(replying.authorId)}`} snippet={messageSnippet(replying.body, replying.file?.name)} onCancel={cancelContext} />
+                  )
+                )}
+              </div>
+            )}
             {error && (
               <p role="alert" className={styles.error}>
                 {error}
@@ -595,13 +771,21 @@ export function Messenger({
                 e.preventDefault();
                 void send();
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && !e.defaultPrevented && (replyTo || editing)) {
+                  e.preventDefault();
+                  cancelContext();
+                }
+              }}
             >
-              <ComposerPlus
-                idPrefix="zpravy"
-                onFile={setFile}
-                onEmoji={(e) => setDraft((d) => insertAtCursor(draftInput.current, d, e))}
-                onGif={(url) => void send(url)}
-              />
+              {!editing && (
+                <ComposerPlus
+                  idPrefix="zpravy"
+                  onFile={setFile}
+                  onEmoji={(e) => setDraft((d) => insertAtCursor(draftInput.current, d, e))}
+                  onGif={(url) => void send(url)}
+                />
+              )}
               <label className={styles.grow}>
                 <span className="sr-only">Zpráva</span>
                 <MentionInput
@@ -617,8 +801,8 @@ export function Messenger({
                   className={styles.input}
                 />
               </label>
-              <button type="submit" className={styles.send} disabled={sending || (!draft.trim() && !file)} aria-label="Odeslat">
-                <Icon name="send" size={20} />
+              <button type="submit" className={styles.send} disabled={sending || (!draft.trim() && !file)} aria-label={editing ? "Uložit úpravu" : "Odeslat"}>
+                <Icon name={editing ? "tick" : "send"} size={20} />
               </button>
             </form>
             {!live && !(activeGroup && panel) && <p className={styles.note}>Ukázkový režim: zprávy se neukládají.</p>}

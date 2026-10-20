@@ -1,0 +1,402 @@
+/* Akce se zprávou: lišta, reakce, citace odpovědi, připnuté zprávy. */
+
+/* Řádek zprávy (přidává se k řádkům ve Zprávách i v chatu třídy). */
+.line {
+  position: relative;
+  border-radius: 14px;
+  outline: none;
+  transition: background-color 0.4s;
+}
+.line[data-flash="true"] {
+  background: var(--primary-soft);
+}
+
+/* Lišta u zprávy: ukáže se při najetí myší, na dotyk po klepnutí na zprávu. */
+.tools {
+  flex: none;
+  align-self: center;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 4px 14px rgba(17, 26, 51, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+.line:hover .tools,
+.line:focus-within .tools,
+.tools[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (hover: none) {
+  .line:hover:not(:focus-within) .tools:not([data-open="true"]) {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+/* Na úzkém displeji lišta nebere místo zprávě: plave nad jejím horním okrajem. */
+@media (max-width: 640px) {
+  .tools {
+    position: absolute;
+    top: -16px;
+    right: 6px;
+    z-index: 3;
+  }
+  .line[data-mine="true"] .tools {
+    right: auto;
+    left: 6px;
+  }
+}
+.tool {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.tool:hover,
+.tool[aria-expanded="true"] {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
+/* Plovoucí okno (reakce, nabídka, potvrzení smazání) */
+.floating {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  visibility: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 12px 32px rgba(17, 26, 51, 0.16);
+  color: var(--text);
+}
+.quick {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+}
+.quickEmoji,
+.quickMore {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.quickEmoji:hover {
+  background: var(--primary-soft);
+  transform: scale(1.12);
+}
+.quickEmoji[data-mine="true"] {
+  background: var(--primary-soft-2);
+}
+.quickMore {
+  color: var(--text-2);
+  background: var(--bg);
+}
+.quickMore:hover {
+  color: var(--primary-text);
+  background: var(--primary-soft);
+}
+.emojiAll {
+  width: min(340px, calc(100vw - 32px));
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+.menu {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  min-width: 170px;
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.menuItem:hover {
+  background: var(--primary-soft);
+}
+.danger {
+  color: var(--late-fg);
+}
+.danger:hover {
+  background: var(--late-bg);
+}
+.confirm {
+  width: min(260px, calc(100vw - 32px));
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.confirm p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.confirmNo,
+.confirmYes {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.confirmNo {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-2);
+}
+.confirmYes {
+  border: 1px solid var(--late);
+  background: var(--late);
+  color: #fff;
+}
+
+/* Reakce pod zprávou */
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: -2px;
+}
+.reactions[data-align="end"] {
+  justify-content: flex-end;
+}
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.reaction:hover {
+  border-color: var(--primary-line);
+}
+.reaction[data-mine="true"] {
+  border-color: var(--primary-line);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+.reactionEmoji {
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* Citace zprávy, na kterou se odpovídá */
+.quote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--surface-2);
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+.quote[data-align="end"] {
+  align-self: flex-end;
+}
+.quote[data-missing="true"] {
+  cursor: default;
+  font-style: italic;
+}
+button.quote:hover {
+  color: var(--text-2);
+  border-color: var(--primary-line);
+}
+.quoteText {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.quoteText strong {
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+/* Pruh nad polem pro psaní */
+.context {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  border-radius: 12px;
+  border-left: 3px solid var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+.context[data-mode="edit"] {
+  border-left-color: var(--wait);
+  background: var(--wait-bg);
+  color: var(--wait);
+}
+.contextMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.contextTitle {
+  font-size: 12px;
+  font-weight: 800;
+}
+.contextSnippet {
+  font-size: 13px;
+  color: var(--text-2);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.contextClose {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.contextClose:hover {
+  background: var(--hover-overlay);
+}
+
+/* Připnuté zprávy */
+.pinned {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface-2);
+  color: var(--primary-text);
+}
+.pinnedMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pinnedLabel {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-text);
+}
+.pinnedText {
+  max-width: 100%;
+  font-size: 13px;
+  color: var(--text-2);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pinnedText strong {
+  font-weight: 700;
+  color: var(--text);
+}
+.pinnedMain:hover .pinnedText {
+  color: var(--text);
+}
+.pinnedBtn {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.pinnedBtn:hover {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
+/* Drobnosti u času zprávy */
+.edited {
+  font-style: italic;
+}
+.pinMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--primary-text);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .tool {
+    width: 36px;
+    height: 36px;
+  }
+}

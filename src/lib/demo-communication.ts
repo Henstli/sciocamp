@@ -34,9 +34,18 @@ export const DEMO_POSTS: Record<string, Post[]> = {
 
 export const DEMO_CLASS_CHAT: Record<string, ClassMessage[]> = {
   "prezentacni-schopnosti": [
-    { id: "c1", authorId: "u-hankova", body: "Kdo se dnes připojuje online, napište sem, ať vím, s kým počítat.", createdAt: "2026-10-19T06:14:00Z", file: null },
-    { id: "c2", authorId: "u-komarek", body: "Já budu na Meetu, jsem ještě ve vlaku.", createdAt: "2026-10-19T06:20:00Z", file: null },
-    { id: "c3", authorId: "u-jaukner", body: "Můžeme si v pátek sdílet obrazovku všichni najednou?", createdAt: "2026-10-19T06:31:00Z", file: null },
+    {
+      id: "c1",
+      authorId: "u-hankova",
+      body: "Kdo se dnes připojuje online, napište sem, ať vím, s kým počítat.",
+      createdAt: "2026-10-19T06:14:00Z",
+      file: null,
+      pinnedAt: "2026-10-19T06:15:00Z",
+      pinnedBy: "u-hankova",
+      reactions: [{ emoji: "👍", userIds: ["u-komarek", "u-jaukner"] }],
+    },
+    { id: "c2", authorId: "u-komarek", body: "Já budu na Meetu, jsem ještě ve vlaku.", createdAt: "2026-10-19T06:20:00Z", file: null, replyTo: "c1" },
+    { id: "c3", authorId: "u-jaukner", body: "Můžeme si v pátek sdílet obrazovku všichni najednou?", createdAt: "2026-10-19T06:31:00Z", file: null, reactions: [{ emoji: "❤️", userIds: ["u-hankova"] }] },
   ],
 };
 
@@ -67,8 +76,26 @@ export const DEMO_MESSAGES: Record<string, DirectMessage[]> = {
   "k-skupina": [
     { id: "g0", authorId: "u-liska", body: "Šimon Samuel Liška založil(a) skupinu „Projekt Cestománie“", file: null, createdAt: "2026-10-19T08:30:00Z", system: true },
     { id: "g1", authorId: "u-liska", body: "Ahoj, kdy se sejdeme kvůli prezentaci?", file: null, createdAt: "2026-10-19T08:31:00Z" },
-    { id: "g2", authorId: "u-kolarova", body: "Mně se hodí středa nebo čtvrtek.", file: null, createdAt: "2026-10-19T08:50:00Z" },
-    { id: "g3", authorId: "u-komarek", body: "Já můžu ve čtvrtek odpoledne.", file: null, createdAt: "2026-10-19T09:05:00Z" },
+    {
+      id: "g2",
+      authorId: "u-kolarova",
+      body: "Mně se hodí středa nebo čtvrtek.",
+      file: null,
+      createdAt: "2026-10-19T08:50:00Z",
+      replyTo: "g1",
+      editedAt: "2026-10-19T08:52:00Z",
+      reactions: [{ emoji: "👍", userIds: ["u-liska", "u-komarek"] }],
+    },
+    {
+      id: "g3",
+      authorId: "u-komarek",
+      body: "Já můžu ve čtvrtek odpoledne.",
+      file: null,
+      createdAt: "2026-10-19T09:05:00Z",
+      pinnedAt: "2026-10-19T09:06:00Z",
+      pinnedBy: "u-liska",
+      reactions: [{ emoji: "❤️", userIds: ["u-kolarova"] }],
+    },
   ],
   "k-jakubcova": [
     { id: "dm1", authorId: "u-jakubcova", body: "Ahoj Šimone, nezapomeň prosím na seznam povinné literatury, potřebuju ho do zítřka.", file: null, createdAt: "2026-10-18T11:20:00Z" },
