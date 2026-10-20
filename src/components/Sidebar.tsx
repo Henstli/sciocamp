@@ -32,7 +32,6 @@ export function Sidebar({ user, showTeach, showAdmin, badges }: SidebarProps) {
         { href: "/ukoly", label: "Úkoly", icon: "check", badge: badges.ukoly },
         { href: "/hlasovani", label: "Hlasování", icon: "vote", badge: badges.hlasovani },
         { href: "/zpravy", label: "Zprávy", icon: "chat", badge: badges.zpravy },
-        { href: "/konzultace", label: "Konzultace", icon: "clock" },
       ],
     },
     {
@@ -42,6 +41,7 @@ export function Sidebar({ user, showTeach, showAdmin, badges }: SidebarProps) {
         { href: "/ateliery", label: "Ateliéry", icon: "shapes" },
         { href: "/udalosti", label: "Události", icon: "calendar" },
         { href: "/expedice", label: "Expedice", icon: "mountain" },
+        { href: "/konzultace", label: "Konzultace", icon: "clock" },
         { href: "/navrhy", label: "Návrhy", icon: "bulb" },
       ],
     },
