@@ -330,7 +330,12 @@ function EnrollCard({ item: i, student, now }: { item: EnrollItem; student: bool
   return (
     <article className={`card ${styles.card}`} data-kind={i.kind} data-enrolled={i.enrolled || undefined}>
       <div className={styles.chips}>
-        <span className={styles.when}>{i.when}</span>
+        {/* Termín a rozvrh zvlášť: první štítek plný (datum / den), další obrysové (časy) */}
+        {i.when.split(" · ").map((part, n) => (
+          <span key={n} className={styles.when} data-more={n > 0 || undefined}>
+            {part}
+          </span>
+        ))}
         {i.enrolled && (
           <span className={styles.enrolled}>
             <Icon name="tick" size={14} strokeWidth={2.6} /> Zapsáno
