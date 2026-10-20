@@ -17,7 +17,7 @@ export function isAdmin(role: Role): boolean {
 
 /** Popisek role pod jménem v navigaci ("Učitelka", "Admin · učitel" …). */
 export function roleCaption(user: User): string {
-  if (user.role === "admin") return "Admin · učitel";
+  if (user.role === "admin") return `Admin · ${looksFeminine(user.name) ? "Učitelka" : "Učitel"}`;
   if (user.role === "ucitel") return looksFeminine(user.name) ? "Učitelka" : "Učitel";
   return "Student";
 }
